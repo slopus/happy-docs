@@ -1,0 +1,55 @@
+---
+import '../styles/global.css';
+import { BASE } from '../lib/nav';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = 'Happy Enterprise: a multi-tenant ontology backend for smaller teams, in Rust on Postgres, with tenant isolation proven in Lean.' } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="en" data-search-index={`${BASE}search.json`}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href={`${BASE}favicon.svg`} type="image/svg+xml" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Happy Enterprise" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <script is:inline>
+      // Before first paint: a saved choice, else the system setting.
+      (() => {
+        const saved = localStorage.getItem('theme');
+        const dark = saved ? saved === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      })();
+    </script>
+  </head>
+  <body>
+    <a class="skip" href="#content">Skip to content</a>
+    <slot />
+    <dialog class="search" aria-label="Search the docs" data-search>
+      <div class="search__bar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <input type="search" placeholder="Search the docs…" aria-label="Search the docs" autocomplete="off" data-search-input />
+        <kbd>Esc</kbd>
+      </div>
+      <ul class="search__results" role="listbox" data-search-results></ul>
+      <p class="search__empty" data-search-empty hidden>No results.</p>
+      <div class="search__foot"><span><kbd>↑</kbd> <kbd>↓</kbd> navigate</span><span><kbd>↵</kbd> open</span></div>
+    </dialog>
+    <script>
+      import { initSite } from '../lib/client';
+      initSite();
+    </script>
+  </body>
+</html>

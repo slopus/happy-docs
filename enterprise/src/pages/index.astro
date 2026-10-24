@@ -1,0 +1,349 @@
+---
+import { Code } from 'astro:components';
+import Base from '../layouts/Base.astro';
+import Rail from '../components/Rail.astro';
+import { REPO, docsHref } from '../lib/nav';
+
+const sections = [
+  { id: 'isolation', title: 'Isolation' },
+  { id: 'organisations', title: 'Organisations' },
+  { id: 'ontology', title: 'Ontology' },
+  { id: 'agents', title: 'Agents and MCP' },
+  { id: 'proofs', title: 'Proofs' },
+  { id: 'what-it-isnt', title: "What it isn't" },
+  { id: 'run-it', title: 'Run it' },
+];
+
+const clone = 'git clone https://github.com/slopus/happy-commons';
+
+const files = [
+  {
+    name: 'object-type.json',
+    glyph: '{}',
+    lang: 'json',
+    note: 'POST /v1/ontology/object-types',
+    code: `{
+  "api_name": "employee",
+  "display_name": "Employee",
+  "properties": [
+    { "api_name": "name", "type": { "kind": "string" }, "required": true,
+      "rules": [{ "rule": "length", "min": 1, "max": 100 }] },
+    { "api_name": "email", "type": { "kind": "string" },
+      "rules": [{ "rule": "email" }, { "rule": "unique" }] },
+    { "api_name": "manager", "type": { "kind": "user_ref" } },
+    { "api_name": "started", "type": { "kind": "date" } },
+    { "api_name": "office", "type": { "kind": "geo_point" } },
+    { "api_name": "badge", "type": { "kind": "string" },
+      "rules": [{ "rule": "validator", "name": "luhn", "version": 2 }] }
+  ]
+}`,
+  },
+  {
+    name: 'query.json',
+    glyph: '{}',
+    lang: 'json',
+    note: 'POST /v1/ontology/objects/employee/query',
+    code: `{
+  "filter": { "op": "and", "filters": [
+    { "op": "linked", "link": "projects", "object": "o9k3m7p1s5v2x6z0b4d8f2h6" },
+    { "op": "gte", "property": "started", "value": "2026-01-01" },
+    { "op": "not", "filter": { "op": "is_null", "property": "email" } }
+  ] },
+  "order_by": { "property": "started", "direction": "desc" },
+  "limit": 50
+}`,
+  },
+  {
+    name: 'luhn.py',
+    glyph: 'py',
+    lang: 'python',
+    note: 'POST /v1/ontology/validators',
+    code: `def validate(value):
+    digits = [int(c) for c in value if c.isdigit()]
+    if len(digits) != len(value) or len(digits) < 8:
+        return "badge numbers are at least 8 digits"
+    total = 0
+    for i, d in enumerate(reversed(digits)):
+        if i % 2 == 1:
+            d = d * 2 - 9 if d > 4 else d * 2
+        total += d
+    return total % 10 == 0`,
+  },
+  {
+    name: 'events',
+    glyph: '~',
+    lang: 'text',
+    note: 'GET /v1/ontology/events',
+    code: `id: 1042
+event: object.created
+data: {"type":"employee","id":"o4b8j2e6c0t1q5w9r3y7u2i6","version":1,"properties":{"name":"Ada"}}
+
+id: 1043
+event: link.created
+data: {"link":"projects","from_type":"employee","from":"o4b8j2e6c0t1q5w9r3y7u2i6","to_type":"project","to":"o9k3m7p1s5v2x6z0b4d8f2h6"}
+
+id: 1044
+event: object.updated
+data: {"type":"employee","id":"o4b8j2e6c0t1q5w9r3y7u2i6","version":2,"properties":{"name":"Ada","started":"2026-03-01"}}`,
+  },
+];
+
+const proofs = [
+  ['A tenant-scoped read returns only that tenant\u2019s rows, whatever the WHERE clause says.', 'Rls.select_forgotten_where'],
+  ['A write under one tenant leaves every other tenant\u2019s rows exactly as they were.', 'Rls.applyAll_preserves_other_tenants'],
+  ['An accepted credential yields a context whose tenant owns the key, session, or token that verified it.', 'Auth.verifyTenant_key_owner'],
+  ['No token is accepted by two of: the REST API, the MCP server, the management API.', 'Auth.audiences_disjoint'],
+  ['When 2FA is required, a session without a second factor reaches only the enrollment routes.', 'Mfa.partial_session_gate'],
+  ['MCP tools never exceed the user\u2019s permissions or the grant\u2019s scopes.', 'Mcp.mcp_tool_within_grant'],
+  ['Stored objects satisfy their type\u2019s current definition, also after schema changes.', 'Ontology.ontRun_inv'],
+  ['Resuming an event stream from a cursor misses no event you may see.', 'Live.resume_complete'],
+];
+---
+
+<Base title="Happy Enterprise: a multi-tenant ontology backend, proven isolated">
+  <div class="frame">
+    <Rail current="home" sections={sections} />
+    <div class="page-body">
+      <main class="landing" id="content">
+        <section class="hero">
+          <h1 class="hero__title">
+            Your organisation's objects, typed and linked. <a class="soft" href="#proofs">Every tenant sealed off, and proven so.</a>
+          </h1>
+          <p class="hero__lead">
+            Happy Enterprise is a multi-tenant backend for smaller teams, in the spirit of Palantir's ontology. Define
+            object types, store and link objects, query them, and stream their changes. One Rust binary on Postgres, with
+            row-level security under every query and a Lean proof for every isolation invariant.
+          </p>
+          <div class="hero__actions">
+            <a class="btn-primary" href={docsHref('')}>Read the docs</a>
+            <button type="button" class="btn-ghost" data-copy={clone} aria-label="Copy the clone command">
+              <code>git clone slopus/happy-commons</code>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+            </button>
+          </div>
+          <p class="hero__fine">
+            Backend only, no UI. Running in ten minutes? <a href={docsHref('quickstart/')}>Quickstart</a>{' · '}
+            <a href={docsHref('api/')}>API reference</a>
+          </p>
+        </section>
+
+        <section class="section" id="isolation">
+          <h2>One database. Many organisations. No leaks.</h2>
+          <p>
+            A tenant is an organisation, and tenants never see or affect each other's data. Every request gets a
+            transaction scoped to exactly one organisation, Postgres row-level security filters every row underneath it,
+            and the runtime roles cannot bypass it. A query that forgets its <code>WHERE tenant_id</code> still sees only
+            its own rows.
+          </p>
+          <ul class="tiles tiles--3">
+            <li>
+              <span class="tile__k">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
+                Types
+              </span>
+              <span class="tile__d">Handlers only ever get a <code>TenantTx</code>, built from a verified credential. No pool, no way around it.</span>
+            </li>
+            <li>
+              <span class="tile__k">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3" /><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5" /><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" /></svg>
+                Postgres
+              </span>
+              <span class="tile__d">Forced RLS on every table, a transaction-local tenant, and roles that are <code>NOBYPASSRLS</code>, checked at startup.</span>
+            </li>
+            <li>
+              <span class="tile__k">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4" /><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z" /></svg>
+                Proofs and tests
+              </span>
+              <span class="tile__d">Lean proves the policy isolates; tests write to every tenant table and try to cross over.</span>
+            </li>
+          </ul>
+          <p style="margin-top:1.25rem">
+            <a href={docsHref('concepts/tenancy/')}>How tenancy works</a>
+          </p>
+        </section>
+
+        <section class="section" id="organisations">
+          <h2>People, agents, teams.</h2>
+          <p>
+            Each organisation has human users who sign in with an emailed code, and agents that use API tokens.
+            Teams grant permissions; <code>owners</code> and <code>everyone</code> always exist, and the database
+            itself keeps at least one owner. Organisations can require two-factor authentication, admit whole verified
+            domains, or bring their own identity provider.
+          </p>
+          <ul class="tiles tiles--4">
+            <li>
+              <span class="tile__k">Email codes</span>
+              <span class="tile__d">Six digits, ten minutes, five tries.</span>
+            </li>
+            <li>
+              <span class="tile__k">Two factors</span>
+              <span class="tile__d">TOTP apps, security keys, and passkeys.</span>
+            </li>
+            <li>
+              <span class="tile__k">Your IdP</span>
+              <span class="tile__d">Ed25519 JWTs, keys registered per organisation.</span>
+            </li>
+            <li>
+              <span class="tile__k">Agent tokens</span>
+              <span class="tile__d"><span class="tile__mono">heat_…</span>, hashed at rest.</span>
+            </li>
+          </ul>
+          <p style="margin-top:1.25rem">
+            <a href={docsHref('concepts/organisations/')}>Users, teams, permissions</a>{' · '}
+            <a href={docsHref('concepts/authentication/')}>Authentication</a>
+          </p>
+        </section>
+
+        <section class="section" id="ontology">
+          <h2>An ontology, not a key-value store.</h2>
+          <p>
+            Object types have typed properties and format rules: strings, numbers, dates, geo points, references to
+            users and files, arrays and structs. Links connect objects with a declared cardinality. Every write is
+            checked against the type, new rules are applied to stored data in the background with every object marked
+            valid, invalid, or pending, deletions are instant, and every change lands in an outbox you can stream.
+          </p>
+          <div class="viewer wide" data-viewer>
+            <div class="viewer__files">
+              <div class="viewer__head">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>
+                acme / ontology
+              </div>
+              <ul>
+                {
+                  files.map((f, i) => (
+                    <li>
+                      <button type="button" data-open-file={f.name} data-note={f.note} aria-pressed={String(i === 0)}>
+                        <span class="viewer__glyph">{f.glyph}</span>
+                        <span class="viewer__name">{f.name}</span>
+                      </button>
+                    </li>
+                  ))
+                }
+              </ul>
+            </div>
+            <div class="viewer__pane">
+              <div class="viewer__tabs">
+                <span data-viewer-name>{files[0].name}</span>
+                <small data-viewer-note>{files[0].note}</small>
+              </div>
+              {
+                files.map((f, i) => (
+                  <div class="viewer__file" data-file={f.name} hidden={i !== 0}>
+                    <Code code={f.code} lang={f.lang as any} themes={{ light: 'github-light', dark: 'github-dark' }} defaultColor={false} />
+                  </div>
+                ))
+              }
+            </div>
+          </div>
+          <p style="margin-top:1.25rem">
+            Rules too specific for a schema run as Python, in <a href="https://github.com/pydantic/monty">Monty</a>: a
+            sandboxed interpreter with no filesystem, network, or imports, 250 ms and 32 MiB per call.
+          </p>
+          <p style="margin-top:1rem">
+            <a href={docsHref('concepts/ontology/')}>The ontology</a>{' · '}
+            <a href={docsHref('concepts/validators/')}>Custom validators</a>
+          </p>
+        </section>
+
+        <section class="section" id="agents">
+          <h2>Built for agents, too.</h2>
+          <p>
+            Every organisation has its own MCP server and OAuth 2.1 authorization server, so any MCP client can
+            connect with PKCE and dynamic registration. Tools act for the signed-in user and never exceed
+            their permissions or the scopes they granted. No scope reaches owner actions or the schema.
+          </p>
+          <ul class="tiles tiles--3">
+            <li><span class="tile__mono">whoami</span><span class="tile__d">who the grant acts for</span></li>
+            <li><span class="tile__mono">list_members</span><span class="tile__d">mcp:read + view_members</span></li>
+            <li><span class="tile__mono">invite_member</span><span class="tile__d">mcp:invite + invite_members</span></li>
+            <li><span class="tile__mono">describe_schema</span><span class="tile__d">the types you may view</span></li>
+            <li><span class="tile__mono">query_objects</span><span class="tile__d">filters, ordering, cursors</span></li>
+            <li><span class="tile__mono">update_object</span><span class="tile__d">ontology:write + edit_objects</span></li>
+          </ul>
+          <p style="margin-top:1.25rem">
+            <a href={docsHref('concepts/mcp/')}>MCP and OAuth</a>{' · '}<a href={docsHref('api/mcp/')}>Tool reference</a>
+          </p>
+        </section>
+
+        <section class="section" id="proofs">
+          <h2>Every invariant has a proof.</h2>
+          <p>
+            The security model lives twice: once in Rust and Postgres, and once in Lean 4, where each invariant is a
+            theorem about a model of the code that enforces it. No <code>sorry</code>, no custom axioms; a build-time audit
+            checks. Some of them:
+          </p>
+          <ul class="proofs wide">
+            {
+              proofs.map(([claim, theorem]) => (
+                <li>
+                  <span>{claim}</span>
+                  <code>{theorem}</code>
+                </li>
+              ))
+            }
+          </ul>
+          <p style="margin-top:1.25rem">
+            Cryptography and Postgres itself are trusted, not proven, and the docs say exactly where:
+            see <a href={docsHref('verification/')}>the invariant map</a>.
+          </p>
+        </section>
+
+        <section class="section" id="what-it-isnt">
+          <h2>What it is, and isn't.</h2>
+          <dl class="qa wide">
+            <div>
+              <dt>A backend, not an app.</dt>
+              <dd>There is no UI. You build yours on the REST API, or let agents use the MCP server.</dd>
+            </div>
+            <div>
+              <dt>For smaller teams.</dt>
+              <dd>One binary and one Postgres. No Kafka, no Redis, no cluster to babysit.</dd>
+            </div>
+            <div>
+              <dt>Not a data warehouse.</dt>
+              <dd>Objects are JSON documents checked against their types, queried with typed filters. Bring your analytics elsewhere.</dd>
+            </div>
+            <div>
+              <dt>Not magic.</dt>
+              <dd>The proofs cover models of the code. Tests check the code against a real Postgres, and the docs list what is trusted.</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="section" id="run-it">
+          <h2>Run it.</h2>
+          <p>Postgres 16 or newer, a Rust toolchain, and an email provider when you go live.</p>
+          <div class="ways wide">
+            <div class="way way--rec">
+              <span class="way__k">Locally</span>
+              <span class="way__d">
+                A pinned Postgres on a unix socket, no Docker. Create an organisation and sign in within ten minutes.
+              </span>
+              <span class="way__a">
+                <a class="btn-secondary" href={docsHref('quickstart/')}>Quickstart</a>
+              </span>
+            </div>
+            <div class="way">
+              <span class="way__k">In production</span>
+              <span class="way__d">
+                Two listeners, two database roles, S3 or local files, Resend, SES, SMTP, or a webhook for email.
+              </span>
+              <span class="way__a">
+                <a class="btn-secondary" href={docsHref('self-hosting/')}>Deploying</a>
+                <a class="btn-secondary" href={docsHref('self-hosting/configuration/')}>Configuration</a>
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <footer class="landing-foot">
+          Happy Enterprise is open source. <a href={REPO}>slopus/happy-commons</a> on GitHub.
+        </footer>
+      </main>
+    </div>
+  </div>
+</Base>
