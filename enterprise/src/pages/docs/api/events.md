@@ -42,7 +42,7 @@ event: object.deleted
 data: {"type":"employee","id":"o4b8j2e6c0t1q5w9r3y7u2i6"}
 ```
 
-Sequence numbers are per organisation and gap-free in the outbox; a stream
+Sequence numbers are per organization and gap-free in the outbox; a stream
 skips the ones you may not see or filtered out, so the ids you receive can
 jump.
 

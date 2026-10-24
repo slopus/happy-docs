@@ -1,12 +1,12 @@
 ---
 layout: ../../../layouts/Docs.astro
 title: Live events
-lead: Every change to an organisation's ontology is appended to its outbox in the same transaction, and streamed to subscribers as server-sent events they can resume without gaps.
+lead: Every change to an organization's ontology is appended to its outbox in the same transaction, and streamed to subscribers as server-sent events they can resume without gaps.
 ---
 
 ## The outbox
 
-Every ontology write appends events to the organisation's outbox
+Every ontology write appends events to the organization's outbox
 (`ontology_events`) inside the write's own transaction, so an event exists
 exactly when its change committed.
 
@@ -25,10 +25,10 @@ validation of new rules reports its progress as `type.validation` after each
 batch. Deleting an object or a link type emits `link.deleted` for each of its
 visible links.
 
-Each event has a **sequence number** from a per-organisation counter row. The
-writer locks that row until it commits, so an organisation's events commit in
+Each event has a **sequence number** from a per-organization counter row. The
+writer locks that row until it commits, so an organization's events commit in
 sequence order and a reader that has seen event *n* has seen everything
-before it. Writers of one organisation serialise on the counter only for the
+before it. Writers of one organization serialize on the counter only for the
 moment between their last statement and commit.
 
 ## Subscribing
@@ -64,8 +64,8 @@ Delivery is decided per event, when it is read, not when the stream opened.
 Each read opens a fresh transaction re-authenticated with the stream's
 credential, then:
 
-- only the subscriber's own organisation's events exist for it (row level
-  security plus an explicit `tenant_id` filter);
+- only the subscriber's own organization's events exist for it (row level
+  security plus an explicit organization filter);
 - an event goes out only if the subscriber may view, at that moment, **every**
   object type it is about. A link between an `employee` and a restricted
   `salary_band` is not delivered to someone who cannot view `salary_band`;
@@ -73,7 +73,7 @@ credential, then:
   stream.
 
 Streams wake on `NOTIFY ontology_events` (the payload is just the
-organisation id) and also poll every 10 seconds, which bounds how long an
+organization id) and also poll every 10 seconds, which bounds how long an
 idle stream outlives a revoked session.
 
 ## Retention and limits
@@ -90,6 +90,6 @@ idle stream outlives a revoked session.
 - At most **20** open streams per user per replica; more get `429`.
 
 The Lean model `proofs/HappyEnterprise/Live.lean` proves that a stream
-delivers only its own organisation's events, only those about types its
+delivers only its own organization's events, only those about types its
 subscriber may view when the event is read, and that resuming from a cursor
 not older than what was pruned misses no event.

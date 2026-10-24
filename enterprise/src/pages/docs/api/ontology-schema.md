@@ -193,7 +193,7 @@ type does not exist. Grants have no effect while the type is unrestricted.
 ```
 
 A grant's `permission` is `view_objects` or `edit_objects`. A member still
-needs the organisation-wide permission too: a grant narrows who may use
+needs the organization-wide permission too: a grant narrows who may use
 `view_objects` on the type, it does not hand it out. Returns the access
 settings and emits a `type.changed` event. `400` for an unknown team or
 permission.

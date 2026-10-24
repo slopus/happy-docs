@@ -1,13 +1,13 @@
 ---
 layout: ../../../layouts/Docs.astro
 title: Files and email
-lead: Avatars and organisation photos go to a local directory or an S3 bucket and are always served through the API. Login codes and invites go out through one of five email providers.
+lead: Avatars and organization photos go to a local directory or an S3 bucket and are always served through the API. Login codes and invites go out through one of five email providers.
 ---
 
 ## Files
 
 Two kinds of file exist: a user's **avatar** (`PUT /v1/me/avatar`) and the
-**organisation photo** (`PUT /v1/org/photo`). Both are images: PNG, JPEG,
+**organization photo** (`PUT /v1/org/photo`). Both are images: PNG, JPEG,
 GIF, or WebP, up to 5 MB, uploaded as the raw request body with a matching
 `Content-Type`. The server sniffs the content and refuses anything whose bytes
 do not match the declared type, so an SVG or HTML file cannot pass as an
@@ -20,8 +20,9 @@ curl -X PUT "$BASE/v1/me/avatar" \
   --data-binary @ada.png
 ```
 
-Files are stored in the configured blob store under `<tenant_id>/<file_id>`,
-with their metadata in the tenant-scoped `files` table. Their ids can be used
+Files are stored in the configured blob store under
+`<organization_id>/<file_id>`, with their metadata in the organization's rows
+of the `files` table. Their ids can be used
 as `file_ref` values in the ontology.
 
 ### Serving
@@ -29,7 +30,7 @@ as `file_ref` values in the ontology.
 Bytes are always proxied by the server, `GET /v1/files/{id}`, never served
 from the store directly:
 
-- the organisation photo is visible to every member,
+- the organization photo is visible to every member,
 - an avatar is visible to its owner and to holders of `view_members`;
   anyone else gets `404`.
 

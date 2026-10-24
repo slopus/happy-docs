@@ -1,39 +1,40 @@
 ---
 layout: ../../../layouts/Docs.astro
 title: Authentication
-lead: Three kinds of bearer credential reach the tenant API. Each resolves to one organisation and one active user, or to the same 401.
+lead: Three kinds of bearer credential reach the organization API. Each resolves to one organization and one active user, or to the same 401.
 ---
 
-Every tenant API request outside the login endpoints sends
-`Authorization: Bearer <credential>`. The verifier turns the credential into a
-`TenantContext` inside a transaction scoped to the organisation it claims, and
-that transaction becomes the request's `TenantTx`. In every case the context's
-organisation is the one that **owns** the key, session, or token row found
-under that organisation's row level security scope, never just a claim.
+Every organization API request outside the login endpoints sends
+`Authorization: Bearer <credential>`. The verifier resolves the credential to
+an organization and a user inside a transaction scoped to the organization it
+claims, and that transaction is the only database access the request gets.
+In every case the organization is the one that **owns** the key, session, or
+token row found under that organization's row level security scope, never
+just a claim.
 
 ## Session tokens
 
 Logging in (an email code or an invite) creates a **session** and returns a
 session token: an EdDSA JWT with header `kid: "he-session-v1"`, signed with a
-per-organisation key the server derives from `SERVER_SECRET_KEY` with HKDF.
+per-organization key the server derives from `SERVER_SECRET_KEY` with HKDF.
 
 | Claim | |
 |---|---|
-| `tid` | organisation id |
+| `tid` | organization ID |
 | `sub` | user id |
 | `sid` | session id |
-| `aud` | `happy-enterprise:tenant` for REST sessions, `happy-enterprise:mcp` for OAuth grants |
+| `aud` | `happy-enterprise:tenant` (the organization API) for REST sessions, `happy-enterprise:mcp` for OAuth grants |
 | `iat`, `exp` | REST sessions last 30 days |
 
 Every request checks the session row: not revoked, not expired, and its user
 still active. Logging out, revoking a session, and deactivating a user take
-effect on the next request. A token signed for one organisation does not
-verify in another, because each organisation's key is different.
+effect on the next request. A token signed for one organization does not
+verify in another, because each organization's key is different.
 
 ## External JWTs
 
-An organisation can bring its own identity provider. The operator registers
-the provider's Ed25519 public key for that organisation through the
+An organization can bring its own identity provider. The operator registers
+the provider's Ed25519 public key for that organization through the
 [management API](/docs/api/management/), with a `kid` of the operator's
 choosing (`he-` prefixes are reserved). The provider then mints tokens like:
 
@@ -54,12 +55,12 @@ The rules:
 
 - `alg` must be `EdDSA` and `kid` must be present.
 - The key is looked up under the claimed `tid`'s scope, and the signed `tid`
-  must equal the key's owner, so one organisation's key cannot mint tokens
+  must equal the key's owner, so one organization's key cannot mint tokens
   for another.
-- `sub` must be an active user of that organisation.
-- `aud` must be the single string `happy-enterprise:tenant`. An array is
-  rejected, even one containing the right value.
-- `exp` is required; `nbf` is honoured; 30 seconds of clock skew are allowed.
+- `sub` must be an active user of that organization.
+- `aud` must be the single string `happy-enterprise:tenant`, the organization
+  API's audience. An array is rejected, even one containing the right value.
+- `exp` is required; `nbf` is honored; 30 seconds of clock skew are allowed.
 - `amr` (RFC 8176) is optional. `"mfa"` in it attests a second factor (see
   [Two-factor authentication](/docs/concepts/two-factor/)).
 - Revoked keys stop working immediately.
@@ -90,7 +91,7 @@ POST /v1/orgs/{org}/auth/email/start
 ```
 
 The answer is always `202` with a challenge id, whether or not the
-organisation exists and whether or not the address may log in. A 6-digit code
+organization exists and whether or not the address may log in. A 6-digit code
 is emailed only if it may. The code expires after 10 minutes and allows five
 attempts. Verifying it returns a session token:
 
@@ -101,14 +102,14 @@ POST /v1/orgs/{org}/auth/email/verify
 
 An address may log in when, in this order:
 
-1. it belongs to an **active user** of the organisation (a deactivated
+1. it belongs to an **active user** of the organization (a deactivated
    user's address may not);
-2. it is the organisation's **bootstrap owner** address and the organisation
+2. it is the organization's **bootstrap owner** address and the organization
    has no active owner: the user is created and added to `owners`;
-3. its domain is **exactly** one of the organisation's verified domains: the
+3. its domain is **exactly** one of the organization's verified domains: the
    user is created as a member of `everyone`.
 
-Anyone else needs an invite. This decision procedure is modelled as
+Anyone else needs an invite. This decision procedure is modeled as
 `Join.loginPath` in Lean, with theorems for each case.
 
 ## Invites
@@ -117,7 +118,7 @@ A member with `invite_members` invites an address. The server emails a link
 to `INVITE_URL?org=<org id>&token=<token>`, where the token is
 `hei_<invite id>_<secret>`. An invite:
 
-- is bound to one address and one organisation,
+- is bound to one address and one organization,
 - works once,
 - expires after 7 days,
 - replaces any pending invite for the same address.
@@ -128,7 +129,7 @@ user if needed (with an optional `display_name`) and logs in.
 
 ## Verified domains
 
-An organisation may let anyone at its own email domains join without an
+An organization may let anyone at its own email domains join without an
 invite. A member with `change_security_posture` adds a domain and gets back a
 DNS record to publish:
 
@@ -136,11 +137,11 @@ DNS record to publish:
 _happy-enterprise.acme.example.  TXT  "happy-enterprise-verification=5f0c1e7a9b2d4c6e8f1a3b5c7d9e0f12"
 ```
 
-The token is random per organisation and domain. The verify endpoint looks
+The token is random per organization and domain. The verify endpoint looks
 the record up and marks the domain verified only if one of the TXT values is
 exactly `happy-enterprise-verification=<that token>`. Unverified domains admit
 nobody. Verification is not re-checked later: removing the record does not
-unverify the domain, deleting the domain does. An organisation can have up to
+unverify the domain, deleting the domain does. An organization can have up to
 50 domains.
 
 ## Ending sessions
@@ -164,7 +165,7 @@ WWW-Authenticate: Bearer
 { "error": { "code": "unauthorized", "message": "unauthorized" } }
 ```
 
-The reason (unknown organisation, unknown `kid`, bad signature, expired,
+The reason (unknown organization, unknown `kid`, bad signature, expired,
 revoked, deactivated user, wrong audience) is logged on the server but never
-returned, so responses do not reveal which organisations, users, keys,
+returned, so responses do not reveal which organizations, users, keys,
 sessions, or invites exist.

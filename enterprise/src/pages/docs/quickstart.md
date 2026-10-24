@@ -1,7 +1,7 @@
 ---
 layout: ../../layouts/Docs.astro
 title: Quickstart
-lead: Run the server locally, create an organisation, sign in as its first owner, and store your first objects. About ten minutes, no Docker.
+lead: Run the server locally, create an organization, sign in as its first owner, and store your first objects. About ten minutes, no Docker.
 ---
 
 You need a Rust toolchain via rustup (the repository pins its version), a C
@@ -62,10 +62,10 @@ INFO tenant API listening addr=0.0.0.0:8080
 INFO management API listening addr=127.0.0.1:9090
 ```
 
-The tenant API is on `:8080`, the management API on `127.0.0.1:9090`. Run
+The organization API is on `:8080`, the management API on `127.0.0.1:9090`. Run
 the remaining steps in a second shell with the same `MGMT_JWT`.
 
-## 4. Create an organisation
+## 4. Create an organization
 
 ```sh
 ORG=$(curl -s -X POST http://127.0.0.1:9090/v1/tenants \
@@ -74,7 +74,7 @@ ORG=$(curl -s -X POST http://127.0.0.1:9090/v1/tenants \
 echo "$ORG"
 ```
 
-The organisation exists, but has no users yet. Its system teams and first
+The organization exists, but has no users yet. Its system teams and first
 owner are created when `ada@acme.example` logs in.
 
 ## 5. Sign in as the owner
@@ -147,10 +147,10 @@ curl -N "$BASE/v1/ontology/events" -H "Authorization: Bearer $TOKEN"
 
 ## Next
 
-* [Tenancy and isolation](/docs/concepts/tenancy/): how one organisation
+* [Organizations and isolation](/docs/concepts/isolation/): how one organization
   is kept from seeing another.
 * [The ontology](/docs/concepts/ontology/): property types, format rules,
   links, and queries.
 * [MCP and OAuth](/docs/concepts/mcp/): connect an AI client to your
-  organisation.
+  organization.
 * [Self-hosting](/docs/self-hosting/): deploy it for real.

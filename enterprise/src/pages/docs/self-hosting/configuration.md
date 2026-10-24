@@ -13,16 +13,16 @@ refuses to start if a required variable is missing or malformed.
 |---|---|---|
 | `DATABASE_URL` | required if migrating | Schema owner. Used only to run migrations at startup. |
 | `RUN_MIGRATIONS` | `true` | `false` skips migrations and makes `DATABASE_URL` optional. |
-| `TENANT_DATABASE_URL` | required | Connects as `happy_enterprise_tenant`. |
+| `TENANT_DATABASE_URL` | required | The organization API's database. Connects as `happy_enterprise_tenant`. |
 | `MANAGEMENT_DATABASE_URL` | required | Connects as `happy_enterprise_management`. |
 
 ## Listeners and URLs
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `TENANT_LISTEN_ADDR` | `0.0.0.0:8080` | Tenant API listener. |
+| `TENANT_LISTEN_ADDR` | `0.0.0.0:8080` | Organization API listener. |
 | `MANAGEMENT_LISTEN_ADDR` | `127.0.0.1:9090` | Management API listener. Keep it off the public network. |
-| `PUBLIC_BASE_URL` | `http://localhost:8080` | Public origin of the tenant API (no path). OAuth issuers and MCP resource URLs derive from it. |
+| `PUBLIC_BASE_URL` | `http://localhost:8080` | Public origin of the organization API (no path). OAuth issuers and MCP resource URLs derive from it. |
 | `INVITE_URL` | `<PUBLIC_BASE_URL>/invite` | Where invite links point (`?org=<id>&token=<token>` is appended). |
 | `CLIENT_IP_HEADER` | none | Header with the client IP set by your reverse proxy (e.g. `x-real-ip`, or `x-forwarded-for`: last entry), for rate limits. Unset: the TCP peer. Only set it if the proxy overwrites the header. |
 | `MCP_ALLOWED_HOSTS` | host of `PUBLIC_BASE_URL` | Comma-separated `Host` values (`host` or `host:port`) the MCP endpoint accepts, against DNS rebinding; `*` accepts any. |

@@ -1,16 +1,19 @@
 ---
 layout: ../../../layouts/Docs.astro
 title: Management API
-lead: Create organisations and register the keys of their identity providers, on a separate listener with its own credentials and database role.
+lead: Create organizations and register the keys of their identity providers, on a separate listener with its own credentials and database role.
 ---
 
-The management API is for the operator, not for tenants. It listens on
+The management API is for the operator, not for organizations. It listens on
 `MANAGEMENT_LISTEN_ADDR` (default `127.0.0.1:9090`), shares no routes with the
-tenant API, and connects to Postgres as `happy_enterprise_management`, a role
-with grants on the control-plane tables (`tenants`, `tenant_signing_keys`)
-and none on organisation data. Keep it off the public network.
+organization API, and connects to Postgres as `happy_enterprise_management`, a
+role with grants on the list of organizations and their identity provider
+keys, and none on organization data. Keep it off the public network.
 
-It never creates users or teams: an organisation's system teams and first
+Its paths call an organization a *tenant*, as the code does: `/v1/tenants`
+is the list of organizations, and `{tenant_id}` is an organization ID.
+
+It never creates users or teams: an organization's system teams and first
 owner come into being when its `owner_email` first logs in.
 
 ## Authentication
@@ -26,8 +29,8 @@ Every route except `/health` needs `Authorization: Bearer <JWT>`, an EdDSA
 | `sub` | who is calling; logged with every change |
 | `exp` | required; `nbf` is checked if present; 30 s leeway |
 
-Tenant tokens are refused here, and management tokens by the tenant API: the
-audiences differ, and a token naming both is refused everywhere. Every failure
+Organization API tokens are refused here, and management tokens by the
+organization API: the audiences differ, and a token naming both is refused everywhere. Every failure
 is the same `401 unauthorized`.
 
 Minting a token with Python and `cryptography`:
@@ -61,9 +64,9 @@ holds public keys.
 { "status": "ok" }
 ```
 
-## Tenants
+## Organizations
 
-A tenant is an organisation:
+An organization:
 
 ```json
 {
@@ -79,7 +82,7 @@ A tenant is an organisation:
 
 <p class="ep-meta"><span><b>Auth</b>management JWT</span></p>
 
-Every tenant, oldest first, as a JSON array.
+Every organization, oldest first, as a JSON array.
 
 ### POST /v1/tenants
 
@@ -91,23 +94,23 @@ curl -X POST http://127.0.0.1:9090/v1/tenants \
   -d '{"name": "Acme", "owner_email": "ada@acme.example"}'
 ```
 
-`201` with the tenant. `name` is 1-200 characters after trimming;
-`owner_email` must be a valid address and is stored normalised. That address
-may log in while the organisation has no active owner and becomes its first
+`201` with the organization. `name` is 1-200 characters after trimming;
+`owner_email` must be a valid address and is stored normalized. That address
+may log in while the organization has no active owner and becomes its first
 owner (see [Joining](/docs/concepts/authentication/)).
 
 ### GET /v1/tenants/{tenant_id}
 
 <p class="ep-meta"><span><b>Auth</b>management JWT</span></p>
 
-The tenant, or `404`.
+The organization, or `404`.
 
 ## Signing keys
 
-An organisation's own identity provider can sign
+An organization's own identity provider can sign
 [external JWTs](/docs/concepts/authentication/) for its users. Register its
-public keys here. A key works only for the tenant it is registered to: the
-signed `tid` must equal the key's owner.
+public keys here. A key works only for the organization it is registered to:
+the signed `tid` claim (the organization ID) must equal the key's owner.
 
 ```json
 {
@@ -125,7 +128,7 @@ padding (a JWK's `x`).
 
 <p class="ep-meta"><span><b>Auth</b>management JWT</span></p>
 
-The tenant's keys, revoked ones included, oldest first.
+The organization's keys, revoked ones included, oldest first.
 
 ### POST /v1/tenants/{tenant_id}/keys
 
@@ -137,13 +140,13 @@ The tenant's keys, revoked ones included, oldest first.
 
 `201` with the key. `kid` is 1-128 characters of `[A-Za-z0-9._-]` and must
 not start with `he-` (reserved for the server's own session keys). `400` for
-a bad `kid` or key, `404` for an unknown tenant, `409` if the tenant already
-has a key with that `kid`.
+a bad `kid` or key, `404` for an unknown organization, `409` if the organization
+already has a key with that `kid`.
 
 ### DELETE /v1/tenants/{tenant_id}/keys/{kid}
 
 <p class="ep-meta"><span><b>Auth</b>management JWT</span></p>
 
-Revokes the key. `204`; `404` if the tenant has no active key with that
+Revokes the key. `204`; `404` if the organization has no active key with that
 `kid`. Tokens signed with it stop working on their next request. A revoked
 `kid` stays taken.

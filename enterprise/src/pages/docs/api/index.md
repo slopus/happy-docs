@@ -4,13 +4,13 @@ title: API overview
 lead: Two HTTP APIs on two listeners. Requests and responses are JSON, credentials are bearer tokens, and errors share one shape.
 ---
 
-| | Tenant API | Management API |
+| | Organization API | Management API |
 |---|---|---|
 | Default address | `0.0.0.0:8080` | `127.0.0.1:9090` (keep it private) |
-| Who calls it | your organisations' users, agents, apps, MCP clients | you, the operator |
+| Who calls it | your organizations' users, agents, apps, MCP clients | you, the operator |
 | Credentials | session tokens, external JWTs, agent API tokens, OAuth access tokens (MCP only) | Ed25519 JWTs signed by a key in `MANAGEMENT_JWT_PUBLIC_KEYS` |
-| JWT audience | `happy-enterprise:tenant` (REST), `happy-enterprise:mcp` (MCP) | `happy-enterprise:management` |
-| Database role | `happy_enterprise_tenant` (row level security applies) | `happy_enterprise_management` (control-plane tables only) |
+| JWT audience | `happy-enterprise:tenant` (REST; the code calls an organization a tenant), `happy-enterprise:mcp` (MCP) | `happy-enterprise:management` |
+| Database access | a role confined by row level security to the request's organization | a role that sees only the list of organizations and their identity provider keys |
 
 The two listeners share no routes, credentials, or database roles. A token for
 one audience is rejected by the others.
@@ -19,12 +19,12 @@ one audience is rejected by the others.
 
 Each endpoint lists:
 
-- **Auth**: `none` (the login endpoints, which name the organisation in the
+- **Auth**: `none` (the login endpoints, which name the organization in the
   path), `partial` (a session still waiting for its second factor is enough),
   or `full` (a fully authenticated credential; partial sessions get
   `403 mfa_required`).
 - **Permission**: what the caller must hold, see
-  [Users, teams, permissions](/docs/concepts/organisations/#permissions).
+  [Users, teams, permissions](/docs/concepts/organizations/#permissions).
   *owner* means a member of `owners` using a first-party credential (not an
   OAuth grant).
 
@@ -32,7 +32,7 @@ Examples use these shell variables:
 
 ```sh
 BASE=https://enterprise.example.com     # PUBLIC_BASE_URL
-ORG=c8kq2m7xw3n5p9r1t4v6y0za            # organisation id
+ORG=c8kq2m7xw3n5p9r1t4v6y0za            # organization id
 TOKEN=eyJhbGciOiJFZERTQSIsImtpZCI6ImhlLXNlc3Npb24tdjEifQ...   # session token
 ```
 
@@ -75,7 +75,7 @@ Validation and schema errors add `details`, a list of
 | 400 | `bad_request` | malformed input; the message says what |
 | 401 | `unauthorized` | any authentication failure, always identical; carries `WWW-Authenticate: Bearer` |
 | 403 | `forbidden` | authenticated, but missing a permission |
-| 403 | `mfa_required` | the organisation requires 2FA and this session has not completed it |
+| 403 | `mfa_required` | the organization requires 2FA and this session has not completed it |
 | 404 | `not_found` | unknown, or not visible to you |
 | 409 | `conflict` | a uniqueness, version, or team-rule conflict |
 | 413 | `payload_too_large` | an image over 5 MB |
@@ -101,15 +101,15 @@ object types, other users' sessions.
 
 ## Example resource: objects
 
-`/v1/objects` is a minimal tenant-owned resource kept as an example of the
-pattern every tenant table follows (a `TenantTx`, an explicit `tenant_id`
-filter, RLS underneath). For real data, use the [ontology](/docs/api/ontology-objects/).
+`/v1/objects` is a minimal per-organization resource kept as an example of
+the pattern every table of organization data follows (a transaction scoped to
+the organization, an explicit organization filter, RLS underneath). For real data, use the [ontology](/docs/api/ontology-objects/).
 
 ### GET /v1/objects
 
 <p class="ep-meta"><span><b>Auth</b>full</span></p>
 
-Every object of the organisation, oldest first.
+Every object of the organization, oldest first.
 
 ### POST /v1/objects
 
@@ -120,7 +120,7 @@ Every object of the organisation, oldest first.
 ```
 
 `201` with `{ id, name, data, created_at, updated_at }`. `name` is 1-200
-characters and unique per organisation (`409` otherwise).
+characters and unique per organization (`409` otherwise).
 
 ### GET /v1/objects/{id}
 

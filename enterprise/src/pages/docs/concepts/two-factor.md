@@ -1,7 +1,7 @@
 ---
 layout: ../../../layouts/Docs.astro
 title: Two-factor authentication
-lead: An organisation can require a second factor of every human. Sessions without one are partial and reach only what they need to finish logging in.
+lead: An organization can require a second factor of every human. Sessions without one are partial and reach only what they need to finish logging in.
 ---
 
 ## Factors
@@ -22,11 +22,11 @@ and `register/finish` takes the result.
 ## Requiring 2FA
 
 A member with `change_security_posture` sets `require_2fa` on the
-organisation (`PUT /v1/org/security`). From then on, a human's credential is
+organization (`PUT /v1/org/security`). From then on, a human's credential is
 **full** only if it is:
 
 - a session that completed a second factor, or
-- an external JWT whose `amr` claim contains `"mfa"`. The organisation's
+- an external JWT whose `amr` claim contains `"mfa"`. The organization's
   identity provider can already mint tokens for any of its users, so its
   attestation is trusted as far as its signature is.
 
@@ -76,7 +76,7 @@ list above.
 - **Failures end the session.** Ten failed second-factor attempts revoke the
   session. Attempts are also rate limited per user across sessions (20 per
   15 minutes) and per IP (60 per 15 minutes).
-- **The last factor stays.** While the organisation requires 2FA, a user
+- **The last factor stays.** While the organization requires 2FA, a user
   cannot delete their last confirmed factor. Deleting any factor needs a full
   session.
 - **Rotating `SERVER_SECRET_KEY`** logs everyone out and makes every TOTP
@@ -84,13 +84,13 @@ list above.
 
 ## In the OAuth sign-in pages
 
-MCP clients sign in through the organisation's OAuth pages, and the same rules
+MCP clients sign in through the organization's OAuth pages, and the same rules
 apply there: after the email code, a user with a factor verifies it, and a
-user without one (when the organisation requires one) enrolls a security key,
+user without one (when the organization requires one) enrolls a security key,
 a passkey, or an authenticator app before the consent screen. See
 [MCP and OAuth](/docs/concepts/mcp/).
 
-The rules on this page are modelled in `proofs/HappyEnterprise/Mfa.lean`,
+The rules on this page are modeled in `proofs/HappyEnterprise/Mfa.lean`,
 which proves that a partial session reaches only the partial routes, that a
 partial session of a user with a factor becomes full only by proving
 possession of an existing factor, and that the last factor is kept while 2FA

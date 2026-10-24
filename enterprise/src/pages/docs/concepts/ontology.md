@@ -1,11 +1,11 @@
 ---
 layout: ../../../layouts/Docs.astro
 title: The ontology
-lead: Each organisation describes its own data as object types with typed properties and link types between them. Every write is checked against the current definition; new rules apply to stored data in the background, and deletions are instant.
+lead: Each organization describes its own data as object types with typed properties and link types between them. Every write is checked against the current definition; new rules apply to stored data in the background, and deletions are instant.
 ---
 
-The ontology is per organisation, stored in tenant-scoped tables like
-everything else. It has four parts:
+The ontology is per organization, stored in tables scoped to the organization
+like everything else. It has four parts:
 
 - **Object types**, such as `employee` or `project`, each with a list of
   typed properties and format rules. Their definitions are versioned.
@@ -49,10 +49,10 @@ property and struct field an `id` that survives renames (see
 | `double` | a JSON number |
 | `boolean` | `true` or `false` |
 | `date` | `YYYY-MM-DD` |
-| `timestamp` | RFC 3339; stored normalised to UTC |
+| `timestamp` | RFC 3339; stored normalized to UTC |
 | `geo_point` | `{ "lat": -90..90, "lon": -180..180 }` |
-| `file_ref` | the id of a file of this organisation, checked on write |
-| `user_ref` | the id of a user of this organisation, checked on write |
+| `file_ref` | the id of a file of this organization, checked on write |
+| `user_ref` | the id of a user of this organization, checked on write |
 | `array` | `{ "kind": "array", "items": { "type": ..., "rules": [...] } }`: elements of one type, each with its own rules |
 | `struct` | `{ "kind": "struct", "fields": [ properties... ] }`: a nested object |
 
@@ -132,7 +132,7 @@ stored objects**:
   progress as `type.validation` events.
 - Invalid objects are kept as they are. Their next write must satisfy the
   rules.
-- A type's `validation` summarises its objects against the current rules:
+- A type's `validation` summarizes its objects against the current rules:
   `pending` while some are unchecked, then `violated` if some failed, or
   `enforced` if all passed.
 
@@ -201,7 +201,7 @@ A link type connects a source type (`from_type`) to a target type
 - **End names.** `forward_name` names the link from the source,
   `reverse_name` from the target. End names are unique per object type, and
   a link from a type to itself needs two different names.
-- Links join objects of the declared types within one organisation, enforced
+- Links join objects of the declared types within one organization, enforced
   by composite foreign keys.
 - A link is visible only while its link type and both its objects exist.
 
@@ -262,7 +262,7 @@ default 50.
 
 ## Access
 
-Ontology access combines organisation-wide permissions with per-type rules:
+Ontology access combines organization-wide permissions with per-type rules:
 
 - `view_objects` reaches the objects of every **unrestricted** type;
   `edit_objects` lets you change them. Editing needs both, because editing
@@ -279,10 +279,10 @@ Ontology access combines organisation-wide permissions with per-type rules:
 
 ## Live updates
 
-Every change to the ontology is also an event in the organisation's outbox,
+Every change to the ontology is also an event in the organization's outbox,
 streamed as server-sent events. See [Live events](/docs/concepts/live-events/).
 
-These rules are modelled in `proofs/HappyEnterprise/Ontology.lean` as a state
+These rules are modeled in `proofs/HappyEnterprise/Ontology.lean` as a state
 machine whose invariant is that every live object marked valid at its type's
 current rules version satisfies it (so an enforced type's objects all do),
 every link joins objects of its declared types and respects its cardinality,

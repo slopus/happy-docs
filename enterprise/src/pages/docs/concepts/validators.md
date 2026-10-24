@@ -10,7 +10,7 @@ A validator is Python code that defines `validate(value)`:
 
 ```python
 def validate(value):
-    # value is the property's normalised JSON value: str, int, float, bool, list, dict
+    # value is the property's normalized JSON value: str, int, float, bool, list, dict
     if not value.startswith("PRJ-"):
         return "project codes start with PRJ-"
     digits = value[4:]
@@ -25,7 +25,7 @@ failure message, cut at 300 characters), or by raising (the exception is the
 message). Returning anything else fails too. Anything else that goes wrong also fails the value: running out
 of time or memory, a crash, or touching anything outside the sandbox.
 
-Validators belong to the organisation and are managed with `manage_ontology`:
+Validators belong to the organization and are managed with `manage_ontology`:
 
 ```http
 POST /v1/ontology/validators
@@ -34,7 +34,7 @@ POST /v1/ontology/validators
 
 The server first checks, in the sandbox, that the code defines `validate`.
 Each `POST` with an existing name adds the **next version**. Versions are
-immutable: the tenant database role may only insert and read them. Code is
+immutable: the organization API's database role may only insert and read them. Code is
 limited to 20,000 characters.
 
 `POST /v1/ontology/validators/{name}/test` runs a version (the latest by
@@ -104,13 +104,13 @@ Runs happen in worker subprocesses (`happy-enterprise-monty-worker`, deploy it
 next to the server binary) with an empty environment and a memory-limited
 allocator. Each worker serves one run (one request's calls to one validator)
 and is then replaced, so nothing a validator does survives into another run
-or reaches another organisation.
+or reaches another organization.
 
 <div class="note">
 
 This is language-level isolation in an unprivileged process, not an OS
 sandbox. Monty's sandboxing and resource limits are trusted and tested
-(`tests/validators.rs` tries escapes and resource bombs), not modelled in
+(`tests/validators.rs` tries escapes and resource bombs), not modeled in
 Lean. In the Lean model a validator is an oracle that the proofs assume
 nothing about, beyond being a function of its value.
 

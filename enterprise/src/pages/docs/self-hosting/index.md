@@ -28,7 +28,7 @@ validators_unavailable`.
 
 ## Two listeners
 
-| | Tenant API | Management API |
+| | Organization API | Management API |
 |---|---|---|
 | Address | `TENANT_LISTEN_ADDR`, default `0.0.0.0:8080` | `MANAGEMENT_LISTEN_ADDR`, default `127.0.0.1:9090` |
 | Exposure | public, behind your reverse proxy | private: operators and provisioning only |
@@ -40,7 +40,7 @@ management listener on the public network.
 
 ## Behind a reverse proxy
 
-Terminate TLS in front of the tenant listener and set `PUBLIC_BASE_URL` to
+Terminate TLS in front of the organization API listener and set `PUBLIC_BASE_URL` to
 the public origin (no path), for example `https://api.acme.example`. OAuth
 issuers, MCP resource URLs, invite links, and the WebAuthn relying party all
 derive from it.
@@ -71,8 +71,8 @@ ALTER ROLE happy_enterprise_management PASSWORD '...';
 | Variable | Role | Used for |
 |---|---|---|
 | `DATABASE_URL` | schema owner, may create roles | running migrations at startup, and nothing else |
-| `TENANT_DATABASE_URL` | `happy_enterprise_tenant` | the tenant API (pool of 20); row-level security applies |
-| `MANAGEMENT_DATABASE_URL` | `happy_enterprise_management` | the management API (pool of 5); control-plane tables only |
+| `TENANT_DATABASE_URL` | `happy_enterprise_tenant` | the organization API (pool of 20); row-level security applies |
+| `MANAGEMENT_DATABASE_URL` | `happy_enterprise_management` | the management API (pool of 5); only the list of organizations and their identity provider keys |
 
 **Migrations.** By default the server applies pending migrations on startup
 with `DATABASE_URL`. To run them separately (from a release job, say), set
@@ -83,15 +83,15 @@ are cluster-wide, so several databases in one cluster share them.
 pool is logged in as exactly its expected role and that the role is neither
 a superuser nor `BYPASSRLS`, and refuses to start otherwise. The migrations
 make the same assertion. A misconfigured URL fails loudly instead of quietly
-disabling tenant isolation.
+disabling isolation between organizations.
 
 ## Secrets
 
 * `SERVER_SECRET_KEY`: 32 random bytes, base64url without padding. It
-  derives each organisation's session signing key (HKDF) and seals TOTP
+  derives each organization's session signing key (HKDF) and seals TOTP
   secrets. Rotating it logs everyone out and invalidates every TOTP factor.
 * `MANAGEMENT_JWT_PUBLIC_KEYS`: public keys only. Keep the private keys
-  with whoever provisions organisations.
+  with whoever provisions organizations.
 * Email and S3 credentials, as listed in
   [Configuration](/docs/self-hosting/configuration/).
 

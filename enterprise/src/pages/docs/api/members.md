@@ -12,7 +12,7 @@ Members are returned as [user objects](/docs/api/me/#the-user-object).
 
 <p class="ep-meta"><span><b>Auth</b>full</span><span><b>Permission</b>view_members</span></p>
 
-Every user of the organisation, active and deactivated, oldest first.
+Every user of the organization, active and deactivated, oldest first.
 
 ```json
 [

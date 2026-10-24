@@ -4,7 +4,7 @@ title: Teams
 lead: The system teams owners and everyone, custom teams, their members, and the permissions they grant.
 ---
 
-See [Users, teams, permissions](/docs/concepts/organisations/) for the rules.
+See [Users, teams, permissions](/docs/concepts/organizations/) for the rules.
 
 A team in responses:
 
@@ -41,7 +41,7 @@ Every team: `owners`, then `everyone`, then custom teams by name.
 { "id": "m2n4b6v8c0x1z3l5k7j9h0g2", "kind": "custom", "name": "Engineering" }
 ```
 
-`name` is 1-100 characters and unique in the organisation (`409` otherwise).
+`name` is 1-100 characters and unique in the organization (`409` otherwise).
 A new team has no members and no permissions.
 
 ### DELETE /v1/teams/{team}

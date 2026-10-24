@@ -1,7 +1,7 @@
 ---
 layout: ../../../layouts/Docs.astro
-title: Organisation
-lead: The organisation's profile and photo, its security posture, its verified domains, and file downloads.
+title: Organization
+lead: The organization's profile and photo, its security posture, its verified domains, and file downloads.
 ---
 
 ## Profile
@@ -28,15 +28,15 @@ lead: The organisation's profile and photo, its security posture, its verified d
 { "name": "Acme Corporation" }
 ```
 
-`name` is 1-200 characters. Returns the organisation.
+`name` is 1-200 characters. Returns the organization.
 
 ### PUT /v1/org/photo
 
 <p class="ep-meta"><span><b>Auth</b>full</span><span><b>Permission</b>manage_organization</span></p>
 
-Uploads the organisation photo as the raw request body (PNG, JPEG, GIF, or
+Uploads the organization photo as the raw request body (PNG, JPEG, GIF, or
 WebP, at most 5 MB, matching `Content-Type`). Replaces any previous photo.
-Returns the organisation.
+Returns the organization.
 
 ```sh
 curl -X PUT "$BASE/v1/org/photo" -H "Authorization: Bearer $TOKEN" \
@@ -76,7 +76,7 @@ factor partial at its next request.
 
 ## Allowed domains
 
-Addresses at a verified domain may join the organisation by logging in with an
+Addresses at a verified domain may join the organization by logging in with an
 email code. See [Verified domains](/docs/concepts/authentication/#verified-domains).
 
 A domain in responses:

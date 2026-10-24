@@ -1,4 +1,4 @@
-// Browser behaviour shared by every page: theme toggle, search, copy
+// Browser behavior shared by every page: theme toggle, search, copy
 // buttons, the source viewer on the landing page, and scroll spies.
 
 interface SearchEntry {

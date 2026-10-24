@@ -6,7 +6,7 @@ import { REPO, docsHref } from '../lib/nav';
 
 const sections = [
   { id: 'isolation', title: 'Isolation' },
-  { id: 'organisations', title: 'Organisations' },
+  { id: 'organizations', title: 'Organizations' },
   { id: 'ontology', title: 'Ontology' },
   { id: 'agents', title: 'Agents and MCP' },
   { id: 'proofs', title: 'Proofs' },
@@ -89,9 +89,9 @@ data: {"type":"employee","id":"o4b8j2e6c0t1q5w9r3y7u2i6","version":2,"properties
 ];
 
 const proofs = [
-  ['A tenant-scoped read returns only that tenant\u2019s rows, whatever the WHERE clause says.', 'Rls.select_forgotten_where'],
-  ['A write under one tenant leaves every other tenant\u2019s rows exactly as they were.', 'Rls.applyAll_preserves_other_tenants'],
-  ['An accepted credential yields a context whose tenant owns the key, session, or token that verified it.', 'Auth.verifyTenant_key_owner'],
+  ['A read scoped to one organization returns only that organization\u2019s rows, whatever the WHERE clause says.', 'Rls.select_forgotten_where'],
+  ['A write made with one organization\u2019s credentials leaves every other organization\u2019s rows exactly as they were.', 'Request.handleWrite_isolated'],
+  ['A read made with one organization\u2019s credentials returns only that organization\u2019s rows, for any query.', 'Request.handleRead_isolated'],
   ['No token is accepted by two of: the REST API, the MCP server, the management API.', 'Auth.audiences_disjoint'],
   ['When 2FA is required, a session without a second factor reaches only the enrollment routes.', 'Mfa.partial_session_gate'],
   ['MCP tools never exceed the user\u2019s permissions or the grant\u2019s scopes.', 'Mcp.mcp_tool_within_grant'],
@@ -100,17 +100,17 @@ const proofs = [
 ];
 ---
 
-<Base title="Happy Enterprise: a multi-tenant ontology backend, proven isolated">
+<Base title="Happy Enterprise: an ontology backend for organizations, proven isolated">
   <div class="frame">
     <Rail current="home" sections={sections} />
     <div class="page-body">
       <main class="landing" id="content">
         <section class="hero">
           <h1 class="hero__title">
-            Your organisation's objects, typed and linked. <a class="soft" href="#proofs">Every tenant sealed off, and proven so.</a>
+            Your organization's objects, typed and linked. <a class="soft" href="#proofs">Every organization sealed off, and proven so.</a>
           </h1>
           <p class="hero__lead">
-            Happy Enterprise is a multi-tenant backend for smaller teams, in the spirit of Palantir's ontology. Define
+            Happy Enterprise is a backend for the organizations of smaller teams, in the spirit of Palantir's ontology. Define
             object types, store and link objects, query them, and stream their changes. One Rust binary on Postgres, with
             row-level security under every query and a Lean proof for every isolation invariant.
           </p>
@@ -131,12 +131,11 @@ const proofs = [
         </section>
 
         <section class="section" id="isolation">
-          <h2>One database. Many organisations. No leaks.</h2>
+          <h2>One database. Many organizations. No leaks.</h2>
           <p>
-            A tenant is an organisation, and tenants never see or affect each other's data. Every request gets a
-            transaction scoped to exactly one organisation, Postgres row-level security filters every row underneath it,
-            and the runtime roles cannot bypass it. A query that forgets its <code>WHERE tenant_id</code> still sees only
-            its own rows.
+            Organizations never see or affect each other's data. Every request gets a transaction scoped to exactly
+            one organization, Postgres row-level security filters every row underneath it, and the runtime roles cannot
+            bypass it. A query that forgets to filter by organization still sees only its own organization's rows.
           </p>
           <ul class="tiles tiles--3">
             <li>
@@ -144,34 +143,34 @@ const proofs = [
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
                 Types
               </span>
-              <span class="tile__d">Handlers only ever get a <code>TenantTx</code>, built from a verified credential. No pool, no way around it.</span>
+              <span class="tile__d">Handlers only ever get a transaction scoped to one organization, built from a verified credential. No pool, no way around it.</span>
             </li>
             <li>
               <span class="tile__k">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3" /><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5" /><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" /></svg>
                 Postgres
               </span>
-              <span class="tile__d">Forced RLS on every table, a transaction-local tenant, and roles that are <code>NOBYPASSRLS</code>, checked at startup.</span>
+              <span class="tile__d">Forced RLS on every table, the organization set per transaction, and roles that are <code>NOBYPASSRLS</code>, checked at startup.</span>
             </li>
             <li>
               <span class="tile__k">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4" /><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z" /></svg>
                 Proofs and tests
               </span>
-              <span class="tile__d">Lean proves the policy isolates; tests write to every tenant table and try to cross over.</span>
+              <span class="tile__d">Lean proves the policy isolates; tests write to every organization table and try to cross over.</span>
             </li>
           </ul>
           <p style="margin-top:1.25rem">
-            <a href={docsHref('concepts/tenancy/')}>How tenancy works</a>
+            <a href={docsHref('concepts/isolation/')}>How organizations are kept apart</a>
           </p>
         </section>
 
-        <section class="section" id="organisations">
+        <section class="section" id="organizations">
           <h2>People, agents, teams.</h2>
           <p>
-            Each organisation has human users who sign in with an emailed code, and agents that use API tokens.
+            Each organization has human users who sign in with an emailed code, and agents that use API tokens.
             Teams grant permissions; <code>owners</code> and <code>everyone</code> always exist, and the database
-            itself keeps at least one owner. Organisations can require two-factor authentication, admit whole verified
+            itself keeps at least one owner. Organizations can require two-factor authentication, admit whole verified
             domains, or bring their own identity provider.
           </p>
           <ul class="tiles tiles--4">
@@ -185,7 +184,7 @@ const proofs = [
             </li>
             <li>
               <span class="tile__k">Your IdP</span>
-              <span class="tile__d">Ed25519 JWTs, keys registered per organisation.</span>
+              <span class="tile__d">Ed25519 JWTs, keys registered per organization.</span>
             </li>
             <li>
               <span class="tile__k">Agent tokens</span>
@@ -193,7 +192,7 @@ const proofs = [
             </li>
           </ul>
           <p style="margin-top:1.25rem">
-            <a href={docsHref('concepts/organisations/')}>Users, teams, permissions</a>{' · '}
+            <a href={docsHref('concepts/organizations/')}>Users, teams, permissions</a>{' · '}
             <a href={docsHref('concepts/authentication/')}>Authentication</a>
           </p>
         </section>
@@ -252,7 +251,7 @@ const proofs = [
         <section class="section" id="agents">
           <h2>Built for agents, too.</h2>
           <p>
-            Every organisation has its own MCP server and OAuth 2.1 authorization server, so any MCP client can
+            Every organization has its own MCP server and OAuth 2.1 authorization server, so any MCP client can
             connect with PKCE and dynamic registration. Tools act for the signed-in user and never exceed
             their permissions or the scopes they granted. No scope reaches owner actions or the schema.
           </p>
@@ -321,7 +320,7 @@ const proofs = [
             <div class="way way--rec">
               <span class="way__k">Locally</span>
               <span class="way__d">
-                A pinned Postgres on a unix socket, no Docker. Create an organisation and sign in within ten minutes.
+                A pinned Postgres on a unix socket, no Docker. Create an organization and sign in within ten minutes.
               </span>
               <span class="way__a">
                 <a class="btn-secondary" href={docsHref('quickstart/')}>Quickstart</a>

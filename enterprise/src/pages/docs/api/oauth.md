@@ -1,7 +1,7 @@
 ---
 layout: ../../../layouts/Docs.astro
 title: OAuth endpoints
-lead: Each organisation is its own OAuth 2.1 authorization server, issuer <PUBLIC_BASE_URL>/orgs/{org}, for MCP clients.
+lead: Each organization is its own OAuth 2.1 authorization server, issuer <PUBLIC_BASE_URL>/orgs/{org}, for MCP clients.
 ---
 
 MCP clients discover and use these endpoints on their own; you rarely call
@@ -55,14 +55,14 @@ RFC 8414 authorization server metadata. Also served at
 }
 ```
 
-Both documents look the same for every well-formed organisation id, existing
+Both documents look the same for every well-formed organization id, existing
 or not.
 
 ## Registration
 
 ### POST /orgs/{org}/oauth/register
 
-<p class="ep-meta"><span><b>Auth</b>none</span><span><b>CORS</b>any origin</span><span><b>Rate limit</b>20 / hour per IP, 100 / hour per organisation</span></p>
+<p class="ep-meta"><span><b>Auth</b>none</span><span><b>CORS</b>any origin</span><span><b>Rate limit</b>20 / hour per IP, 100 / hour per organization</span></p>
 
 RFC 7591 dynamic registration of a public client.
 
@@ -95,7 +95,7 @@ RFC 7591 dynamic registration of a public client.
 - Only `token_endpoint_auth_method: none`, grant types `authorization_code`
   and `refresh_token`, response type `code`.
 - `client_name` up to 200 characters, default "MCP client".
-- At most 500 clients per organisation.
+- At most 500 clients per organization.
 
 ## Authorization
 
@@ -112,7 +112,7 @@ Standard authorization code request:
 | `code_challenge`, `code_challenge_method` | PKCE, `S256` only, required |
 | `scope` | space-separated; default `mcp:read` |
 | `state` | optional, up to 1000 characters, returned unchanged |
-| `resource` | optional (RFC 8707); if given, must be this organisation's MCP endpoint |
+| `resource` | optional (RFC 8707); if given, must be this organization's MCP endpoint |
 
 An unknown client or redirect URI gets an error page. Other errors redirect
 back to the client with `error`, `error_description`, `iss`, and `state`. A
@@ -154,7 +154,7 @@ Completes the assertion: `{ "mfa_satisfied": true }`.
 
 <p class="ep-meta"><span><b>Auth</b>the request's browser cookie</span></p>
 
-For a user with no factor in an organisation that requires one: registration
+For a user with no factor in an organization that requires one: registration
 options for a first security key or passkey.
 
 ### POST /orgs/{org}/oauth/requests/{request}/webauthn/register/finish
@@ -221,5 +221,5 @@ curl -X POST "$BASE/orgs/$ORG/oauth/revoke" -d token=her_... -d client_id=l4c8l2
 ```
 
 Revoking either kind of token ends the whole grant, if the token belongs to
-this client at this organisation. Always `200` otherwise, changing nothing.
+this client at this organization. Always `200` otherwise, changing nothing.
 `400 invalid_request` if a field is missing.

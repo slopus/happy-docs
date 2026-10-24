@@ -1,7 +1,7 @@
 ---
 layout: ../../../layouts/Docs.astro
 title: MCP and OAuth
-lead: Every organisation has its own MCP server and its own OAuth 2.1 authorization server. An agent acts for a signed-in user, limited to both the scopes the user consented to and the user's own permissions.
+lead: Every organization has its own MCP server and its own OAuth 2.1 authorization server. An agent acts for a signed-in user, limited to both the scopes the user consented to and the user's own permissions.
 ---
 
 ## The endpoint
@@ -17,11 +17,11 @@ follows the MCP authorization spec, so a compliant client needs only the URL:
 1. It calls the endpoint without a token and gets `401` with
    `WWW-Authenticate: Bearer resource_metadata="<url>"`.
 2. It reads the protected resource metadata (RFC 9728), then the
-   organisation's authorization server metadata (RFC 8414). The issuer is
+   organization's authorization server metadata (RFC 8414). The issuer is
    `<PUBLIC_BASE_URL>/orgs/{org}`.
 3. It registers itself (RFC 7591 dynamic client registration).
 4. It opens the browser at the authorization endpoint with PKCE `S256`.
-5. The user signs in on the organisation's pages and consents.
+5. The user signs in on the organization's pages and consents.
 6. The client exchanges the code for tokens and calls the MCP endpoint.
 
 The [OAuth endpoints](/docs/api/oauth/) page lists every route.
@@ -38,7 +38,7 @@ The [OAuth endpoints](/docs/api/oauth/) page lists every route.
 A tool's permission must be allowed by **both** the grant's scopes and the
 user's own permissions, and both are checked again on every call, so a user
 who loses a permission loses it in their agents too. No scope reaches
-owner-only actions, the security posture, organisation settings, or the
+owner-only actions, the security posture, organization settings, or the
 ontology's schema.
 
 The ontology tools run the same functions as the REST API: the same
@@ -59,7 +59,7 @@ the request and redirects to a request page,
 `/orgs/{org}/oauth/requests/{request}`, which walks the user through:
 
 1. **Email code.** The same codes and eligibility rules as the REST login.
-2. **Second factor.** If the organisation requires 2FA: verify an existing
+2. **Second factor.** If the organization requires 2FA: verify an existing
    factor, or, for a user with none, enroll a security key, passkey, or
    authenticator app right there.
 3. **Consent.** The client's name, redirect URI, and requested scopes.
@@ -77,7 +77,7 @@ nonce-based Content Security Policy, `X-Frame-Options: DENY`, and
 - A **grant** is an `oauth` session (30 days) that holds its client and
   scopes.
 - **Access tokens** are session tokens with `aud = "happy-enterprise:mcp"` and
-  a 1-hour lifetime. They work only at their own organisation's MCP endpoint,
+  a 1-hour lifetime. They work only at their own organization's MCP endpoint,
   never on the REST API.
 - **Refresh tokens** `her_<session>_<secret>` rotate on every use. Reusing a
   rotated-out one revokes the grant.
@@ -92,7 +92,7 @@ nonce-based Content Security Policy, `X-Frame-Options: DENY`, and
 Clients are public (`token_endpoint_auth_method = none`), so PKCE is what binds
 a code to the client that asked for it. Allowed redirect URIs are `https`,
 loopback `http` (any port at use, as native apps need), or a custom scheme.
-An organisation can have at most 500 registered clients.
+An organization can have at most 500 registered clients.
 
 ## Browsers and hosts
 
@@ -102,17 +102,17 @@ An organisation can have at most 500 registered clients.
   and the REST API send no CORS headers.
 - **DNS rebinding.** The MCP endpoint checks `Host` against
   `MCP_ALLOWED_HOSTS` (by default, the host of `PUBLIC_BASE_URL`).
-- **Unknown organisations** get metadata and registration responses like real
+- **Unknown organizations** get metadata and registration responses like real
   ones, but no client works there.
 
 ## Trying it
 
-`scripts/mcp-client-demo.sh` starts the server, creates an organisation, and
+`scripts/mcp-client-demo.sh` starts the server, creates an organization, and
 runs `crates/server/examples/mcp_client.rs` (the rmcp SDK's OAuth client)
 through discovery, registration, PKCE authorization, token exchange, a
 refresh, every tool, and revocation, playing the browser with curl.
 
-The flow is modelled in `proofs/HappyEnterprise/Mcp.lean` and
-`McpOntology.lean`: a credential works at one organisation's MCP endpoint
+The flow is modeled in `proofs/HappyEnterprise/Mcp.lean` and
+`McpOntology.lean`: a credential works at one organization's MCP endpoint
 only, tools never exceed the grant or the user, codes and refresh tokens are
 single-use and bound to their client, and revocation sticks.

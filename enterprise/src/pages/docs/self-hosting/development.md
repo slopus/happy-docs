@@ -17,7 +17,7 @@ lead: The toolchain, the local database, the test suites, and the checks every c
 ```text
 crates/server/          the only crate (package happy-enterprise)
   src/app.rs            pools, routers, the two listeners, graceful shutdown
-  src/tenant/           tenant API: tx.rs (TenantTx), auth.rs, login.rs, mfa.rs,
+  src/tenant/           organization API: tx.rs (TenantTx), auth.rs, login.rs, mfa.rs,
                         org.rs, members.rs, teams.rs, files.rs, oauth.rs, mcp.rs,
                         ontology/ (schema, objects, validators, events)
   src/management/       management API
@@ -59,7 +59,7 @@ RUST_LOG=warn cargo test ...      # with server logs, for a failing test
 
 | Suite | Covers |
 |---|---|
-| `isolation` | every tenant table, reads and writes across tenants, missing context, the catalog (forced RLS, policies, grants) |
+| `isolation` | every organization table, reads and writes across organizations, a missing organization scope, the catalog (forced RLS, policies, grants) |
 | `auth` | session tokens, external JWTs, agent tokens, audiences, revocation |
 | `org` | joining, verified domains, invites, owners and system teams, permissions, files |
 | `mfa` | TOTP, WebAuthn, partial sessions, required 2FA |
@@ -68,7 +68,7 @@ RUST_LOG=warn cargo test ...      # with server logs, for a failing test
 | `validators` | custom validators, escape attempts, resource bombs |
 | `live` | event streams, filters, resumption, pruning, limits |
 | `limits` | rate limits on login, second factors, OAuth |
-| `guardrails` | source checks: who may open an `OrgTx`, where `app.tenant_id` is set, no `SET ROLE` |
+| `guardrails` | source checks: who may open an `OrgTx`, where the organization setting `app.tenant_id` is set, no `SET ROLE` |
 | `s3` | `S3Store` against a real S3-compatible server; skipped unless `S3_TEST_ENDPOINT` is set |
 
 `cargo build` and `cargo clippy` need no database: queries use runtime
@@ -80,19 +80,21 @@ RUST_LOG=warn cargo test ...      # with server logs, for a failing test
 scripts/check.sh   # cargo fmt --check, clippy -D warnings, cargo test, proofs/check.sh
 ```
 
-The project's rules, enforced in review and partly by `tests/guardrails.rs`:
+The project's rules, enforced in review and partly by `tests/guardrails.rs`.
+The code calls an organization a *tenant*: `tenant_id` is the organization ID,
+and `TenantTx` is a transaction scoped to one organization.
 
 1. Every security or isolation invariant has a Lean counterpart, listed in
    the [invariant map](/docs/verification/#invariant-map). Change the Rust,
    the Lean model, and the table together.
-2. Every new tenant-owned table gets a `tenant_id cuid` column, `ENABLE` and
-   `FORCE ROW LEVEL SECURITY`, the standard `tenant_isolation` policy, and
-   coverage in `tests/isolation.rs`.
-3. Tenant code reaches Postgres only through `TenantTx` (or `PartialTx`).
-   Only authentication code opens an `OrgTx`, and only maintenance jobs a
-   `JobTx`. Nothing else sets `app.tenant_id`.
-4. Tenant queries still filter by `tenant_id` explicitly. RLS is the
-   backstop, not the only check.
+2. Every new table of organization data gets a `tenant_id cuid` column,
+   `ENABLE` and `FORCE ROW LEVEL SECURITY`, the standard `tenant_isolation`
+   policy, and coverage in `tests/isolation.rs`.
+3. Organization API code reaches Postgres only through `TenantTx` (or
+   `PartialTx`). Only authentication code opens an `OrgTx`, and only
+   maintenance jobs a `JobTx`. Nothing else sets `app.tenant_id`.
+4. Queries still filter by `tenant_id` explicitly. RLS is the backstop, not
+   the only check.
 5. Authentication failures all return the same `401`.
 6. Permission checks go through `TenantTx::permitted`, `require`, and
    `require_owner`.
@@ -111,7 +113,7 @@ scripts/dev-s3.sh start && eval "$(scripts/dev-s3.sh env)" && cargo test --test 
 ## End to end with a real MCP client
 
 `scripts/mcp-client-demo.sh` starts the server on `localhost:18080`,
-creates an organisation, and runs `examples/mcp_client.rs` (the `rmcp` SDK's
+creates an organization, and runs `examples/mcp_client.rs` (the `rmcp` SDK's
 OAuth client) through discovery, dynamic registration, PKCE authorization
 (playing the browser with `curl` and reading the login code from the `log`
 provider), token exchange, a refresh, every tool, and revocation.

@@ -1,11 +1,11 @@
 ---
 layout: ../../../layouts/Docs.astro
 title: MCP tools
-lead: The MCP endpoint of an organisation, the tools it offers, and the scopes and permissions each one needs.
+lead: The MCP endpoint of an organization, the tools it offers, and the scopes and permissions each one needs.
 ---
 
-Each organisation has its own MCP server. Clients reach it with an access
-token from the organisation's [OAuth server](/docs/api/oauth/); see
+Each organization has its own MCP server. Clients reach it with an access
+token from the organization's [OAuth server](/docs/api/oauth/); see
 [MCP and OAuth](/docs/concepts/mcp/) for the flow.
 
 ## The endpoint
@@ -27,8 +27,8 @@ curl "$BASE/orgs/$ORG/mcp" \
 ```
 
 The token must be an access token (`aud = "happy-enterprise:mcp"`) of a full
-`oauth` session of the organisation in the path. Anything else, including a
-missing token, a REST session token, or a token of another organisation, gets
+`oauth` session of the organization in the path. Anything else, including a
+missing token, a REST session token, or a token of another organization, gets
 `401`:
 
 ```http
@@ -43,7 +43,7 @@ header must be one of `MCP_ALLOWED_HOSTS` (by default the host of
 `PUBLIC_BASE_URL`), against DNS rebinding.
 
 The server identifies itself as `happy-enterprise` with the instructions
-"Happy Enterprise: your organisation's members, teams, invites, and ontology
+"Happy Enterprise: your organization's members, teams, invites, and ontology
 (object types, objects, links)."
 
 ## Scopes
@@ -58,7 +58,7 @@ The server identifies itself as `happy-enterprise` with the instructions
 A tool runs only if both the grant's scopes and the user's own permissions
 allow it, checked again in a fresh transaction on every call. Losing a
 permission or having the grant revoked takes effect on the next call. No
-scope reaches owner-only actions, the security posture, organisation
+scope reaches owner-only actions, the security posture, organization
 settings, or the ontology's schema.
 
 ## Results and errors
@@ -103,7 +103,7 @@ the scopes allow.
 
 <p class="ep-meta"><span><b>Scope</b>mcp:read</span><span><b>Permission</b>view_members</span></p>
 
-No arguments. `{"members": [...]}`, every member of the organisation as a
+No arguments. `{"members": [...]}`, every member of the organization as a
 [user object](/docs/api/me/#the-user-object), oldest first.
 
 ### list_teams

@@ -37,10 +37,10 @@ Send `token` as `Authorization: Bearer <token>`. If `mfa.satisfied` is
 
 ### POST /v1/orgs/{org}/auth/email/start
 
-<p class="ep-meta"><span><b>Auth</b>none</span><span><b>Rate limit</b>30 / 10 min per IP, 5 / 15 min per organisation and address</span></p>
+<p class="ep-meta"><span><b>Auth</b>none</span><span><b>Rate limit</b>30 / 10 min per IP, 5 / 15 min per organization and address</span></p>
 
 Starts a login. Always answers `202` with a challenge, whether or not the
-organisation exists or the address may log in; the 6-digit code is emailed
+organization exists or the address may log in; the 6-digit code is emailed
 only if it may.
 
 ```sh

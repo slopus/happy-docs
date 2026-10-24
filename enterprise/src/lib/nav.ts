@@ -20,8 +20,8 @@ export const NAV: NavGroup[] = [
   {
     group: 'Concepts',
     items: [
-      { title: 'Tenants and isolation', href: 'concepts/tenancy/' },
-      { title: 'Users, teams, permissions', href: 'concepts/organisations/' },
+      { title: 'Organizations and isolation', href: 'concepts/isolation/' },
+      { title: 'Users, teams, permissions', href: 'concepts/organizations/' },
       { title: 'Authentication', href: 'concepts/authentication/' },
       { title: 'Two-factor authentication', href: 'concepts/two-factor/' },
       { title: 'The ontology', href: 'concepts/ontology/' },
@@ -38,7 +38,7 @@ export const NAV: NavGroup[] = [
       { title: 'Overview and errors', href: 'api/' },
       { title: 'Login and sessions', href: 'api/auth/' },
       { title: 'Your account', href: 'api/me/' },
-      { title: 'Organisation', href: 'api/organisation/' },
+      { title: 'Organization', href: 'api/organization/' },
       { title: 'Members, agents, invites', href: 'api/members/' },
       { title: 'Teams', href: 'api/teams/' },
       { title: 'Ontology schema', href: 'api/ontology-schema/' },

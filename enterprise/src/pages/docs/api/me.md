@@ -33,7 +33,7 @@ unset or expired.
 
 <p class="ep-meta"><span><b>Auth</b>partial</span></p>
 
-Who you are, your organisation, what you may do, and where your session
+Who you are, your organization, what you may do, and where your session
 stands on two-factor authentication. Partial sessions may call it to find out
 what to do next; their `permissions` list is empty.
 
@@ -87,7 +87,7 @@ curl -X PUT "$BASE/v1/me/avatar" -H "Authorization: Bearer $TOKEN" \
 ```
 
 Returns the updated user, whose `avatar_file_id` you can fetch with
-[`GET /v1/files/{id}`](/docs/api/organisation/#get-v1-files-file). `400` if the
+[`GET /v1/files/{id}`](/docs/api/organization/#get-v1-files-file). `400` if the
 content does not match the type, `413` if it is too large.
 
 ### DELETE /v1/me/avatar
@@ -234,5 +234,5 @@ The ceremony is valid for 5 minutes.
 
 <p class="ep-meta"><span><b>Auth</b>full</span></p>
 
-Removes a factor. `204`. `409` if the organisation requires 2FA and this is
+Removes a factor. `204`. `409` if the organization requires 2FA and this is
 your last confirmed factor.

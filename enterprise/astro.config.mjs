@@ -11,6 +11,12 @@ export default defineConfig({
   base,
   trailingSlash: 'always',
   build: { format: 'directory' },
+  // Renamed pages: old URLs keep working.
+  redirects: {
+    '/docs/concepts/tenancy/': `${base}/docs/concepts/isolation/`,
+    '/docs/concepts/organisations/': `${base}/docs/concepts/organizations/`,
+    '/docs/api/organisation/': `${base}/docs/api/organization/`,
+  },
   markdown: {
     shikiConfig: {
       themes: { light: 'github-light', dark: 'github-dark' },

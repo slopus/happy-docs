@@ -1,56 +1,57 @@
 ---
 layout: ../../layouts/Docs.astro
 title: What Happy Enterprise is
-lead: A multi-tenant backend for smaller teams. Each organisation gets its own members, teams, permissions, and ontology, kept apart from every other organisation by the type system, by Postgres, and by proofs.
+lead: A backend for the organizations of smaller teams. Each organization gets its own members, teams, permissions, and ontology, kept apart from every other organization by the type system, by Postgres, and by proofs.
 ---
 
 Happy Enterprise is a backend only: there is no UI. It is one Rust binary
 on top of one Postgres database, and it serves two HTTP APIs on two separate
 listeners:
 
-- The **tenant API** (default `0.0.0.0:8080`) is what your organisations'
-  people, agents, and apps use: login, members and teams, the ontology, the
+- The **organization API** (default `0.0.0.0:8080`, the public one) is what
+  your organizations' people, agents, and apps use: login, members and teams, the ontology, the
   live event stream, OAuth, and an MCP server.
 - The **management API** (default `127.0.0.1:9090`) is for you, the operator:
-  it creates organisations and registers the signing keys of their identity
+  it creates organizations and registers the signing keys of their identity
   providers.
 
-The design is inspired by Palantir's: an organisation describes its data as an
+The design is inspired by Palantir's: an organization describes its data as an
 **ontology** of typed object types and links, and access to every type is a
 matter of permissions that can be granted to teams and audited.
 
-## What an organisation gets
+## What an organization gets
 
-A tenant is an **organisation**. Everything below is per organisation, and
-nothing in one organisation can see or affect another.
+Everything below is per organization, and nothing in one organization can
+see or affect another.
 
 | | |
 |---|---|
-| People and agents | Human users log in with an emailed code; agent users authenticate with API tokens. See [Users, teams, permissions](/docs/concepts/organisations/). |
+| People and agents | Human users log in with an emailed code; agent users authenticate with API tokens. See [Users, teams, permissions](/docs/concepts/organizations/). |
 | Teams and permissions | The system teams `owners` and `everyone`, custom teams, and seven permissions granted to teams. |
 | Login and security posture | Email codes, invites, DNS-verified allowed domains, required two-factor authentication with TOTP or WebAuthn. See [Authentication](/docs/concepts/authentication/). |
 | An ontology | Object types with typed properties and format rules, versioned schemas, custom validators in sandboxed Python, link types with cardinality, queries, and per-type access. See [The ontology](/docs/concepts/ontology/). |
 | Live updates | Every change to the ontology as a resumable stream of server-sent events. See [Live events](/docs/concepts/live-events/). |
-| An MCP server | At `/orgs/{org}/mcp`, behind the organisation's own OAuth 2.1 authorization server. See [MCP and OAuth](/docs/concepts/mcp/). |
-| Files | Avatars and an organisation photo, in a local directory or an S3 bucket. |
+| An MCP server | At `/orgs/{org}/mcp`, behind the organization's own OAuth 2.1 authorization server. See [MCP and OAuth](/docs/concepts/mcp/). |
+| Files | Avatars and an organization photo, in a local directory or an S3 bucket. |
 
 ## How it is kept apart
 
-Tenant isolation is the point of the design, and it is enforced three times
-over:
+Isolation between organizations is the point of the design, and it is
+enforced three times over:
 
-1. **Types.** Tenant handlers never see a connection pool. The only database
-   handle they get is a `TenantTx`: a transaction opened for a verified
-   credential, scoped to that credential's organisation.
-2. **Postgres row level security.** Every table has forced RLS. Tenant tables
-   carry one policy, `tenant_id = app_current_tenant_id()`, for reads and
-   writes. The runtime roles cannot bypass it.
-3. **Tests and proofs.** Integration tests check every tenant table for
-   cross-tenant reads and writes, and a Lean 4 model proves the isolation
+1. **Types.** Request handlers never see a connection pool. The only database
+   handle they get is a transaction opened for a verified credential, scoped
+   to that credential's organization.
+2. **Postgres row level security.** Every table has forced RLS. Every row of
+   organization data records its organization, and one policy, for reads and
+   writes, matches only rows of the transaction's organization. The runtime
+   roles cannot bypass it.
+3. **Tests and proofs.** Integration tests try to read and write across
+   organizations in every table, and a Lean 4 model proves the isolation
    invariants of the policy, the credential verifier, and the request
    pipeline.
 
-[Tenants and isolation](/docs/concepts/tenancy/) explains each layer, and
+[Organizations and isolation](/docs/concepts/isolation/) explains each layer, and
 [Formal verification](/docs/verification/) lists what is proven.
 
 ## The stack
@@ -65,7 +66,7 @@ over:
 
 ## Where to go next
 
-- [Quickstart](/docs/quickstart/): run it locally, create an organisation,
+- [Quickstart](/docs/quickstart/): run it locally, create an organization,
   log in, and define an object type.
 - [API reference](/docs/api/): every endpoint, with examples.
 - [Self-hosting](/docs/self-hosting/): roles, configuration, deployment.
