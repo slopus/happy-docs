@@ -43,8 +43,7 @@ cannot leave `owners` or be deactivated.
 
 These rules are enforced twice. The handlers check them, and database
 triggers enforce the same invariants independently of the application, so a
-bug in a handler cannot break them. Both are modeled in
-`proofs/HappyEnterprise/Org.lean`.
+bug in a handler cannot break them.
 
 ## Permissions
 
@@ -80,10 +79,8 @@ when:
    without a scope can never be used through OAuth.
 
 `require_owner` additionally needs a first-party credential: no OAuth scope
-reaches owner-only actions. The Lean model proves that no credential is
-permitted more than its user holds (`Org.permitted_le_holds`) and that scoped
-credentials never administer (`Org.scoped_never_administers`,
-`Org.scoped_never_owner`).
+reaches owner-only actions. So no credential is ever permitted more than its
+user holds, and OAuth grants never administer the organization.
 
 Permissions on ontology objects are further narrowed per object type when an
 owner restricts a type. See [The ontology](/docs/concepts/ontology/#access).

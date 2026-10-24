@@ -2,19 +2,17 @@
 import { Code } from 'astro:components';
 import Base from '../layouts/Base.astro';
 import Rail from '../components/Rail.astro';
-import { REPO, docsHref } from '../lib/nav';
+import { docsHref } from '../lib/nav';
 
 const sections = [
-  { id: 'isolation', title: 'Isolation' },
+  { id: 'one-model', title: 'One model' },
   { id: 'organizations', title: 'Organizations' },
   { id: 'ontology', title: 'Ontology' },
-  { id: 'agents', title: 'Agents and MCP' },
-  { id: 'proofs', title: 'Proofs' },
+  { id: 'agents', title: 'Agents' },
+  { id: 'isolation', title: 'Isolation' },
   { id: 'what-it-isnt', title: "What it isn't" },
   { id: 'run-it', title: 'Run it' },
 ];
-
-const clone = 'git clone https://github.com/slopus/happy-commons';
 
 const files = [
   {
@@ -88,41 +86,26 @@ data: {"type":"employee","id":"o4b8j2e6c0t1q5w9r3y7u2i6","version":2,"properties
   },
 ];
 
-const proofs = [
-  ['A read scoped to one organization returns only that organization\u2019s rows, whatever the WHERE clause says.', 'Rls.select_forgotten_where'],
-  ['A write made with one organization\u2019s credentials leaves every other organization\u2019s rows exactly as they were.', 'Request.handleWrite_isolated'],
-  ['A read made with one organization\u2019s credentials returns only that organization\u2019s rows, for any query.', 'Request.handleRead_isolated'],
-  ['No token is accepted by two of: the REST API, the MCP server, the management API.', 'Auth.audiences_disjoint'],
-  ['When 2FA is required, a session without a second factor reaches only the enrollment routes.', 'Mfa.partial_session_gate'],
-  ['MCP tools never exceed the user\u2019s permissions or the grant\u2019s scopes.', 'Mcp.mcp_tool_within_grant'],
-  ['Stored objects satisfy their type\u2019s current definition, also after schema changes.', 'Ontology.ontRun_inv'],
-  ['Resuming an event stream from a cursor misses no event you may see.', 'Live.resume_complete'],
-];
 ---
 
-<Base title="Happy Enterprise: an ontology backend for organizations, proven isolated">
+<Base title="Happy Enterprise: a shared, permissioned business model for your apps and agents">
   <div class="frame">
     <Rail current="home" sections={sections} />
     <div class="page-body">
       <main class="landing" id="content">
         <section class="hero">
           <h1 class="hero__title">
-            Your organization's objects, typed and linked. <a class="soft" href="#proofs">Every organization sealed off, and proven so.</a>
+            A shared, permissioned business model for your apps and agents. <a class="soft" href="#one-model">Same objects, same rules, whoever is calling.</a>
           </h1>
           <p class="hero__lead">
-            Happy Enterprise is a backend for the organizations of smaller teams, in the spirit of Palantir's ontology. Define
-            object types, store and link objects, query them, and stream their changes. One Rust binary on Postgres, with
-            row-level security under every query and a Lean proof for every isolation invariant.
+            Describe your organization's customers, projects, incidents, and machines as typed objects and links. Your
+            apps, your people, and your agents read and change them through one backend that checks every write against
+            its type, every call against the caller's permissions, and keeps every organization apart. One Rust binary on
+            Postgres.
           </p>
           <div class="hero__actions">
             <a class="btn-primary" href={docsHref('')}>Read the docs</a>
-            <button type="button" class="btn-ghost" data-copy={clone} aria-label="Copy the clone command">
-              <code>git clone slopus/happy-commons</code>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <rect x="9" y="9" width="13" height="13" rx="2" />
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-              </svg>
-            </button>
+            <a class="btn-secondary" href={docsHref('how-it-fits/')}>How it fits</a>
           </div>
           <p class="hero__fine">
             Backend only, no UI. Running in ten minutes? <a href={docsHref('quickstart/')}>Quickstart</a>{' · '}
@@ -130,38 +113,29 @@ const proofs = [
           </p>
         </section>
 
-        <section class="section" id="isolation">
-          <h2>One database. Many organizations. No leaks.</h2>
+        <section class="section" id="one-model">
+          <h2>One model for apps, people, and agents.</h2>
           <p>
-            Organizations never see or affect each other's data. Every request gets a transaction scoped to exactly
-            one organization, Postgres row-level security filters every row underneath it, and the runtime roles cannot
-            bypass it. A query that forgets to filter by organization still sees only its own organization's rows.
+            A dashboard, a person working through an assistant, and a background agent all refer to the same incident.
+            They meet the same validation, the same permissions, and see each other's changes on the same event stream.
           </p>
           <ul class="tiles tiles--3">
             <li>
-              <span class="tile__k">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
-                Types
-              </span>
-              <span class="tile__d">Handlers only ever get a transaction scoped to one organization, built from a verified credential. No pool, no way around it.</span>
+              <span class="tile__k">Your apps</span>
+              <span class="tile__d">The REST API, signed in as a person with an emailed code or your identity provider.</span>
             </li>
             <li>
-              <span class="tile__k">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3" /><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5" /><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" /></svg>
-                Postgres
-              </span>
-              <span class="tile__d">Forced RLS on every table, the organization set per transaction, and roles that are <code>NOBYPASSRLS</code>, checked at startup.</span>
+              <span class="tile__k">Assistants</span>
+              <span class="tile__d">Any MCP client, acting for the person who signed in, within what they consented to.</span>
             </li>
             <li>
-              <span class="tile__k">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4" /><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z" /></svg>
-                Proofs and tests
-              </span>
-              <span class="tile__d">Lean proves the policy isolates; tests write to every organization table and try to cross over.</span>
+              <span class="tile__k">Agent accounts</span>
+              <span class="tile__d">Your own processes, with API tokens and only the permissions their team grants.</span>
             </li>
           </ul>
           <p style="margin-top:1.25rem">
-            <a href={docsHref('concepts/isolation/')}>How organizations are kept apart</a>
+            <a href={docsHref('how-it-fits/')}>How it fits</a>{' · '}
+            <a href={docsHref('#current-limits')}>Current limits</a>
           </p>
         </section>
 
@@ -249,11 +223,16 @@ const proofs = [
         </section>
 
         <section class="section" id="agents">
-          <h2>Built for agents, too.</h2>
+          <h2>Two ways for agents to connect.</h2>
           <p>
-            Every organization has its own MCP server and OAuth 2.1 authorization server, so any MCP client can
-            connect with PKCE and dynamic registration. Tools act for the signed-in user and never exceed
-            their permissions or the scopes they granted. No scope reaches owner actions or the schema.
+            An <strong>assistant</strong> acts for a person. Every organization has its own MCP server and OAuth 2.1
+            authorization server, so any MCP client can connect with PKCE and dynamic registration. Its tools act for the
+            signed-in user and never exceed their permissions or the scopes they granted, and no scope reaches owner
+            actions or the schema.
+          </p>
+          <p style="margin-top:1rem">
+            An <strong>agent account</strong> acts as itself: an agent user with API tokens, on the REST API, holding
+            what its teams grant. Use it for unattended work such as imports and triage.
           </p>
           <ul class="tiles tiles--3">
             <li><span class="tile__mono">whoami</span><span class="tile__d">who the grant acts for</span></li>
@@ -264,30 +243,47 @@ const proofs = [
             <li><span class="tile__mono">update_object</span><span class="tile__d">ontology:write + edit_objects</span></li>
           </ul>
           <p style="margin-top:1.25rem">
+            <a href={docsHref('how-it-fits/#how-it-connects')}>Which one to use</a>{' · '}
             <a href={docsHref('concepts/mcp/')}>MCP and OAuth</a>{' · '}<a href={docsHref('api/mcp/')}>Tool reference</a>
           </p>
         </section>
 
-        <section class="section" id="proofs">
-          <h2>Every invariant has a proof.</h2>
+        <section class="section" id="isolation">
+          <h2>Every organization kept apart.</h2>
           <p>
-            The security model lives twice: once in Rust and Postgres, and once in Lean 4, where each invariant is a
-            theorem about a model of the code that enforces it. No <code>sorry</code>, no custom axioms; a build-time audit
-            checks. Some of them:
+            Organizations never see or affect each other's data. Every request gets a transaction scoped to exactly
+            one organization, Postgres row-level security filters every row underneath it, and the runtime roles cannot
+            bypass it. A query that forgets to filter by organization still sees only its own organization's rows.
           </p>
-          <ul class="proofs wide">
-            {
-              proofs.map(([claim, theorem]) => (
-                <li>
-                  <span>{claim}</span>
-                  <code>{theorem}</code>
-                </li>
-              ))
-            }
+          <ul class="tiles tiles--3">
+            <li>
+              <span class="tile__k">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
+                Scoped transactions
+              </span>
+              <span class="tile__d">Handlers only ever get a transaction scoped to one organization, built from a verified credential. No pool, no way around it.</span>
+            </li>
+            <li>
+              <span class="tile__k">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3" /><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5" /><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" /></svg>
+                Postgres
+              </span>
+              <span class="tile__d">Forced RLS on every table, the organization set per transaction, and roles that are <code>NOBYPASSRLS</code>, checked at startup.</span>
+            </li>
+            <li>
+              <span class="tile__k">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4" /><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z" /></svg>
+                Tests
+              </span>
+              <span class="tile__d">Tests write to every organization table and try to cross over; a table without the policy fails them.</span>
+            </li>
           </ul>
           <p style="margin-top:1.25rem">
-            Cryptography and Postgres itself are trusted, not proven, and the docs say exactly where:
-            see <a href={docsHref('verification/')}>the invariant map</a>.
+            Isolation and authorization rules are enforced by PostgreSQL row-level security and covered by
+            machine-checked models and integration tests.
+          </p>
+          <p style="margin-top:1rem">
+            <a href={docsHref('concepts/isolation/')}>How organizations are kept apart</a>
           </p>
         </section>
 
@@ -307,20 +303,24 @@ const proofs = [
               <dd>Objects are JSON documents checked against their types, queried with typed filters. Bring your analytics elsewhere.</dd>
             </div>
             <div>
-              <dt>Not magic.</dt>
-              <dd>The proofs cover models of the code. Tests check the code against a real Postgres, and the docs list what is trusted.</dd>
+              <dt>Not a sandbox for agent-written code.</dt>
+              <dd>Isolation keeps a buggy handler inside its organization. Server code an agent writes needs review like any other.</dd>
+            </div>
+            <div>
+              <dt>Not finished.</dt>
+              <dd>Access is per organization and per object type, and business actions are not built yet. See <a href={docsHref('#current-limits')}>current limits</a>.</dd>
             </div>
           </dl>
         </section>
 
         <section class="section" id="run-it">
           <h2>Run it.</h2>
-          <p>Postgres 16 or newer, a Rust toolchain, and an email provider when you go live.</p>
+          <p>The <code>happy-enterprise</code> binary, Postgres 16 or newer, and an email provider when you go live.</p>
           <div class="ways wide">
             <div class="way way--rec">
               <span class="way__k">Locally</span>
               <span class="way__d">
-                A pinned Postgres on a unix socket, no Docker. Create an organization and sign in within ten minutes.
+                Point it at a local Postgres. Create an organization and sign in within ten minutes.
               </span>
               <span class="way__a">
                 <a class="btn-secondary" href={docsHref('quickstart/')}>Quickstart</a>
@@ -340,7 +340,7 @@ const proofs = [
         </section>
 
         <footer class="landing-foot">
-          Happy Enterprise is open source. <a href={REPO}>slopus/happy-commons</a> on GitHub.
+          Happy Enterprise. <a href={docsHref('')}>Documentation</a>{' · '}<a href={docsHref('#current-limits')}>Current limits</a>
         </footer>
       </main>
     </div>

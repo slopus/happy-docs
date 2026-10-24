@@ -1,28 +1,39 @@
 ---
 layout: ../../layouts/Docs.astro
 title: Quickstart
-lead: Run the server locally, create an organization, sign in as its first owner, and store your first objects. About ten minutes, no Docker.
+lead: Run the server locally, create an organization, sign in as its first owner, and store your first objects. About ten minutes.
 ---
 
-You need a Rust toolchain via rustup (the repository pins its version), a C
-compiler and `perl` (OpenSSL is vendored), `curl`, `jq`, and Python 3 with
-`cryptography` to mint a management token.
+You need:
 
-## 1. Start a database
+- the `happy-enterprise` server binary, and `happy-enterprise-monty-worker`
+  next to it if you want [custom validators](/docs/concepts/validators/),
+- Postgres 16 or newer, with a user that may create databases and roles
+  (the default `postgres` superuser is fine locally),
+- `curl`, `jq`, and Python 3 with `cryptography` to mint a management token.
 
-`scripts/dev-db.sh` downloads pinned, checksummed Postgres 18 binaries and
-runs a cluster that listens only on a unix socket under `.context/pg`.
+## 1. Prepare the database
+
+Create a database and the two roles the server runs as. The server creates
+the roles itself if they are missing, but without passwords; creating them
+first lets them log in over TCP.
 
 ```sh
-git clone https://github.com/slopus/happy-commons && cd happy-commons
-scripts/dev-db.sh install
-scripts/dev-db.sh start
-eval "$(scripts/dev-db.sh env)"   # DATABASE_URL, TENANT_DATABASE_URL, MANAGEMENT_DATABASE_URL
+psql -U postgres <<'SQL'
+CREATE DATABASE happy_enterprise;
+CREATE ROLE happy_enterprise_tenant LOGIN NOINHERIT PASSWORD 'dev-only-1';
+CREATE ROLE happy_enterprise_management LOGIN NOINHERIT PASSWORD 'dev-only-2';
+SQL
+
+export DATABASE_URL=postgres://postgres@localhost/happy_enterprise
+export TENANT_DATABASE_URL=postgres://happy_enterprise_tenant:dev-only-1@localhost/happy_enterprise
+export MANAGEMENT_DATABASE_URL=postgres://happy_enterprise_management:dev-only-2@localhost/happy_enterprise
 ```
 
-The server runs the migrations on startup as `DATABASE_URL`'s role, then
-connects as the two runtime roles. Any Postgres 16+ works if you point the
-three URLs at it instead.
+On startup the server applies its migrations as `DATABASE_URL`'s user, then
+connects as the two runtime roles. It refuses to start if either runtime role
+is a superuser or may bypass row level security. Add a password to
+`DATABASE_URL` if your Postgres asks for one.
 
 ## 2. Configure
 
@@ -53,7 +64,7 @@ export EMAIL_PROVIDER=log   # the default: emails, login codes included, go to t
 ## 3. Run
 
 ```sh
-cargo run -p happy-enterprise
+./happy-enterprise
 ```
 
 ```text

@@ -1,6 +1,6 @@
 ---
 import Mark from './Mark.astro';
-import { BASE, NAV, REPO, docsHref } from '../lib/nav';
+import { BASE, NAV, docsHref } from '../lib/nav';
 
 interface Props {
   /** Which main link is current. */
@@ -27,8 +27,7 @@ const here = path ? normalize(path) : '';
       <a href={BASE} class="rail__link rail__link--keep" aria-current={current === 'home' ? 'page' : undefined}>Home</a>
       <a href={docsHref('')} class="rail__link rail__link--keep" aria-current={current === 'docs' ? 'page' : undefined}>Docs</a>
       <a href={docsHref('api/')} class="rail__link" aria-current={current === 'api' ? 'page' : undefined}>API</a>
-      <a href={docsHref('verification/')} class="rail__link">Proofs</a>
-      <a href={REPO} class="rail__link rail__link--keep">GitHub <span class="ext">↗</span></a>
+      <a href={docsHref('how-it-fits/')} class="rail__link">How it fits</a>
     </nav>
 
     {
@@ -67,12 +66,8 @@ const here = path ? normalize(path) : '';
     {
       !docs && (
         <div class="rail__meta">
-          <a href={REPO} class="rail__meta-line">
-            <span>Open source</span>
-            <span class="rail__meta-n">happy-commons</span>
-          </a>
           <span class="rail__meta-line">
-            <span>Rust · Postgres · Lean 4</span>
+            <span>One Rust binary · Postgres</span>
           </span>
         </div>
       )
@@ -95,12 +90,8 @@ const here = path ? normalize(path) : '';
       {
         docs && (
           <div class="rail__meta" style="margin-top:0;padding-top:0;border-top:0">
-            <a href={REPO} class="rail__meta-line">
-              <span>Open source</span>
-              <span class="rail__meta-n">happy-commons</span>
-            </a>
             <span class="rail__meta-line">
-              <span>Rust · Postgres · Lean 4</span>
+              <span>One Rust binary · Postgres</span>
             </span>
           </div>
         )
@@ -108,8 +99,8 @@ const here = path ? normalize(path) : '';
       {
         !docs && (
           <div>
-            <div class="rail__foot-title">Built to be audited.</div>
-            <div class="rail__foot-sub">every invariant has a proof</div>
+            <div class="rail__foot-title">One model, every caller.</div>
+            <div class="rail__foot-sub">apps, people, and agents</div>
           </div>
         )
       }

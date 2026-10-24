@@ -109,9 +109,8 @@ or reaches another organization.
 <div class="note">
 
 This is language-level isolation in an unprivileged process, not an OS
-sandbox. Monty's sandboxing and resource limits are trusted and tested
-(`tests/validators.rs` tries escapes and resource bombs), not modeled in
-Lean. In the Lean model a validator is an oracle that the proofs assume
-nothing about, beyond being a function of its value.
+sandbox. Monty's sandboxing and resource limits are tested with escape
+attempts and resource bombs. Happy Enterprise treats a validator as a
+function of its value and assumes nothing else about it.
 
 </div>

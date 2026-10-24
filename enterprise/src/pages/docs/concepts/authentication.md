@@ -109,8 +109,7 @@ An address may log in when, in this order:
 3. its domain is **exactly** one of the organization's verified domains: the
    user is created as a member of `everyone`.
 
-Anyone else needs an invite. This decision procedure is modeled as
-`Join.loginPath` in Lean, with theorems for each case.
+Anyone else needs an invite.
 
 ## Invites
 

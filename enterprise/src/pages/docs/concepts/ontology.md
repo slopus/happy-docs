@@ -282,10 +282,9 @@ Ontology access combines organization-wide permissions with per-type rules:
 Every change to the ontology is also an event in the organization's outbox,
 streamed as server-sent events. See [Live events](/docs/concepts/live-events/).
 
-These rules are modeled in `proofs/HappyEnterprise/Ontology.lean` as a state
-machine whose invariant is that every live object marked valid at its type's
-current rules version satisfies it (so an enforced type's objects all do),
-every link joins objects of its declared types and respects its cardinality,
-and unique values stay unique among valid objects. It also proves that links
-of deleted objects and link types are never visible, and that the background
-job changes nothing the API shows except validation marks.
+Taken together: every live object marked valid at its type's current rules
+version satisfies those rules (so an enforced type's objects all do), every
+link joins objects of its declared types and respects its cardinality, and
+unique values stay unique among valid objects. Links of deleted objects and
+link types are never visible, and the background job changes nothing the API
+shows except validation marks.

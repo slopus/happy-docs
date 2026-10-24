@@ -89,7 +89,6 @@ idle stream outlives a revoked session.
 
 - At most **20** open streams per user per replica; more get `429`.
 
-The Lean model `proofs/HappyEnterprise/Live.lean` proves that a stream
-delivers only its own organization's events, only those about types its
-subscriber may view when the event is read, and that resuming from a cursor
-not older than what was pruned misses no event.
+In short: a stream delivers only its own organization's events, only those
+about types its subscriber may view when the event is read, and resuming
+from a cursor within the retained history misses no event.

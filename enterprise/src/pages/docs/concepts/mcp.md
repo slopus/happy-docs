@@ -105,14 +105,11 @@ An organization can have at most 500 registered clients.
 - **Unknown organizations** get metadata and registration responses like real
   ones, but no client works there.
 
-## Trying it
+## Guarantees
 
-`scripts/mcp-client-demo.sh` starts the server, creates an organization, and
-runs `crates/server/examples/mcp_client.rs` (the rmcp SDK's OAuth client)
-through discovery, registration, PKCE authorization, token exchange, a
-refresh, every tool, and revocation, playing the browser with curl.
-
-The flow is modeled in `proofs/HappyEnterprise/Mcp.lean` and
-`McpOntology.lean`: a credential works at one organization's MCP endpoint
-only, tools never exceed the grant or the user, codes and refresh tokens are
-single-use and bound to their client, and revocation sticks.
+- A credential works at one organization's MCP endpoint only.
+- Tools never exceed the grant's scopes or the user's current permissions.
+- Authorization codes and refresh tokens are single-use and bound to their
+  client; replaying a used code or a rotated-out refresh token revokes the
+  grant.
+- Revocation sticks: none of a revoked grant's tokens work afterwards.

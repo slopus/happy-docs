@@ -90,8 +90,6 @@ user without one (when the organization requires one) enrolls a security key,
 a passkey, or an authenticator app before the consent screen. See
 [MCP and OAuth](/docs/concepts/mcp/).
 
-The rules on this page are modeled in `proofs/HappyEnterprise/Mfa.lean`,
-which proves that a partial session reaches only the partial routes, that a
-partial session of a user with a factor becomes full only by proving
-possession of an existing factor, and that the last factor is kept while 2FA
-is required.
+In short: a partial session reaches only the partial routes, a partial
+session of a user with a factor becomes full only by proving possession of
+an existing factor, and the last factor is kept while 2FA is required.

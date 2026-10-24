@@ -14,6 +14,7 @@ export const NAV: NavGroup[] = [
     group: 'Getting started',
     items: [
       { title: 'What Happy Enterprise is', href: '' },
+      { title: 'How it fits', href: 'how-it-fits/' },
       { title: 'Quickstart', href: 'quickstart/' },
     ],
   },
@@ -51,21 +52,13 @@ export const NAV: NavGroup[] = [
     ],
   },
   {
-    group: 'Assurance',
-    items: [{ title: 'Formal verification', href: 'verification/' }],
-  },
-  {
     group: 'Run it yourself',
     items: [
       { title: 'Self-hosting', href: 'self-hosting/' },
       { title: 'Configuration', href: 'self-hosting/configuration/' },
-      { title: 'Development', href: 'self-hosting/development/' },
     ],
   },
 ];
-
-/** The Happy Enterprise source code. */
-export const REPO = 'https://github.com/slopus/happy-commons';
 
 /** This site's source, for "Edit this page". */
 export const DOCS_SOURCE = 'https://github.com/slopus/happy-docs/blob/main/enterprise';

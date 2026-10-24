@@ -14,15 +14,7 @@ lead: One Rust binary, a sandbox worker next to it, and a Postgres database. Wha
 | a blob store | a local directory, or an S3-compatible bucket |
 | an email provider | Resend, SES, SMTP, or your own webhook |
 
-Build both binaries with:
-
-```sh
-cargo build --release -p happy-enterprise --bins
-# target/release/happy-enterprise
-# target/release/happy-enterprise-monty-worker
-```
-
-Without the worker (or with `MONTY_WORKER=off`), everything works except
+Install the two binaries side by side. Without the worker (or with `MONTY_WORKER=off`), everything works except
 writes that owe custom validator calls, which get `503
 validators_unavailable`.
 

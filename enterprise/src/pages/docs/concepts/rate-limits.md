@@ -46,6 +46,5 @@ By default the client IP is the TCP peer. Behind a reverse proxy, set
 `x-forwarded-for`, of which the last entry is used). Only set it if the proxy
 overwrites the header: otherwise clients can choose their own IP.
 
-The limiter is modeled in `proofs/HappyEnterprise/RateLimit.lean`, which
-proves that within any window a key accepts at most its limit, and that
-refused requests use up nothing.
+Within any window a key accepts at most its limit, and refused requests use
+up nothing.

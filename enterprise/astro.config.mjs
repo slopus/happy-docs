@@ -16,6 +16,8 @@ export default defineConfig({
     '/docs/concepts/tenancy/': `${base}/docs/concepts/isolation/`,
     '/docs/concepts/organisations/': `${base}/docs/concepts/organizations/`,
     '/docs/api/organisation/': `${base}/docs/api/organization/`,
+    '/docs/verification/': `${base}/docs/concepts/isolation/`,
+    '/docs/self-hosting/development/': `${base}/docs/self-hosting/`,
   },
   markdown: {
     shikiConfig: {

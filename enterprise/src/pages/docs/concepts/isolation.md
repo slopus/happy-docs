@@ -1,7 +1,7 @@
 ---
 layout: ../../../layouts/Docs.astro
 title: Organizations and isolation
-lead: Organizations never see or affect each other's data, and three independent layers make sure of it.
+lead: Organizations never see or affect each other's data. Three independent layers make sure of it, so a bug in one is caught by the next.
 ---
 
 Every organization's data lives in the same Postgres database, and every row
@@ -9,54 +9,30 @@ records the organization it belongs to. This page explains how a request for
 one organization is kept from reading or writing another organization's rows,
 even when the code serving it has a bug.
 
-The code and the database schema call an organization a *tenant*.
-Where this page shows an exact name from the code or the schema, read
-"tenant" as "organization": `tenant_id` is the organization ID column,
-`TenantTx` is a transaction scoped to one organization, and so on.
+## Layer 1: one scoped transaction per request
 
-## Layer 1: the type system
-
-Organization API handlers never receive a connection pool. The only database
-handle they can ask for is a `TenantTx`, an axum extractor that:
+Request handlers never get a connection pool. The only way a handler reaches
+the database is a transaction the server opens for it after it:
 
 1. reads the `Authorization: Bearer` credential,
-2. verifies it and resolves it to a `TenantContext` (organization, user,
-   how they authenticated, whether the session is fully authenticated, and
-   any OAuth scopes),
-3. opens a transaction and runs `SELECT set_config('app.tenant_id', $1, true)`
-   with the context's organization ID.
+2. verifies it and resolves it to an organization and an active user of that
+   organization, together with how they authenticated, whether the session
+   has passed its second factor, and any OAuth scopes,
+3. opens a transaction and sets the organization for that transaction only.
 
-The context has private fields, and only the verifier constructs one. So
-a handler cannot invent a context for another organization, and it cannot
-reach the database without one.
-
-```rust
-async fn list_members(mut tx: TenantTx) -> Result<Json<Vec<UserView>>, ApiError> {
-    tx.require(Permission::ViewMembers).await?;
-    let tenant_id = tx.tenant_id().to_owned();
-    let rows: Vec<UserRow> = sqlx::query_as(/* ... WHERE u.tenant_id = $1 ... */)
-        .bind(&tenant_id)
-        .fetch_all(tx.conn())
-        .await?;
-    tx.commit().await?;
-    Ok(Json(rows.into_iter().map(UserView::from).collect()))
-}
-```
-
-There is a second, narrower handle: `OrgTx`, scoped to the organization a
-request *names* (the `{org}` path segment of login and OAuth endpoints, or the
-`tid` claim of a token being verified). Only the authentication modules
-(`auth.rs`, `login.rs`, and `oauth.rs` under `src/tenant/`) may open one, and
-`tests/guardrails.rs` checks this mechanically, along with the rule that the
-organization setting `app.tenant_id` is set nowhere except `tx.rs`.
+A handler cannot make up a context for another organization: only the
+verifier creates one. Login and OAuth endpoints, which run before anyone is
+signed in, get a narrower transaction scoped to the organization named in
+the URL.
 
 Queries still filter by organization explicitly. The next layer is the
 backstop, not the only check.
 
 ## Layer 2: Postgres row level security
 
-Every table has `ENABLE` and `FORCE ROW LEVEL SECURITY`. Every table that
-holds an organization's data carries the same policy for reads and writes:
+Every table has row level security enabled and forced, so it applies to the
+table owner too. Every table that holds an organization's data carries the
+same policy for reads and writes:
 
 ```sql
 CREATE POLICY tenant_isolation ON users TO happy_enterprise_tenant
@@ -64,16 +40,9 @@ CREATE POLICY tenant_isolation ON users TO happy_enterprise_tenant
   WITH CHECK (tenant_id = app_current_tenant_id());
 ```
 
-`app_current_tenant_id()` returns the organization ID set for the current
-transaction:
-
-```sql
-CREATE FUNCTION app_current_tenant_id() RETURNS cuid
-  LANGUAGE sql STABLE PARALLEL SAFE
-  AS $$ SELECT NULLIF(current_setting('app.tenant_id', true), '')::cuid $$;
-```
-
-Three properties follow:
+`tenant_id` is the row's organization ID, and `app_current_tenant_id()`
+returns the organization set for the current transaction. (The schema calls
+an organization a *tenant*.) Three properties follow:
 
 - **A query that forgets to filter by organization still sees only its own
   organization's rows.** `USING` filters every `SELECT`, `UPDATE`, and
@@ -81,43 +50,34 @@ Three properties follow:
 - **A write cannot produce a row of another organization.** `WITH CHECK`
   refuses any inserted or updated row whose organization is not the
   transaction's.
-- **No organization means no rows.** When no organization is set the function
-  returns `NULL`, the comparison is never true, and every policy matches
-  nothing. A missing `TenantTx` fails closed.
+- **No organization means no rows.** When no organization is set, the
+  comparison is never true and every policy matches nothing. A request that
+  somehow skipped the first layer would see and change nothing.
 
-The setting is transaction-local (`set_config(..., true)`), so a pooled
-connection never carries one organization's scope into its next checkout.
+The setting is transaction-local, so a pooled connection never carries one
+organization's scope into its next use.
 
 ### Database roles
 
-The server connects with two runtime roles, both `NOSUPERUSER NOBYPASSRLS`:
+The server connects with two runtime roles, neither a superuser and neither
+able to bypass row level security:
 
 | Role | Used by | Can reach |
 |---|---|---|
-| `happy_enterprise_tenant` | the organization API | organization data, under the isolation policy; column-level grants keep it from changing ids, user kinds, or email addresses |
-| `happy_enterprise_management` | the management API | only the list of organizations (`tenants`) and their identity provider keys (`tenant_signing_keys`): no grants on organization data |
+| `happy_enterprise_tenant` | the organization API | organization data, under the policy above; column-level grants keep it from changing ids, user kinds, or email addresses |
+| `happy_enterprise_management` | the management API | only the list of organizations and their identity provider keys: no grants on organization data |
 
 Migrations run as a third, owning role (`DATABASE_URL`). The migrations
-assert that the runtime roles cannot bypass RLS, and the server refuses to
-start if either pool is logged in as the wrong role or as a role that can.
-Trigger functions are `SECURITY INVOKER`, so they too see only the caller's
-organization, and there are no `SECURITY DEFINER` functions or views at all.
+check that the runtime roles cannot bypass row level security, and the server
+refuses to start if either connection is logged in as the wrong role or as a
+role that can. Triggers run with the caller's rights, so they too see only
+the caller's organization, and there are no functions or views that run with
+elevated rights.
 
-### Every new organization table
+## Layer 3: tests
 
-The repository's rules for a new table of organization data:
-
-- a `tenant_id cuid` column for the organization ID, defaulting to
-  `app_current_tenant_id()`,
-- `ENABLE` and `FORCE ROW LEVEL SECURITY`,
-- the standard `tenant_isolation` policy for `USING` and `WITH CHECK`,
-- coverage in `crates/server/tests/isolation.rs`, whose fixture writes a row
-  to every organization table so the catalog-driven tests check it.
-
-## Layer 3: tests and proofs
-
-`tests/isolation.rs` runs against a real Postgres and checks, for every
-organization table found in the catalog, that:
+Integration tests run against a real Postgres and check, for every table of
+organization data found in the database catalog, that:
 
 - reads across organizations return nothing, including `SELECT`s with no
   `WHERE`,
@@ -125,15 +85,30 @@ organization table found in the catalog, that:
   without a `WHERE` touch only the caller's rows,
 - a transaction without an organization sees and changes nothing,
 - the organization scope does not outlive its transaction,
-- every table has forced RLS, organization tables have exactly the expected
-  policy, no `SECURITY DEFINER` function exists, and the role grants are
-  minimal.
+- every table has forced row level security, organization tables have
+  exactly the expected policy, and the role grants are minimal.
 
-The Lean model in `proofs/HappyEnterprise/Rls.lean` proves the same
-properties for the policy itself, for any type of organization ID and any
-query predicate, and `Request.lean` composes them with the verifier into
-"an authenticated request reads and writes only its own organization's rows".
-See [Formal verification](/docs/verification/).
+Because the tests read the catalog, a new table without the policy fails
+them.
+
+Isolation and authorization rules are enforced by PostgreSQL row-level
+security and covered by machine-checked models and integration tests.
+
+## What this does not cover
+
+These layers keep a request handler that forgets to filter by organization,
+or filters by the wrong one, from reaching another organization's data. They
+are not a sandbox for code that sets out to get around them, and they do not
+make it safe to run arbitrary agent-written backend code inside the server.
+Code running in the server process has the server's own configuration: the
+connection strings for both runtime roles (and for the owning role, when the
+server runs migrations) and `SERVER_SECRET_KEY`. Such code could open its own
+connection or sign its own session tokens.
+
+Review server code an agent writes as you would any other change to the
+server. The one place Happy Enterprise runs untrusted code is
+[custom validators](/docs/concepts/validators/), in a sandbox with no
+filesystem, network, or imports.
 
 ## Ids
 
