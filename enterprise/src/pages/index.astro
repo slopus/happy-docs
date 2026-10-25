@@ -110,6 +110,12 @@ const cases: { title: string; href: string; what: string; uses: string }[] = [
     what: 'Stock, leads, reservations, deals, and invoices. Salespeople see their own customers, a large discount needs a manager, and closing sells the car and emails a numbered invoice at once.',
     uses: 'custom formats · one-to-one links · sequences · emails to customers',
   },
+  {
+    title: 'An agentic dev team',
+    href: 'examples/dev-team/',
+    what: 'Issues, tasks, pull requests, and reviews for people and coding agents. Agents claim work and spend their own budgets; CI reports back through signed webhooks.',
+    uses: 'races · private budgets · review policy · webhooks in and out',
+  },
 ];
 
 // The maintenance example, step by step: who, what, and what came back.
@@ -155,11 +161,11 @@ const steps: { who: string; what: string; outcome: string; refused?: boolean }[]
         <section class="section" id="use-cases">
           <h2>One backend for the apps you would otherwise build.</h2>
           <p>
-            Maintenance tracking, document management, and a dealership's sales are usually separate apps, each with
-            its own database, permission checks, and audit trail. Here each is a model and a set of actions loaded into the same server
+            Maintenance tracking, document management, a dealership's sales, and a team's issue tracker are usually
+            separate apps, each with its own database, permission checks, and audit trail. Here each is a model and a set of actions loaded into the same server
             through its API, used by the same people and agents under the same rules.
           </p>
-          <ul class="tiles tiles--3 cases">
+          <ul class="tiles cases">
             {
               cases.map((c) => (
                 <li>

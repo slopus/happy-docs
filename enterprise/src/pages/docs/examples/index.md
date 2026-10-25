@@ -14,6 +14,7 @@ any of them.
 | [Machine maintenance](/docs/examples/maintenance/) | Machines, incidents, assignments, and work orders | An agent reports and assigns, a technician's assistant does the work over MCP, a supervisor approves the close. Technicians see only the incidents assigned to them and hold no write permission; a high-severity close needs a second person. |
 | [Document management](/docs/examples/documents/) | Folders and documents with every version as a file | Documents shared with people and teams, as viewers or editors. Files are readable exactly by whoever sees the document, and unsharing ends that at once. Two people adding a version at once get a conflict, not a lost version. |
 | [Car sales](/docs/examples/car-sales/) | Stock, leads, test drives, reservations, deals, trade-ins, financing, and invoices | Salespeople see only their own customers and finance never sees leads. VINs are checked by the organization's own format, a car can be reserved once, a large discount needs a manager, and closing a deal sells the car, numbers the invoice, and emails it to the customer at once. |
+| [A small agentic dev team](/docs/examples/dev-team/) | Repositories, issues, tasks, pull requests, reviews, and per-agent budgets | Coding agents claim tasks (one claimant, even when two race), spend only their own budgets, and submit code. CI receives signed webhooks and reports back safely; nobody reviews their own pull request, and agents approve agents only where a maintainer allows it. |
 
 ## What they have in common
 

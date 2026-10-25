@@ -88,6 +88,13 @@ it ships.
   reservation that has run out waits for someone to release it.
 - **Emails go to one person each.** An action emails a member or an outside
   address, not a team.
+- **Criteria know only the caller.** They see the caller's id and kind, not
+  another user's kind or anyone's team membership, so rules like "agents do
+  not approve agents" record the author's kind on the object when it is
+  created.
+- **Agent accounts cannot use MCP.** The MCP endpoint takes OAuth sessions,
+  which start with an email sign-in, so agent accounts work over REST with
+  API tokens.
 - **Every reader is a member.** There are no share links for people outside
   the organization.
 - **No full-text search.** Filters match property values, not the contents
@@ -111,6 +118,7 @@ it ships.
 - [Quickstart](/docs/quickstart/): run it locally, create an organization,
   log in, and define an object type.
 - [Use cases](/docs/examples/): complete examples, machine maintenance,
-  document management, and car sales, each run end to end.
+  document management, car sales, and an agentic dev team, each run end to
+  end.
 - [API reference](/docs/api/): every endpoint, with examples.
 - [Self-hosting](/docs/self-hosting/): roles, configuration, deployment.
