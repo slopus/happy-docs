@@ -20,10 +20,10 @@ per-organization key the server derives from `SERVER_SECRET_KEY` with HKDF.
 
 | Claim | |
 |---|---|
-| `tid` | organization ID |
+| `oid` | organization ID |
 | `sub` | user id |
 | `sid` | session id |
-| `aud` | `happy-enterprise:tenant` (the organization API) for REST sessions, `happy-enterprise:mcp` for OAuth grants |
+| `aud` | `happy-enterprise:org` (the organization API) for REST sessions, `happy-enterprise:mcp` for OAuth grants |
 | `iat`, `exp` | REST sessions last 30 days |
 
 Every request checks the session row: not revoked, not expired, and its user
@@ -42,9 +42,9 @@ choosing (`he-` prefixes are reserved). The provider then mints tokens like:
 {
   "header": { "alg": "EdDSA", "kid": "acme-idp-2026" },
   "claims": {
-    "tid": "c8kq2m7xw3n5p9r1t4v6y0za",
+    "oid": "c8kq2m7xw3n5p9r1t4v6y0za",
     "sub": "h3jd8s0q2l5x7c1v9b4n6m8k",
-    "aud": "happy-enterprise:tenant",
+    "aud": "happy-enterprise:org",
     "exp": 1793000000,
     "amr": ["pwd", "mfa"]
   }
@@ -54,11 +54,11 @@ choosing (`he-` prefixes are reserved). The provider then mints tokens like:
 The rules:
 
 - `alg` must be `EdDSA` and `kid` must be present.
-- The key is looked up under the claimed `tid`'s scope, and the signed `tid`
+- The key is looked up under the claimed `oid`'s scope, and the signed `oid`
   must equal the key's owner, so one organization's key cannot mint tokens
   for another.
 - `sub` must be an active user of that organization.
-- `aud` must be the single string `happy-enterprise:tenant`, the organization
+- `aud` must be the single string `happy-enterprise:org`, the organization
   API's audience. An array is rejected, even one containing the right value.
 - `exp` is required; `nbf` is honored; 30 seconds of clock skew are allowed.
 - `amr` (RFC 8176) is optional. `"mfa"` in it attests a second factor (see

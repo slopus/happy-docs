@@ -13,14 +13,14 @@ refuses to start if a required variable is missing or malformed.
 |---|---|---|
 | `DATABASE_URL` | required if migrating | Schema owner. Used only to run migrations at startup. |
 | `RUN_MIGRATIONS` | `true` | `false` skips migrations and makes `DATABASE_URL` optional. |
-| `TENANT_DATABASE_URL` | required | The organization API's database. Connects as `happy_enterprise_tenant`. |
+| `ORG_DATABASE_URL` | required | The organization API's database. Connects as `happy_enterprise_org`. |
 | `MANAGEMENT_DATABASE_URL` | required | Connects as `happy_enterprise_management`. |
 
 ## Listeners and URLs
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `TENANT_LISTEN_ADDR` | `0.0.0.0:8080` | Organization API listener. |
+| `ORG_LISTEN_ADDR` | `0.0.0.0:8080` | Organization API listener. |
 | `MANAGEMENT_LISTEN_ADDR` | `127.0.0.1:9090` | Management API listener. Keep it off the public network. |
 | `PUBLIC_BASE_URL` | `http://localhost:8080` | Public origin of the organization API (no path). OAuth issuers and MCP resource URLs derive from it. |
 | `INVITE_URL` | `<PUBLIC_BASE_URL>/invite` | Where invite links point (`?org=<id>&token=<token>` is appended). |
@@ -91,7 +91,7 @@ later makes existing WebAuthn factors unusable.
 ## A production example
 
 ```sh
-TENANT_DATABASE_URL=postgres://happy_enterprise_tenant:...@db.internal/happy_enterprise
+ORG_DATABASE_URL=postgres://happy_enterprise_org:...@db.internal/happy_enterprise
 MANAGEMENT_DATABASE_URL=postgres://happy_enterprise_management:...@db.internal/happy_enterprise
 RUN_MIGRATIONS=false
 PUBLIC_BASE_URL=https://api.acme.example

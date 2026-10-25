@@ -22,10 +22,10 @@ validators_unavailable`.
 
 | | Organization API | Management API |
 |---|---|---|
-| Address | `TENANT_LISTEN_ADDR`, default `0.0.0.0:8080` | `MANAGEMENT_LISTEN_ADDR`, default `127.0.0.1:9090` |
+| Address | `ORG_LISTEN_ADDR`, default `0.0.0.0:8080` | `MANAGEMENT_LISTEN_ADDR`, default `127.0.0.1:9090` |
 | Exposure | public, behind your reverse proxy | private: operators and provisioning only |
 | Credentials | sessions, external JWTs, agent API tokens, OAuth | Ed25519 JWTs from `MANAGEMENT_JWT_PUBLIC_KEYS` |
-| Database role | `happy_enterprise_tenant` | `happy_enterprise_management` |
+| Database role | `happy_enterprise_org` | `happy_enterprise_management` |
 
 The two share no routes, credentials, or database roles. Never put the
 management listener on the public network.
@@ -56,14 +56,14 @@ NOBYPASSRLS` and without passwords. In production, give them passwords (or
 another authentication method in `pg_hba.conf`) as an administrator:
 
 ```sql
-ALTER ROLE happy_enterprise_tenant PASSWORD '...';
+ALTER ROLE happy_enterprise_org PASSWORD '...';
 ALTER ROLE happy_enterprise_management PASSWORD '...';
 ```
 
 | Variable | Role | Used for |
 |---|---|---|
 | `DATABASE_URL` | schema owner, may create roles | running migrations at startup, and nothing else |
-| `TENANT_DATABASE_URL` | `happy_enterprise_tenant` | the organization API (pool of 20); row-level security applies |
+| `ORG_DATABASE_URL` | `happy_enterprise_org` | the organization API (pool of 20); row-level security applies |
 | `MANAGEMENT_DATABASE_URL` | `happy_enterprise_management` | the management API (pool of 5); only the list of organizations and their identity provider keys |
 
 **Migrations.** By default the server applies pending migrations on startup

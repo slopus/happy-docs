@@ -35,14 +35,14 @@ table owner too. Every table that holds an organization's data carries the
 same policy for reads and writes:
 
 ```sql
-CREATE POLICY tenant_isolation ON users TO happy_enterprise_tenant
-  USING (tenant_id = app_current_tenant_id())
-  WITH CHECK (tenant_id = app_current_tenant_id());
+CREATE POLICY org_isolation ON users TO happy_enterprise_org
+  USING (org_id = app_current_org_id())
+  WITH CHECK (org_id = app_current_org_id());
 ```
 
-`tenant_id` is the row's organization ID, and `app_current_tenant_id()`
-returns the organization set for the current transaction. (The schema calls
-an organization a *tenant*.) Three properties follow:
+`org_id` is the row's organization ID, and `app_current_org_id()`
+returns the organization set for the current transaction. Three properties
+follow:
 
 - **A query that forgets to filter by organization still sees only its own
   organization's rows.** `USING` filters every `SELECT`, `UPDATE`, and
@@ -70,7 +70,7 @@ able to bypass row level security:
 
 | Role | Used by | Can reach |
 |---|---|---|
-| `happy_enterprise_tenant` | the organization API | organization data, under the policy above; column-level grants keep it from changing ids, user kinds, or email addresses |
+| `happy_enterprise_org` | the organization API | organization data, under the policy above; column-level grants keep it from changing ids, user kinds, or email addresses |
 | `happy_enterprise_management` | the management API | only the list of organizations and their identity provider keys: no grants on organization data |
 
 Migrations run as a third, owning role (`DATABASE_URL`). The migrations

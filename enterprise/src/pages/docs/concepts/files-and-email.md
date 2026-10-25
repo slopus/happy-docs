@@ -21,7 +21,7 @@ curl -X PUT "$BASE/v1/me/avatar" \
 ```
 
 Files are stored in the configured blob store under
-`<organization_id>/<file_id>`, with their metadata in the organization's rows
+`<org_id>/<file_id>`, with their metadata in the organization's rows
 of the `files` table. Their ids can be used
 as `file_ref` values in the ontology.
 

@@ -10,9 +10,6 @@ organization API, and connects to Postgres as `happy_enterprise_management`, a
 role with grants on the list of organizations and their identity provider
 keys, and none on organization data. Keep it off the public network.
 
-Its paths call an organization a *tenant*, as the code does: `/v1/tenants`
-is the list of organizations, and `{tenant_id}` is an organization ID.
-
 It never creates users or teams: an organization's system teams and first
 owner come into being when its `owner_email` first logs in.
 
@@ -78,18 +75,18 @@ An organization:
 }
 ```
 
-### GET /v1/tenants
+### GET /v1/organizations
 
 <p class="ep-meta"><span><b>Auth</b>management JWT</span></p>
 
 Every organization, oldest first, as a JSON array.
 
-### POST /v1/tenants
+### POST /v1/organizations
 
 <p class="ep-meta"><span><b>Auth</b>management JWT</span></p>
 
 ```sh
-curl -X POST http://127.0.0.1:9090/v1/tenants \
+curl -X POST http://127.0.0.1:9090/v1/organizations \
   -H "Authorization: Bearer $MGMT_JWT" -H "Content-Type: application/json" \
   -d '{"name": "Acme", "owner_email": "ada@acme.example"}'
 ```
@@ -99,7 +96,7 @@ curl -X POST http://127.0.0.1:9090/v1/tenants \
 may log in while the organization has no active owner and becomes its first
 owner (see [Joining](/docs/concepts/authentication/)).
 
-### GET /v1/tenants/{tenant_id}
+### GET /v1/organizations/{id}
 
 <p class="ep-meta"><span><b>Auth</b>management JWT</span></p>
 
@@ -110,7 +107,7 @@ The organization, or `404`.
 An organization's own identity provider can sign
 [external JWTs](/docs/concepts/authentication/) for its users. Register its
 public keys here. A key works only for the organization it is registered to:
-the signed `tid` claim (the organization ID) must equal the key's owner.
+the signed `oid` claim (the organization ID) must equal the key's owner.
 
 ```json
 {
@@ -124,13 +121,13 @@ the signed `tid` claim (the organization ID) must equal the key's owner.
 `public_key` is the raw 32-byte Ed25519 public key, base64url without
 padding (a JWK's `x`).
 
-### GET /v1/tenants/{tenant_id}/keys
+### GET /v1/organizations/{id}/keys
 
 <p class="ep-meta"><span><b>Auth</b>management JWT</span></p>
 
 The organization's keys, revoked ones included, oldest first.
 
-### POST /v1/tenants/{tenant_id}/keys
+### POST /v1/organizations/{id}/keys
 
 <p class="ep-meta"><span><b>Auth</b>management JWT</span></p>
 
@@ -143,7 +140,7 @@ not start with `he-` (reserved for the server's own session keys). `400` for
 a bad `kid` or key, `404` for an unknown organization, `409` if the organization
 already has a key with that `kid`.
 
-### DELETE /v1/tenants/{tenant_id}/keys/{kid}
+### DELETE /v1/organizations/{id}/keys/{kid}
 
 <p class="ep-meta"><span><b>Auth</b>management JWT</span></p>
 

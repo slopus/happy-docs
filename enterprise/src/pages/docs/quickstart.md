@@ -21,12 +21,12 @@ first lets them log in over TCP.
 ```sh
 psql -U postgres <<'SQL'
 CREATE DATABASE happy_enterprise;
-CREATE ROLE happy_enterprise_tenant LOGIN NOINHERIT PASSWORD 'dev-only-1';
+CREATE ROLE happy_enterprise_org LOGIN NOINHERIT PASSWORD 'dev-only-1';
 CREATE ROLE happy_enterprise_management LOGIN NOINHERIT PASSWORD 'dev-only-2';
 SQL
 
 export DATABASE_URL=postgres://postgres@localhost/happy_enterprise
-export TENANT_DATABASE_URL=postgres://happy_enterprise_tenant:dev-only-1@localhost/happy_enterprise
+export ORG_DATABASE_URL=postgres://happy_enterprise_org:dev-only-1@localhost/happy_enterprise
 export MANAGEMENT_DATABASE_URL=postgres://happy_enterprise_management:dev-only-2@localhost/happy_enterprise
 ```
 
@@ -69,7 +69,7 @@ export EMAIL_PROVIDER=log   # the default: emails, login codes included, go to t
 
 ```text
 INFO migrations applied
-INFO tenant API listening addr=0.0.0.0:8080
+INFO organisation API listening addr=0.0.0.0:8080
 INFO management API listening addr=127.0.0.1:9090
 ```
 
@@ -79,7 +79,7 @@ the remaining steps in a second shell with the same `MGMT_JWT`.
 ## 4. Create an organization
 
 ```sh
-ORG=$(curl -s -X POST http://127.0.0.1:9090/v1/tenants \
+ORG=$(curl -s -X POST http://127.0.0.1:9090/v1/organizations \
   -H "Authorization: Bearer $MGMT_JWT" -H "Content-Type: application/json" \
   -d '{"name": "Acme", "owner_email": "ada@acme.example"}' | jq -r .id)
 echo "$ORG"

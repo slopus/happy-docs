@@ -9,7 +9,7 @@ lead: Two HTTP APIs on two listeners. Requests and responses are JSON, credentia
 | Default address | `0.0.0.0:8080` | `127.0.0.1:9090` (keep it private) |
 | Who calls it | your organizations' users, agents, apps, MCP clients | you, the operator |
 | Credentials | session tokens, external JWTs, agent API tokens, OAuth access tokens (MCP only) | Ed25519 JWTs signed by a key in `MANAGEMENT_JWT_PUBLIC_KEYS` |
-| JWT audience | `happy-enterprise:tenant` (REST; the code calls an organization a tenant), `happy-enterprise:mcp` (MCP) | `happy-enterprise:management` |
+| JWT audience | `happy-enterprise:org` (REST), `happy-enterprise:mcp` (MCP) | `happy-enterprise:management` |
 | Database access | a role confined by row level security to the request's organization | a role that sees only the list of organizations and their identity provider keys |
 
 The two listeners share no routes, credentials, or database roles. A token for
