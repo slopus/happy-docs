@@ -81,8 +81,6 @@ it ships.
 - **No transactions outside actions.** Plain object and link writes are one
   operation each. A change that takes several steps is atomic only when it is
   defined as an action.
-- **No example application.** There is no end-to-end example yet of an agent
-  and a person working on the same objects.
 - **No published benchmarks.** There are no measured numbers yet for object
   counts, query latency, write throughput, revalidation time, or event
   recovery.
@@ -93,5 +91,7 @@ it ships.
   connect, and where your data and UI come from.
 - [Quickstart](/docs/quickstart/): run it locally, create an organization,
   log in, and define an object type.
+- [Example: machine maintenance](/docs/example/): an agent, an assistant,
+  and a person working on the same incident through actions.
 - [API reference](/docs/api/): every endpoint, with examples.
 - [Self-hosting](/docs/self-hosting/): roles, configuration, deployment.

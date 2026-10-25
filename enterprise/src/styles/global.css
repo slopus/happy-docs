@@ -1802,14 +1802,14 @@ a.rail__meta-line:hover {
 
 /* invariant list on the landing */
 
-.proofs {
+.steps {
   margin: 1.5rem 0 0;
   padding: 0;
   list-style: none;
   border-top: 1px solid var(--rule);
 }
 
-.proofs li {
+.steps li {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 0.2rem;
@@ -1818,23 +1818,35 @@ a.rail__meta-line:hover {
 }
 
 @media (min-width: 720px) {
-  .proofs li {
-    grid-template-columns: minmax(0, 1fr) 18.5rem;
-    gap: 1.5rem;
+  .steps li {
+    grid-template-columns: 9.5rem minmax(0, 1fr) 11rem;
+    gap: 1.25rem;
+    align-items: baseline;
   }
 }
 
-.proofs span {
+.steps__who {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink-3);
+}
+
+.steps span:not(.steps__who) {
   font-size: 15px;
   line-height: 1.55;
   color: var(--ink-2);
 }
 
-.proofs code {
+.steps code {
   font-size: 12px;
   line-height: 1.6;
   color: var(--accent);
   word-break: break-word;
+}
+
+.steps li[data-refused] code {
+  color: var(--ink-3);
 }
 
 .landing-foot {

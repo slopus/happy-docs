@@ -16,6 +16,7 @@ export const NAV: NavGroup[] = [
       { title: 'What Happy Enterprise is', href: '' },
       { title: 'How it fits', href: 'how-it-fits/' },
       { title: 'Quickstart', href: 'quickstart/' },
+      { title: 'Example: maintenance', href: 'example/' },
     ],
   },
   {

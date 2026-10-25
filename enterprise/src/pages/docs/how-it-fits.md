@@ -108,6 +108,7 @@ pages of the OAuth flow, it serves no UI. Your app:
 
 ## What is not there yet
 
-There is no end-to-end example application yet, read access cannot yet be
-limited to single objects or properties, and there are no published
-benchmarks. See [Current limits](/docs/#current-limits).
+Read access cannot yet be limited to single objects or properties, and
+there are no published benchmarks. See
+[Current limits](/docs/#current-limits). For all of the above working
+together, see [Example: machine maintenance](/docs/example/).

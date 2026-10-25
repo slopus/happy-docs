@@ -126,7 +126,7 @@ parameters:
       "parameters": {
         "type": "object",
         "properties": {
-          "incident": { "type": "string", "description": "id of a incident object" },
+          "incident": { "type": "string", "description": "id of an object of type incident" },
           "summary": { "type": "string" },
           "code": { "type": "string" }
         },

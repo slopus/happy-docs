@@ -5,6 +5,7 @@ import Rail from '../components/Rail.astro';
 import { docsHref } from '../lib/nav';
 
 const sections = [
+  { id: 'workflow', title: 'One incident' },
   { id: 'one-model', title: 'One model' },
   { id: 'organizations', title: 'Organizations' },
   { id: 'ontology', title: 'Ontology' },
@@ -87,6 +88,20 @@ data: {"type":"employee","id":"o4b8j2e6c0t1q5w9r3y7u2i6","version":2,"properties
   },
 ];
 
+
+// The maintenance example, step by step: who, what, and what came back.
+const steps: { who: string; what: string; outcome: string; refused?: boolean }[] = [
+  { who: 'dispatch-bot · REST', what: 'An agent account reports a hydraulic leak on Press 7 and links it to the machine.', outcome: '201 incident' },
+  { who: 'dispatch-bot · REST', what: 'It applies assign_incident: an assignment is recorded and Tess is emailed.', outcome: '201 applied' },
+  { who: 'dispatch-bot · REST', what: 'Its answer is lost, so it retries with the same idempotency key.', outcome: '200 replayed' },
+  { who: 'Tess · MCP', what: 'Her assistant finds the incident assigned to her and lists the actions she may apply.', outcome: 'close, create order' },
+  { who: 'Tess · MCP', what: 'It tries to reassign the incident. Technicians are not granted that action.', outcome: '403 forbidden', refused: true },
+  { who: 'Tess · MCP', what: 'It opens a work order: the order, two links, the incident in progress, the machine in maintenance, in one transaction.', outcome: '201 applied' },
+  { who: 'Tess · MCP', what: 'It submits the close with the version it read before the work order changed the incident.', outcome: '409 version_conflict', refused: true },
+  { who: 'Tess · MCP', what: 'It reads the incident again and submits the close for approval.', outcome: '201 awaiting approval' },
+  { who: 'Tess · MCP', what: 'It tries to approve her own close of a high-severity incident.', outcome: '422 criteria_failed', refused: true },
+  { who: 'Sam · REST', what: 'The supervisor, who watched every change on the event stream, approves. The incident is closed.', outcome: '201 closed' },
+];
 ---
 
 <Base title="Happy Enterprise: a shared, permissioned business model for your apps and agents">
@@ -111,6 +126,30 @@ data: {"type":"employee","id":"o4b8j2e6c0t1q5w9r3y7u2i6","version":2,"properties
           <p class="hero__fine">
             Backend only, no UI. Running in ten minutes? <a href={docsHref('quickstart/')}>Quickstart</a>{' · '}
             <a href={docsHref('api/')}>API reference</a>
+          </p>
+        </section>
+
+        <section class="section" id="workflow">
+          <h2>One incident, an agent, an assistant, and a person.</h2>
+          <p>
+            A machine breaks down. An agent account reports and assigns the incident, a technician's assistant does the
+            work through MCP, and a supervisor approves it in an app. Each step is an action the organization defined,
+            checked against who is calling and what the data looks like when it commits. Everyone sees the same objects.
+          </p>
+          <ul class="steps wide">
+            {
+              steps.map((s) => (
+                <li data-refused={s.refused ? '' : undefined}>
+                  <span class="steps__who">{s.who}</span>
+                  <span>{s.what}</span>
+                  <code>{s.outcome}</code>
+                </li>
+              ))
+            }
+          </ul>
+          <p style="margin-top:1.25rem">
+            <a href={docsHref('example/')}>Walk through the example</a>{' · '}
+            <a href={docsHref('concepts/actions/')}>Business actions</a>
           </p>
         </section>
 
@@ -347,7 +386,7 @@ data: {"type":"employee","id":"o4b8j2e6c0t1q5w9r3y7u2i6","version":2,"properties
             </div>
             <div>
               <dt>Not finished.</dt>
-              <dd>Read access is per organization and per object type, and there is no example application or published benchmark yet. See <a href={docsHref('#current-limits')}>current limits</a>.</dd>
+              <dd>Read access is per organization and per object type, and there are no published benchmarks yet. See <a href={docsHref('#current-limits')}>current limits</a>.</dd>
             </div>
           </dl>
         </section>
