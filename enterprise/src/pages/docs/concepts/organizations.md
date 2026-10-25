@@ -56,12 +56,17 @@ teams grants it, or if they are an owner.
 | `view_members` | the member directory, team member lists, other users' avatars | `mcp:read` |
 | `change_security_posture` | the 2FA requirement and the allowed (verified) domains | none |
 | `manage_organization` | the organization's name and photo | none |
-| `manage_ontology` | object types, link types, custom validators | none |
+| `manage_ontology` | object types, link types, custom validators and formats, action types | none |
 | `view_objects` | reading ontology objects and links, and the event stream | `ontology:read` |
 | `edit_objects` | creating, changing, deleting objects and links | `ontology:write` |
 
 A new organization's `everyone` team holds `view_members` and
 `view_objects`.
+
+Besides these permissions, owners grant teams the right to apply each
+[business action](/docs/concepts/actions/). That grant stands in for
+`edit_objects` for the action's edits, so a team can, say, open work orders
+without being able to edit incidents freely.
 
 Everyone may always read their own profile (`GET /v1/me`,
 `GET /v1/members/{own id}`) and the list of teams.

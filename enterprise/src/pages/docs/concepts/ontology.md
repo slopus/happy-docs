@@ -66,9 +66,10 @@ Arrays and structs nest at most 4 deep.
 | `length` `{min?, max?}` | strings, arrays | characters of a string, elements of an array |
 | `regex` `{pattern}` | strings | Rust `regex` syntax, at most 1000 characters and size-limited when compiled; the whole string must match, so anchor it yourself |
 | `enum` `{values}` | strings, integers | one of up to 500 values |
-| `email` | strings | an email address |
-| `url` | strings | an absolute `http` or `https` URL |
-| `uuid`, `cuid` | strings | a UUID, a cuid2 |
+| `email` | strings | an email address (built-in) |
+| `url` | strings | an absolute `http` or `https` URL (built-in) |
+| `uuid`, `cuid` | strings | a UUID, a cuid2 (built-in) |
+| `format` `{name, version}` | strings, including nested values | one of the organization's own [formats](/docs/concepts/validators/#formats) |
 | `unique` | top-level scalar properties other than booleans | no two objects of the type share the value |
 | `validator` `{name, version}` | any type, including nested values | a [custom validator](/docs/concepts/validators/) |
 
@@ -276,6 +277,9 @@ Ontology access combines organization-wide permissions with per-type rules:
 - `manage_ontology` alone cannot decide who reads data: access settings are
   owner-only.
 - OAuth grants (MCP clients) never change the schema.
+- A team granted a [business action](/docs/concepts/actions/) may make that
+  action's edits without `edit_objects`, but still needs view access to
+  every type the action touches.
 
 ## Live updates
 

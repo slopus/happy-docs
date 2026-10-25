@@ -35,6 +35,7 @@ see or affect another.
 | Teams and permissions | The system teams `owners` and `everyone`, custom teams, and seven permissions granted to teams. |
 | Login and security posture | Email codes, invites, DNS-verified allowed domains, required two-factor authentication with TOTP or WebAuthn. See [Authentication](/docs/concepts/authentication/). |
 | An ontology | Object types with typed properties and format rules, versioned schemas, custom validators in sandboxed Python, link types with cardinality, queries, and per-type access. See [The ontology](/docs/concepts/ontology/). |
+| Business actions | The organization's own operations, such as "open a work order": typed parameters, criteria, edits applied all or nothing, safe retries, webhooks and emails after commit, and an audit log. See [Business actions](/docs/concepts/actions/). |
 | Live updates | Every change to the ontology as a resumable stream of server-sent events. See [Live events](/docs/concepts/live-events/). |
 | An MCP server | At `/orgs/{org}/mcp`, behind the organization's own OAuth 2.1 authorization server. See [MCP and OAuth](/docs/concepts/mcp/). |
 | Files | Avatars and an organization photo, in a local directory or an S3 bucket. |
@@ -70,17 +71,16 @@ and what it does not cover.
 What Happy Enterprise does not do yet. Each item comes off this list when
 it ships.
 
-- **Access is per organization and per object type.** A member who may view
-  a type sees every object of it and every property. There are no rules for
-  single objects (only the incidents assigned to my team), single properties
-  (an employee's name for everyone, their salary for a few), or relationships
-  (a manager approves their reports' expenses).
-- **No business actions.** Writes are single operations: create, update, or
-  delete one object, or create or delete one link. There is no transaction
-  across requests, so a change that takes several steps (create a work order,
-  link it to a machine and an incident, update the incident) can stop half
-  done, and the caller has to handle retries. `expected_version` guards one
-  object at a time, and creating an object has no idempotency key.
+- **Read access is per organization and per object type.** A member who may
+  view a type sees every object of it and every property. There are no rules
+  for single objects (only the incidents assigned to my team) or single
+  properties (an employee's name for everyone, their salary for a few).
+  Writes can be narrowed further: a [business action](/docs/concepts/actions/)'s
+  criteria can check the caller against the objects it changes, and a team
+  can be granted an action without `edit_objects`.
+- **No transactions outside actions.** Plain object and link writes are one
+  operation each. A change that takes several steps is atomic only when it is
+  defined as an action.
 - **No example application.** There is no end-to-end example yet of an agent
   and a person working on the same objects.
 - **No published benchmarks.** There are no measured numbers yet for object

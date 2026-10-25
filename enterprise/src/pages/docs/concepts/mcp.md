@@ -34,6 +34,7 @@ The [OAuth endpoints](/docs/api/oauth/) page lists every route.
 | `mcp:invite` | `invite_members` | `invite_member` |
 | `ontology:read` | `view_objects` | `describe_schema`, `query_objects`, `get_object` |
 | `ontology:write` | `edit_objects` (writing needs `ontology:read` too) | `create_object`, `update_object` |
+| `actions:apply` | no permission on its own: the user's [action](/docs/concepts/actions/) grants, with `ontology:read` for the types each action touches | `list_actions`, one `action_<api_name>` tool per action |
 
 A tool's permission must be allowed by **both** the grant's scopes and the
 user's own permissions, and both are checked again on every call, so a user

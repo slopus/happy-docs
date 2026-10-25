@@ -1,6 +1,6 @@
 ---
 layout: ../../../layouts/Docs.astro
-title: Custom validators
+title: Custom validators and formats
 lead: When format rules are not enough, a property can be checked by a Python function. It runs in Pydantic Monty, a sandboxed Python interpreter written in Rust, and a write is accepted only if every call passes.
 ---
 
@@ -82,6 +82,36 @@ If no sandbox is configured (`MONTY_WORKER=off`, or no worker binary next to
 the server), writes that owe validator calls get `503
 validators_unavailable`; writes that owe none are unaffected. Stored objects
 of a type whose rules owe calls stay `pending` until a sandbox is available.
+
+## Formats
+
+A **format** is a validator for strings. The four built-in formats, `email`,
+`url`, `uuid` and `cuid`, are checked natively in Rust; an organization adds
+its own in Python:
+
+```http
+POST /v1/ontology/formats
+{ "name": "sku", "description": "three capitals, a dash, digits", "code": "def validate(value): ..." }
+```
+
+```json
+{ "api_name": "sku", "type": { "kind": "string" },
+  "rules": [{ "rule": "format", "name": "sku", "version": 1 }] }
+```
+
+Formats are written, versioned, tested (`POST /v1/ontology/formats/{name}/test`)
+and run exactly like validators, with two differences: the rule fits string
+properties only, and formats have their own names, so a format and a
+validator may both be called `sku`. Failures read `format sku v1: <message>`.
+`GET /v1/ontology/formats` lists the built-ins next to the organization's
+formats, and their names cannot be taken.
+
+The built-ins stay native on purpose. They are fixed, total and fast, so they
+never cost a sandbox run, never time out, and keep working when no sandbox is
+configured: an `email` property never gets a `503`. Moving them into Monty
+would add a subprocess round trip to most writes and make them fail with the
+sandbox, for no gain in flexibility, since an organization that wants a
+different notion of an email address can write its own format.
 
 ## The sandbox
 

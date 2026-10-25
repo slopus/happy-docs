@@ -1,11 +1,12 @@
 ---
 layout: ../../../layouts/Docs.astro
-title: Validators
-lead: Custom validators are versioned Python functions run in the Monty sandbox. Every endpoint here needs manage_ontology.
+title: Validators and formats
+lead: Custom validators and formats are versioned Python functions run in the Monty sandbox. Every endpoint here needs manage_ontology.
 ---
 
 See [Custom validators](/docs/concepts/validators/) for how they work and how
-object types use them.
+object types use them. Formats, validators for strings, have the same
+endpoints under [`/v1/ontology/formats`](#formats).
 
 A validator version in responses:
 
@@ -87,3 +88,19 @@ to the latest; up to 100 `values`; the run must finish within 5 seconds.
 ```
 
 `404` for an unknown name or version.
+
+## Formats
+
+`GET/POST /v1/ontology/formats`, `GET /v1/ontology/formats/{name}` and
+`POST /v1/ontology/formats/{name}/test` work like the validator endpoints
+above, in their own namespace, with these differences:
+
+- `POST` refuses the built-in names `email`, `url`, `uuid` and `cuid` with
+  `400`.
+- `test` takes string values only (`400` otherwise).
+- The list names the built-ins too:
+
+```json
+{ "builtin": ["email", "url", "uuid", "cuid"],
+  "formats": [ { "name": "sku", "version": 1, "description": "...", "created_by": "...", "created_at": "..." } ] }
+```

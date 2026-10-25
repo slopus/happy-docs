@@ -75,6 +75,12 @@ later makes existing WebAuthn factors unusable.
 | `S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | required for `s3` | S3 (or compatible) bucket. |
 | `S3_ENDPOINT`, `S3_PREFIX`, `S3_SESSION_TOKEN` | none | Custom endpoint (path-style, e.g. MinIO, R2), key prefix, temporary credentials. |
 
+## Actions
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `ACTION_WEBHOOKS_ALLOW_PRIVATE` | `false` | `true` lets [action](/docs/concepts/actions/) webhooks use `http` and reach private and loopback addresses. Development only. |
+
 ## Validators and logging
 
 | Variable | Default | Meaning |

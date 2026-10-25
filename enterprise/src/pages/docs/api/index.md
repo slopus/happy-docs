@@ -78,11 +78,14 @@ Validation and schema errors add `details`, a list of
 | 403 | `mfa_required` | the organization requires 2FA and this session has not completed it |
 | 404 | `not_found` | unknown, or not visible to you |
 | 409 | `conflict` | a uniqueness, version, or team-rule conflict |
+| 409 | `version_conflict` | an object an [action](/docs/concepts/actions/) reads is not at its expected version, or changed before its edits ran |
+| 409 | `idempotency_conflict` | an action's idempotency key was used for a different request |
 | 413 | `payload_too_large` | an image over 5 MB |
 | 422 | `validation_failed` | content that breaks its rules, with `details` |
+| 422 | `criteria_failed` | an action's criteria do not hold, one detail per criterion |
 | 429 | `rate_limited` | see [Rate limits](/docs/concepts/rate-limits/); carries `Retry-After` |
 | 502 | `upstream` | the email provider or object store failed |
-| 503 | `validators_unavailable` | a write owes custom validator calls but no sandbox is configured |
+| 503 | `validators_unavailable` | a write owes custom validator or format calls but no sandbox is configured |
 | 500 | `internal` | a bug; details are only in the server log |
 
 Resources you are not allowed to see answer `404` rather than `403` where

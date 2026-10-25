@@ -18,6 +18,7 @@ exactly when its change committed.
 | `type.created`, `type.changed`, `type.deleted` | `type`, `version` (`changed` also on access changes) |
 | `type.validation` | `type`, `rules_version`, `state`, `objects`, `validated`, `invalid`: progress of the background validation |
 | `link_type.created`, `link_type.changed`, `link_type.deleted` | `link`, `from_type`, `to_type` |
+| `action.applied` | the [action's result](/docs/concepts/actions/#applying-step-by-step), after the events of its edits; about every type the action touches |
 
 Schema changes never rewrite objects, so they emit only `type.changed`;
 removed properties simply stop appearing in later events, and the background

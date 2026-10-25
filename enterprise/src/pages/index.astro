@@ -8,6 +8,7 @@ const sections = [
   { id: 'one-model', title: 'One model' },
   { id: 'organizations', title: 'Organizations' },
   { id: 'ontology', title: 'Ontology' },
+  { id: 'actions', title: 'Actions' },
   { id: 'agents', title: 'Agents' },
   { id: 'isolation', title: 'Isolation' },
   { id: 'what-it-isnt', title: "What it isn't" },
@@ -222,6 +223,44 @@ data: {"type":"employee","id":"o4b8j2e6c0t1q5w9r3y7u2i6","version":2,"properties
           </p>
         </section>
 
+        <section class="section" id="actions">
+          <h2>Business actions, all or nothing.</h2>
+          <p>
+            Objects describe what exists; actions describe what someone may make happen. An organization defines its own
+            operations, such as "open a work order for this incident", once. Your app, a person's assistant, and an agent
+            account all apply the same action under the same rules, and every application is recorded.
+          </p>
+          <ul class="tiles tiles--3">
+            <li>
+              <span class="tile__k">Typed inputs</span>
+              <span class="tile__d">Parameters checked like properties, or references to live objects.</span>
+            </li>
+            <li>
+              <span class="tile__k">Who may apply</span>
+              <span class="tile__d">Owners grant teams each action, without handing out edit rights.</span>
+            </li>
+            <li>
+              <span class="tile__k">Criteria</span>
+              <span class="tile__d">Conditions or Python, checked on exactly what commits.</span>
+            </li>
+            <li>
+              <span class="tile__k">All or nothing</span>
+              <span class="tile__d">Every create, update, and link in one transaction.</span>
+            </li>
+            <li>
+              <span class="tile__k">Safe retries</span>
+              <span class="tile__d">An idempotency key returns the first result instead of applying twice.</span>
+            </li>
+            <li>
+              <span class="tile__k">Effects after commit</span>
+              <span class="tile__d">Signed webhooks and emails, delivered with retries, in the audit log.</span>
+            </li>
+          </ul>
+          <p style="margin-top:1.25rem">
+            <a href={docsHref('concepts/actions/')}>Business actions</a>{' · '}<a href={docsHref('api/actions/')}>Actions API</a>
+          </p>
+        </section>
+
         <section class="section" id="agents">
           <h2>Two ways for agents to connect.</h2>
           <p>
@@ -237,10 +276,10 @@ data: {"type":"employee","id":"o4b8j2e6c0t1q5w9r3y7u2i6","version":2,"properties
           <ul class="tiles tiles--3">
             <li><span class="tile__mono">whoami</span><span class="tile__d">who the grant acts for</span></li>
             <li><span class="tile__mono">list_members</span><span class="tile__d">mcp:read + view_members</span></li>
-            <li><span class="tile__mono">invite_member</span><span class="tile__d">mcp:invite + invite_members</span></li>
             <li><span class="tile__mono">describe_schema</span><span class="tile__d">the types you may view</span></li>
             <li><span class="tile__mono">query_objects</span><span class="tile__d">filters, ordering, cursors</span></li>
             <li><span class="tile__mono">update_object</span><span class="tile__d">ontology:write + edit_objects</span></li>
+            <li><span class="tile__mono">action_open_work_order</span><span class="tile__d">actions:apply + the action's grant</span></li>
           </ul>
           <p style="margin-top:1.25rem">
             <a href={docsHref('how-it-fits/#how-it-connects')}>Which one to use</a>{' · '}
@@ -308,7 +347,7 @@ data: {"type":"employee","id":"o4b8j2e6c0t1q5w9r3y7u2i6","version":2,"properties
             </div>
             <div>
               <dt>Not finished.</dt>
-              <dd>Access is per organization and per object type, and business actions are not built yet. See <a href={docsHref('#current-limits')}>current limits</a>.</dd>
+              <dd>Read access is per organization and per object type, and there is no example application or published benchmark yet. See <a href={docsHref('#current-limits')}>current limits</a>.</dd>
             </div>
           </dl>
         </section>

@@ -52,9 +52,17 @@ one that matches who is responsible for what the agent does.
 | Connects with | [MCP](/docs/concepts/mcp/), at `/orgs/{org}/mcp` | the REST API |
 | Credential | an OAuth grant, from the person's sign-in and consent | an API token (`heat_…`), or a JWT from your identity provider |
 | May do | what both the grant's scopes and the person's current permissions allow; never owner actions or schema changes | what the teams it belongs to allow, like any member |
+| Business actions | the person's action grants, with the `actions:apply` scope; one MCP tool per action | its teams' action grants, through `POST /v1/actions/{type}/apply` |
 | Changes are recorded as | the person (`created_by`, `updated_by`) | the agent user |
 | Second factor | the person's, when the organization requires one | none: agents are exempt |
 | Ends when | the person revokes the grant, loses the permission, or is deactivated | an owner revokes the token or deactivates the agent |
+
+Either way, the safest thing to give an agent is a
+[business action](/docs/concepts/actions/) rather than raw write access: a
+named operation with typed inputs, criteria checked on what commits, all or
+nothing, and safe to retry. Grant the action to the agent's team and leave
+`edit_objects` out. The audit log records which kind of identity applied it,
+with which credential, through REST or MCP.
 
 Use a **delegated assistant** when a person is directing the work and should
 answer for it. Use an **agent account** for unattended work: an import, a
@@ -78,8 +86,11 @@ From your current systems, through the REST API. A typical import:
    ([objects API](/docs/api/ontology-objects/)), then link them. Each
    object is checked against its type and validators as it is written.
 
-There is no bulk endpoint and no transaction across requests, so make the
-import safe to re-run: on a `409` for the unique source id, the object is
+For records that must arrive together, such as an order and its lines,
+define an import [action](/docs/concepts/actions/) whose code creates them:
+up to 100 edits in one transaction, with an idempotency key per source
+record. Otherwise there is no bulk endpoint and no transaction across
+requests, so make the import safe to re-run: on a `409` for the unique source id, the object is
 already there; look it up and continue. Creating a link that already exists
 returns `200`, so link steps can simply be repeated.
 
@@ -97,6 +108,6 @@ pages of the OAuth flow, it serves no UI. Your app:
 
 ## What is not there yet
 
-Some pieces a complete application needs are not built yet, among them
-business actions that change several objects at once. See
-[Current limits](/docs/#current-limits).
+There is no end-to-end example application yet, read access cannot yet be
+limited to single objects or properties, and there are no published
+benchmarks. See [Current limits](/docs/#current-limits).

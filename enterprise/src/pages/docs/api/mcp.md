@@ -42,9 +42,10 @@ WWW-Authenticate: Bearer resource_metadata="https://api.example.com/.well-known/
 header must be one of `MCP_ALLOWED_HOSTS` (by default the host of
 `PUBLIC_BASE_URL`), against DNS rebinding.
 
-The server identifies itself as `happy-enterprise` with the instructions
-"Happy Enterprise: your organization's members, teams, invites, and ontology
-(object types, objects, links)."
+The server identifies itself as `happy-enterprise`. Its instructions tell the
+client it offers the organization's members, teams, invites, and ontology
+(object types, objects, links), and the actions the user may apply, one tool
+each (`action_<name>`).
 
 ## Scopes
 
@@ -54,6 +55,7 @@ The server identifies itself as `happy-enterprise` with the instructions
 | `mcp:invite` | `invite_member` | `invite_members` |
 | `ontology:read` | `describe_schema`, `query_objects`, `get_object` | `view_objects` (on the type) |
 | `ontology:write` | `create_object`, `update_object`, with `ontology:read` | `edit_objects` (on the type) |
+| `actions:apply` | `action_<api_name>` tools, with `ontology:read` for the types they touch | the action's grant (no permission on its own) |
 
 A tool runs only if both the grant's scopes and the user's own permissions
 allow it, checked again in a fresh transaction on every call. Losing a
@@ -203,3 +205,35 @@ as over REST, and the write emits an `object.created`
 result must satisfy the type. With `expected_version`, the change is refused
 (`conflict`) unless the object is at that version. Returns the updated
 object.
+
+### list_actions
+
+<p class="ep-meta"><span><b>Scope</b>ontology:read + actions:apply</span><span><b>Permission</b>the actions' grants</span></p>
+
+The [actions](/docs/concepts/actions/) you may apply, each with a JSON Schema
+of its parameters, as in [`GET /v1/actions`](/docs/api/actions/#get-v1-actions).
+
+### action_&lt;api_name&gt;
+
+<p class="ep-meta"><span><b>Scope</b>ontology:read + actions:apply</span><span><b>Permission</b>the action's grant + view access to every type it touches</span></p>
+
+One tool per action you may apply, named after it, such as
+`action_open_work_order`. Its input schema is the action's parameters plus
+`idempotency_key` and `expected_versions`, and its description ends with the
+action's name and version:
+
+```json
+{
+  "incident": "o4b8j2e6c0t1q5w9r3y7u2i6",
+  "summary": "Replace the seal",
+  "idempotency_key": "mcp-triage-42",
+  "expected_versions": { "incident": 3 }
+}
+```
+
+The tool applies the action exactly as
+[`POST /v1/actions/{type}/apply`](/docs/api/actions/#post-v1-actions-type-apply)
+does and returns its result, with `applied_by.via` set to `mcp`. Refusals
+are tool errors carrying the REST error, such as `criteria_failed` or
+`version_conflict`.
+
