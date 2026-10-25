@@ -23,8 +23,9 @@ exactly when its change committed.
 Schema changes never rewrite objects, so they emit only `type.changed`;
 removed properties simply stop appearing in later events, and the background
 validation of new rules reports its progress as `type.validation` events,
-at most once a second while the job runs and once when it is done with the
-type, so the last one always shows the finished state. Deleting an object or a link type emits `link.deleted` for each of its
+at most once a second (less often on large types) while the job runs, and
+once when it is done with the type, so the last one always shows the finished
+state. Deleting an object or a link type emits `link.deleted` for each of its
 visible links.
 
 Each event has a **sequence number** from a per-organization counter row. The

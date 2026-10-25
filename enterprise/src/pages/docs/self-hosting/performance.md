@@ -1,7 +1,7 @@
 ---
 layout: ../../../layouts/Docs.astro
 title: Performance
-lead: Measured reads, writes, live streams, and revalidation at 100,000, 300,000, and 1,000,000 objects of one type, on a 4-core machine. One run, no tuning; the numbers describe this machine and this setup, nothing more.
+lead: Measured reads, writes, live streams, and revalidation at 100,000, 300,000, and 1,000,000 objects of one type, on a 4-core machine. No tuning; the numbers describe this machine and this setup, nothing more.
 ---
 
 Measured on 2026-10-25. Everything measured goes through the HTTP API.
@@ -21,6 +21,7 @@ Measured on 2026-10-25. Everything measured goes through the HTTP API.
 | Apply an action, 8 clients | 740/s | 645/s | 637/s |
 | Catch up a live stream | 40,328 events/s | 47,669 events/s | 48,326 events/s |
 | Rules change answered in | 316 ms | 994 ms | 2.5 s |
+| Revalidate every object after it | 29 s | 88 s | 281 s |
 
 - **Lookups by id, link traversals, and `linked` filters** use indexes and
   stay in single-digit milliseconds at every size.
@@ -37,17 +38,35 @@ Measured on 2026-10-25. Everything measured goes through the HTTP API.
 - **A type's `validation` summary counts every object of the type**, so a
   schema change that changes the rules takes longer to answer as the type
   grows, without reading any object's data.
+- **Revalidation after a rules change** rechecks about 3,500 objects per
+  second at every size: a million objects in under 5 minutes.
 - **Catching up a live stream** ran at 40,000 to 48,000 events per second,
   the first event within 20 ms, at every size.
 
 ### Revalidation
 
-In this run, revalidation after a rules change was **quadratic**: after each
-batch the job recounted the whole type for its progress event. Its rate fell
-from 521 objects/s at 120,000 objects to 217 at 320,000 and 79 at 1,000,000,
-where 30 minutes covered 14% of the type. This has since been fixed: the job
-now walks the type once and reports progress at most once a second, so
-revalidation is linear. Measurements after the fix will be published here.
+After a rules change, a background job rechecks every object of the type.
+Measured on the same machine and setup, from the rules change to the job's
+last `type.validation` event, with every object valid:
+
+| Assets | Rules change answered in | Rechecked in | objects/s | `type.validation` events |
+|---|---|---|---|---|
+| 100,000 | 252 ms | 29.1 s | 3,435 | 13 |
+| 300,000 | 724 ms | 87.8 s | 3,417 | 13 |
+| 1,000,000 | 2.6 s | 281.4 s | 3,554 | 12 |
+
+The job walks the type once, in batches found from a cursor. Its progress
+events count the whole type, so it sends them at most once a second, and
+less often on large types: after each one it waits nine times as long as
+that count took.
+
+In the first run, before this was fixed, revalidation was **quadratic**:
+after each batch of 200 objects the job recounted the whole type for its
+progress event, and its query for the next batch scanned past every object
+already checked (301 ms per batch at a million objects, against 1.8 ms from
+a cursor). Its rate fell from 521 objects/s at 120,000 objects to 217 at
+320,000 and 79 at 1,000,000, where 30 minutes covered 14% of the type. The
+per-size results below keep those numbers.
 
 ## Machine
 
