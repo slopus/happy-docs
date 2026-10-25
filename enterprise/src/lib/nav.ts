@@ -59,6 +59,7 @@ export const NAV: NavGroup[] = [
     items: [
       { title: 'Self-hosting', href: 'self-hosting/' },
       { title: 'Configuration', href: 'self-hosting/configuration/' },
+      { title: 'Performance', href: 'self-hosting/performance/' },
     ],
   },
 ];

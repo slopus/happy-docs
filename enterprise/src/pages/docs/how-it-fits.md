@@ -109,7 +109,7 @@ pages of the OAuth flow, it serves no UI. Your app:
 ## What is not there yet
 
 Access cannot yet be limited to single properties, or to objects by
-relationships other than assignment to a member, and there are no published
-benchmarks. See
+relationships other than assignment to a member, and filters on properties
+are not indexed yet ([Performance](/docs/self-hosting/performance/)). See
 [Current limits](/docs/#current-limits). For all of the above working
 together, see [Example: machine maintenance](/docs/example/).

@@ -130,7 +130,8 @@ stored objects**:
 - A write checks the current rules and marks the object valid. The job
   checks pending objects in batches, against the newest rules version (a
   change made while it runs supersedes the older one), and reports its
-  progress as `type.validation` events.
+  progress as `type.validation` events, at most once a second while the job
+  runs and once when it is done with the type.
 - Invalid objects are kept as they are. Their next write must satisfy the
   rules.
 - A type's `validation` summarizes its objects against the current rules:

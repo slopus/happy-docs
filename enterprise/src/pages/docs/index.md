@@ -81,9 +81,11 @@ it ships.
 - **No transactions outside actions.** Plain object and link writes are one
   operation each. A change that takes several steps is atomic only when it is
   defined as an action.
-- **No published benchmarks.** There are no measured numbers yet for object
-  counts, query latency, write throughput, revalidation time, or event
-  recovery.
+- **No property indexes.** Filters and sorts on properties scan the type's
+  objects, so those that must look at every object, such as `starts_with` or
+  `order_by` on a property, take 1.3 to 2.3 seconds at a million objects of a
+  type. Lookups by id, link traversals, and `linked` filters use indexes.
+  See [Performance](/docs/self-hosting/performance/).
 
 ## Where to go next
 

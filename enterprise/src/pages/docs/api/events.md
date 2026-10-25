@@ -54,7 +54,7 @@ jump.
 | `object.deleted` | `{type, id}` |
 | `link.created`, `link.deleted` | `{link, from_type, from, to_type, to}` |
 | `type.created`, `type.changed`, `type.deleted` | `{type, version}` |
-| `type.validation` | `{type, rules_version, state, objects, validated, invalid}`: the background job's progress against new rules |
+| `type.validation` | `{type, rules_version, state, objects, validated, invalid}`: the background job's progress against new rules, at most once a second and once when it is done with the type |
 | `link_type.created`, `link_type.changed`, `link_type.deleted` | `{link, from_type, to_type}` |
 | `action.applied` | the result of an [action](/docs/api/actions/#post-v1-actions-type-apply), after the events of its edits |
 | `reset` (no `id`) | `{reason}`: your cursor is older than the 7 days kept; reload, then carry on |
