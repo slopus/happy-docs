@@ -134,15 +134,48 @@ verified if one of them is exactly the expected value. Returns the domain.
 
 ## Files
 
+### POST /v1/files
+
+<p class="ep-meta"><span><b>Auth</b>full</span><span><b>Permission</b>any member</span></p>
+
+Uploads an attachment. The body is the file's bytes and `Content-Type` its
+media type (`application/octet-stream` if none is given). Query parameter
+`name` (optional): 1 to 255 characters, no control characters, `/`, or `\`.
+
+```sh
+curl -X POST "$BASE/v1/files?name=invoice-1042.pdf" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/pdf" \
+  --data-binary @invoice-1042.pdf
+```
+
+```json
+201 { "id": "f6i2l8e4i0d9x3c7v1b5n2m6", "purpose": "attachment",
+      "name": "invoice-1042.pdf", "content_type": "application/pdf",
+      "size_bytes": 48213, "sha256": "9f2c...", "created_at": "2026-10-31T09:00:00Z" }
+```
+
+`sha256` is hex. Until an object refers to it, only the uploader can read
+the file. `400` for an empty body, a bad name, or a `Content-Type` that is not
+a media type or (for PNG, JPEG, GIF, and WebP) does not match the bytes;
+`413` over 25 MiB.
+
 ### GET /v1/files/{file}
 
-<p class="ep-meta"><span><b>Auth</b>full</span><span><b>Permission</b>photo: none; avatars: their owner or view_members</span></p>
+<p class="ep-meta"><span><b>Auth</b>full</span><span><b>Permission</b>see below</span></p>
 
 The file's bytes with its stored `Content-Type`, plus
 `X-Content-Type-Options: nosniff`,
 `Content-Security-Policy: default-src 'none'; sandbox`, and
-`Cache-Control: private, max-age=300`. An avatar you may not see is `404`.
+`Cache-Control: private, max-age=300`. Attachments also carry
+`Content-Disposition: attachment` with their name.
+
+Readable by everyone for the organization photo; by its owner and holders of
+`view_members` for an avatar; by its uploader for an attachment; and, for
+any file, by anyone who may view a live object whose visible properties refer
+to it through a `file_ref`. Anyone else gets `404`. See
+[Who may read a file](/docs/concepts/files-and-email/#who-may-read-a-file).
 
 ```sh
-curl "$BASE/v1/files/f6i2l8e4i0d9x3c7v1b5n2m6" -H "Authorization: Bearer $TOKEN" -o photo.png
+curl "$BASE/v1/files/f6i2l8e4i0d9x3c7v1b5n2m6" -H "Authorization: Bearer $TOKEN" -o invoice-1042.pdf
 ```

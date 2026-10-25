@@ -16,7 +16,14 @@ export const NAV: NavGroup[] = [
       { title: 'What Happy Enterprise is', href: '' },
       { title: 'How it fits', href: 'how-it-fits/' },
       { title: 'Quickstart', href: 'quickstart/' },
-      { title: 'Example: maintenance', href: 'example/' },
+    ],
+  },
+  {
+    group: 'Examples',
+    items: [
+      { title: 'Use cases', href: 'examples/' },
+      { title: 'Machine maintenance', href: 'examples/maintenance/' },
+      { title: 'Document management', href: 'examples/documents/' },
     ],
   },
   {

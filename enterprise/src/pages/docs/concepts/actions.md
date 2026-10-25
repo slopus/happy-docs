@@ -82,10 +82,11 @@ nothing changes and the response says which.
   touches. Restricting a type hides the actions that touch it from anyone
   who may not view it.
 - Actions see only the objects the caller can see. With
-  [assigned objects](/docs/concepts/ontology/#assigned-objects), passing an
-  object that is not assigned to the caller is refused like an unknown one
-  (`422`, at `params.<name>`), and edits that would hand an object to
-  someone the caller's view does not cover are `403`.
+  [shared and assigned objects](/docs/concepts/ontology/#shared-and-assigned-objects),
+  passing an object that is not shared with the caller is refused like an
+  unknown one (`422`, at `params.<name>`), and edits that would take an
+  object out of the caller's sight are `403`. A `file_ref` parameter must
+  name a file the caller can read.
 - Through MCP, the grant also needs the `actions:apply` scope, and
   `ontology:read` for the touched types. See [MCP and OAuth](/docs/concepts/mcp/).
 

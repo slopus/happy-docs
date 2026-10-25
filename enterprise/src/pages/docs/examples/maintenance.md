@@ -1,5 +1,5 @@
 ---
-layout: ../../layouts/Docs.astro
+layout: ../../../layouts/Docs.astro
 title: "Example: machine maintenance"
 lead: A machine breaks down. An agent reports and assigns the incident, a technician's assistant does the work over MCP, and a supervisor approves the close. All three change the same objects, only through actions, and every refusal is explained.
 ---
@@ -46,7 +46,7 @@ them. Two machines are seeded: Press 7 and Conveyor 2, both `running`.
 ### Who sees which incidents
 
 `incident` is a restricted type with `assignee` as its
-[assignee property](/docs/concepts/ontology/#assigned-objects):
+[access property](/docs/concepts/ontology/#shared-and-assigned-objects):
 
 | Team | Sees |
 |---|---|
@@ -56,7 +56,7 @@ them. Two machines are seeded: Press 7 and Conveyor 2, both `running`.
 
 ```json
 PUT /v1/ontology/object-types/incident/access
-{ "restricted": true, "assignee_property": "assignee",
+{ "restricted": true, "access_properties": ["assignee"],
   "grants": [
     { "team_id": "<dispatch>", "permission": "view_objects" },
     { "team_id": "<dispatch>", "permission": "edit_objects" },

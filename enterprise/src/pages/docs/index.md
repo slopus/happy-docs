@@ -34,11 +34,11 @@ see or affect another.
 | People and agents | Human users log in with an emailed code. Assistants act for a signed-in person over MCP; agent accounts act as themselves with API tokens. See [How it fits](/docs/how-it-fits/#how-it-connects) and [Users, teams, permissions](/docs/concepts/organizations/). |
 | Teams and permissions | The system teams `owners` and `everyone`, custom teams, and seven permissions granted to teams. |
 | Login and security posture | Email codes, invites, DNS-verified allowed domains, required two-factor authentication with TOTP or WebAuthn. See [Authentication](/docs/concepts/authentication/). |
-| An ontology | Object types with typed properties and format rules, versioned schemas, custom validators in sandboxed Python, link types with cardinality, queries, and per-type access, down to the objects assigned to each member. See [The ontology](/docs/concepts/ontology/). |
+| An ontology | Object types with typed properties and format rules, versioned schemas, custom validators in sandboxed Python, link types with cardinality, queries, and per-type access, down to the objects shared with each member or their teams. See [The ontology](/docs/concepts/ontology/). |
 | Business actions | The organization's own operations, such as "open a work order": typed parameters, criteria, edits applied all or nothing, safe retries, webhooks and emails after commit, and an audit log. See [Business actions](/docs/concepts/actions/). |
 | Live updates | Every change to the ontology as a resumable stream of server-sent events. See [Live events](/docs/concepts/live-events/). |
 | An MCP server | At `/orgs/{org}/mcp`, behind the organization's own OAuth 2.1 authorization server. See [MCP and OAuth](/docs/concepts/mcp/). |
-| Files | Avatars and an organization photo, in a local directory or an S3 bucket. |
+| Files | Avatars, an organization photo, and attachments up to 25 MiB, readable by whoever may see an object that refers to them. In a local directory or an S3 bucket. See [Files and email](/docs/concepts/files-and-email/). |
 
 ## How it is kept apart
 
@@ -71,13 +71,22 @@ and what it does not cover.
 What Happy Enterprise does not do yet. Each item comes off this list when
 it ships.
 
-- **Object access goes as far as assignment.** A team sees all objects of a
-  type, or only [the ones assigned to each member](/docs/concepts/ontology/#assigned-objects).
-  There are no rules for single properties (an employee's name for everyone,
-  their salary for a few), for team-wide assignment (the incidents assigned
-  to my team), or for other relationships (a manager sees their reports'
-  expenses). Writes can be narrowed further through
+- **Object access goes as far as the object's own properties.** A team sees
+  all objects of a type, or only
+  [the ones that name the member or a team of theirs](/docs/concepts/ontology/#shared-and-assigned-objects)
+  (an assignee, an owner, a list of viewers or teams). There are no rules for
+  single properties (an employee's name for everyone, their salary for a
+  few), and access does not follow links: a manager does not see their
+  reports' expenses, and a document does not inherit its folder's sharing.
+  Writes can be narrowed further through
   [business actions](/docs/concepts/actions/).
+- **Actions change only the objects they are given.** An action cannot
+  update every document in a folder; each object it edits is a parameter or
+  one it creates.
+- **Every reader is a member.** There are no share links for people outside
+  the organization.
+- **No full-text search.** Filters match property values, not the contents
+  of attached files.
 - **No transactions outside actions.** Plain object and link writes are one
   operation each. A change that takes several steps is atomic only when it is
   defined as an action.
@@ -86,6 +95,9 @@ it ships.
   `order_by` on a property, take 1.3 to 2.3 seconds at a million objects of a
   type. Lookups by id, link traversals, and `linked` filters use indexes.
   See [Performance](/docs/self-hosting/performance/).
+- **Files have no quota or cleanup.** Uploads are limited to 25 MiB each,
+  but not in total, and attachments that no object refers to are kept. MCP
+  clients cannot upload files.
 
 ## Where to go next
 
@@ -93,7 +105,7 @@ it ships.
   connect, and where your data and UI come from.
 - [Quickstart](/docs/quickstart/): run it locally, create an organization,
   log in, and define an object type.
-- [Example: machine maintenance](/docs/example/): an agent, an assistant,
-  and a person working on the same incident through actions.
+- [Use cases](/docs/examples/): complete examples, from machine
+  maintenance to document management, each run end to end.
 - [API reference](/docs/api/): every endpoint, with examples.
 - [Self-hosting](/docs/self-hosting/): roles, configuration, deployment.

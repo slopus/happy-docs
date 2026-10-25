@@ -59,7 +59,7 @@ organization's scope into its next use.
 
 One table carries a second policy: objects also have a *restrictive* policy,
 `object_access`, that limits a member to the objects of restricted types
-they may see, down to the [objects assigned to them](/docs/concepts/ontology/#assigned-objects).
+they may see, down to the [objects shared with them](/docs/concepts/ontology/#shared-and-assigned-objects).
 A restrictive policy can only narrow what the organization policy shows,
 never widen it, so it cannot reach across organizations either.
 

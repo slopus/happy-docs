@@ -5,6 +5,7 @@ import Rail from '../components/Rail.astro';
 import { docsHref } from '../lib/nav';
 
 const sections = [
+  { id: 'use-cases', title: 'Use cases' },
   { id: 'workflow', title: 'One incident' },
   { id: 'one-model', title: 'One model' },
   { id: 'organizations', title: 'Organizations' },
@@ -89,6 +90,22 @@ data: {"type":"employee","id":"o4b8j2e6c0t1q5w9r3y7u2i6","version":2,"properties
 ];
 
 
+// The worked examples, one tile each.
+const cases: { title: string; href: string; what: string; uses: string }[] = [
+  {
+    title: 'Machine maintenance',
+    href: 'examples/maintenance/',
+    what: 'Incidents, assignments, and work orders. Technicians see only the incidents assigned to them, and a high-severity close needs a second person.',
+    uses: 'assigned access · actions · four-eyes approval · webhooks',
+  },
+  {
+    title: 'Document management',
+    href: 'examples/documents/',
+    what: 'Folders and versioned documents shared with people and teams. Files are readable by whoever sees the document, and unsharing ends that at once.',
+    uses: 'sharing lists · team access · attachments · version conflicts',
+  },
+];
+
 // The maintenance example, step by step: who, what, and what came back.
 const steps: { who: string; what: string; outcome: string; refused?: boolean }[] = [
   { who: 'dispatch-bot · REST', what: 'An agent account reports a hydraulic leak on Press 7 and links it to the machine.', outcome: '201 incident' },
@@ -129,6 +146,30 @@ const steps: { who: string; what: string; outcome: string; refused?: boolean }[]
           </p>
         </section>
 
+        <section class="section" id="use-cases">
+          <h2>One backend for the apps you would otherwise build.</h2>
+          <p>
+            Maintenance tracking and document management are usually separate apps, each with its own database,
+            permission checks, and audit trail. Here each is a model and a set of actions loaded into the same server
+            through its API, used by the same people and agents under the same rules.
+          </p>
+          <ul class="tiles cases">
+            {
+              cases.map((c) => (
+                <li>
+                  <a class="tile__k" href={docsHref(c.href)}>{c.title}</a>
+                  <span class="tile__d">{c.what}</span>
+                  <span class="cases__uses">{c.uses}</span>
+                </li>
+              ))
+            }
+          </ul>
+          <p style="margin-top:1.25rem">
+            <a href={docsHref('examples/')}>All use cases</a>{' · '}
+            <a href="#workflow">One of them, step by step</a>
+          </p>
+        </section>
+
         <section class="section" id="workflow">
           <h2>One incident, an agent, an assistant, and a person.</h2>
           <p>
@@ -148,7 +189,7 @@ const steps: { who: string; what: string; outcome: string; refused?: boolean }[]
             }
           </ul>
           <p style="margin-top:1.25rem">
-            <a href={docsHref('example/')}>Walk through the example</a>{' · '}
+            <a href={docsHref('examples/maintenance/')}>Walk through the example</a>{' · '}
             <a href={docsHref('concepts/actions/')}>Business actions</a>
           </p>
         </section>
@@ -386,7 +427,7 @@ const steps: { who: string; what: string; outcome: string; refused?: boolean }[]
             </div>
             <div>
               <dt>Not finished.</dt>
-              <dd>Access goes down to the objects assigned to each member, not to single properties, and filters on properties are not indexed yet. See <a href={docsHref('#current-limits')}>current limits</a> and <a href={docsHref('self-hosting/performance/')}>measured performance</a>.</dd>
+              <dd>Access goes down to the objects shared with each member, not to single properties or along links, and filters on properties are not indexed yet. See <a href={docsHref('#current-limits')}>current limits</a> and <a href={docsHref('self-hosting/performance/')}>measured performance</a>.</dd>
             </div>
           </dl>
         </section>

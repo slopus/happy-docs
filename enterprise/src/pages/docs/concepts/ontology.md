@@ -51,12 +51,18 @@ property and struct field an `id` that survives renames (see
 | `date` | `YYYY-MM-DD` |
 | `timestamp` | RFC 3339; stored normalized to UTC |
 | `geo_point` | `{ "lat": -90..90, "lon": -180..180 }` |
-| `file_ref` | the id of a file of this organization, checked on write |
+| `file_ref` | the id of a file of this organization that the writer can read, checked on write |
 | `user_ref` | the id of a user of this organization, checked on write |
+| `team_ref` | the id of a team of this organization, checked on write |
 | `array` | `{ "kind": "array", "items": { "type": ..., "rules": [...] } }`: elements of one type, each with its own rules |
 | `struct` | `{ "kind": "struct", "fields": [ properties... ] }`: a nested object |
 
 Arrays and structs nest at most 4 deep.
+
+A reference to a user, team, or file that does not exist is a `422`: "the
+properties refer to users, teams or files that do not exist". A file the
+writer cannot read counts as one that does not exist, so a write can only
+attach files its writer could already read.
 
 ### Format rules
 
@@ -272,12 +278,13 @@ Ontology access combines organization-wide permissions with per-type rules:
 - An owner can **restrict** a type (`PUT .../object-types/{type}/access`).
   Then only owners and teams granted `view_objects` or `edit_objects` *on that
   type* reach its objects. To everyone else the type does not exist: `404`.
-- A restricted type can also limit a team to **the objects assigned to its
-  members**; see [Assigned objects](#assigned-objects) below.
+- A restricted type can also limit a team to **the objects shared with or
+  assigned to each member**; see
+  [Shared and assigned objects](#shared-and-assigned-objects) below.
 - Links to types you cannot view are hidden, and you cannot navigate them.
 - Schema changes need `manage_ontology` **and** a view of the whole type,
   because whether a change is accepted says something about the stored values.
-  A view of only the objects assigned to you is not enough: `403`.
+  A view of only the objects shared with you is not enough: `403`.
 - `manage_ontology` alone cannot decide who reads data: access settings are
   owner-only.
 - OAuth grants (MCP clients) never change the schema.
@@ -285,18 +292,21 @@ Ontology access combines organization-wide permissions with per-type rules:
   action's edits without `edit_objects`, but still needs view access to
   every type the action touches.
 
-### Assigned objects
+### Shared and assigned objects
 
-A restricted type may name one of its top-level `user_ref` properties as its
-**assignee property**, such as an incident's `assignee`. A `view_objects`
-grant on the type is then either for all of its objects (`scope: "all"`, the
-default) or only for the objects assigned to the member (`scope:
-"assigned"`): those whose assignee property holds the member's own user id.
+A restricted type may name **access properties**: top-level properties of
+type `user_ref` or `team_ref`, or arrays of either, such as an incident's
+`assignee`, a document's `owner`, or its `viewers` and `teams` lists. A
+`view_objects` grant on the type is then either for all of its objects
+(`scope: "all"`, the default) or only for the objects that name the member
+(`scope: "assigned"`): those where one of the access properties holds the
+member's own user id, or the id of a team they are on, as the value or as an
+element of the list.
 
 ```json
 PUT /v1/ontology/object-types/incident/access
 { "restricted": true,
-  "assignee_property": "assignee",
+  "access_properties": ["assignee"],
   "grants": [
     { "team_id": "<dispatch>", "permission": "view_objects" },
     { "team_id": "<dispatch>", "permission": "edit_objects" },
@@ -307,6 +317,15 @@ PUT /v1/ontology/object-types/incident/access
 Here every technician sees only the incidents assigned to them; dispatch and
 supervisors see all of them. Owners always see every object.
 
+The same mechanism shares objects. A document type with
+`"access_properties": ["owner", "editors", "viewers", "teams"]` and an
+`assigned` view grant to `everyone` lets each member see the documents they
+own, the ones listing them as an editor or viewer, and the ones shared with
+a team they are on. Sharing is a write to one of those properties, so who
+may share is decided like any other write, usually by a
+[business action](/docs/concepts/actions/). See
+[Example: document management](/docs/examples/documents/).
+
 Postgres enforces this itself, with a second row level security policy on
 objects that can only narrow what the organization policy shows, for reads
 and for writes. So it holds everywhere the objects are reached:
@@ -315,20 +334,26 @@ and for writes. So it holds everywhere the objects are reached:
   [actions](/docs/concepts/actions/) see only the objects in reach. Any other
   object answers `404`, as if it did not exist; passed to an action, it is
   refused as an unknown object (`422`, at `params.<name>`).
-- **Writes.** An edit grant reaches what its holder can see. A write that
-  would leave an object out of its writer's sight is `403 forbidden` ("you
-  may only write objects assigned to you"): handing your incident to someone
-  else, or creating one assigned to someone else. Hidden objects are never
-  changed.
+- **Files.** Files that a visible object refers to through a `file_ref` can
+  be read with it, and stop being readable when the object is unshared. See
+  [Files](/docs/concepts/files-and-email/#who-may-read-a-file).
+- **Writes.** An edit grant reaches what its holder can see. Sharing an
+  object further is allowed wherever you may edit it. A write that would
+  leave an object out of its writer's sight is `403 forbidden` ("you may only
+  write objects that stay shared with you"): unsharing it from yourself,
+  handing your incident to someone else, or creating one only for someone
+  else. Hidden objects are never changed.
+- **Teams.** Leaving a team ends access to what was shared with that team at
+  once; joining one starts it.
 - **Links.** Deleting an object linked to objects you cannot see is `409`;
   removing a link to one is `404`.
 - **Events.** For a type you see only in part, an event reaches you only if
   you see every object it names when the event is read, and the type's
-  `type.validation` progress events never do. An object reassigned to you
+  `type.validation` progress events never do. An object shared with you
   starts sending you its events.
-- **Removing the property.** If a schema change removes the assignee
-  property, the type's `assignee_property` is cleared and `assigned` grants
-  reach nothing until a new one is set.
+- **Removing a property.** If a schema change removes an access property, it
+  is also removed from the type's `access_properties`; while none are left,
+  `assigned` grants reach nothing.
 
 Two things can still hint at hidden objects: a `409` for a `unique` value or
 a link's cardinality can reveal that an object you cannot see holds it, and

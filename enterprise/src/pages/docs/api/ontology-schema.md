@@ -167,7 +167,7 @@ Every version of the definition, newest first.
 ```json
 {
   "restricted": true,
-  "assignee_property": "assignee",
+  "access_properties": ["assignee"],
   "grants": [
     { "team_id": "m2n4b6v8c0x1z3l5k7j9h0g2", "permission": "edit_objects", "scope": "all" },
     { "team_id": "m2n4b6v8c0x1z3l5k7j9h0g2", "permission": "view_objects", "scope": "all" },
@@ -187,7 +187,7 @@ type does not exist. Grants have no effect while the type is unrestricted.
 ```json
 {
   "restricted": true,
-  "assignee_property": "assignee",
+  "access_properties": ["assignee"],
   "grants": [
     { "team_id": "m2n4b6v8c0x1z3l5k7j9h0g2", "permission": "view_objects" },
     { "team_id": "m2n4b6v8c0x1z3l5k7j9h0g2", "permission": "edit_objects" },
@@ -197,17 +197,22 @@ type does not exist. Grants have no effect while the type is unrestricted.
 ```
 
 A grant's `permission` is `view_objects` or `edit_objects`. Its `scope` is
-`all` (the default) or, for `view_objects` on a type with an
-`assignee_property`, `assigned`: only the objects whose assignee property
-holds the member's own id. `assignee_property` is optional: the `api_name`
-of a top-level `user_ref` property, or `null`. See
-[Assigned objects](/docs/concepts/ontology/#assigned-objects). A member still
-needs the organization-wide permission too: a grant narrows who may use
-`view_objects` on the type, it does not hand it out. Returns the access
-settings and emits a `type.changed` event. `400` for an unknown team or
-permission, an `assigned` grant without an `assignee_property` or on
-`edit_objects`, an `assignee_property` that is not a top-level `user_ref`,
-or two grants for the same team and permission.
+`all` (the default) or, for `view_objects` on a type with
+`access_properties`, `assigned`: only the objects that name the member in one
+of those properties, by their own id or the id of a team they are on, as the
+value or as an element of a list. `access_properties` is optional (default
+`[]`): the `api_name`s of top-level properties of type `user_ref`,
+`team_ref`, or an array of either. See
+[Shared and assigned objects](/docs/concepts/ontology/#shared-and-assigned-objects).
+A member still needs the organization-wide permission too: a grant narrows
+who may use `view_objects` on the type, it does not hand it out. Returns the
+access settings and emits a `type.changed` event.
+
+`400` for an unknown team or permission, an `assigned` grant without
+`access_properties` or on `edit_objects`, an access property that is not a
+top-level `user_ref` or `team_ref` or an array of either, a property named
+twice, or two grants for the same team and permission. Unknown fields are
+refused, including `assignee_property`, which `access_properties` replaced.
 
 ## Link types
 

@@ -18,6 +18,7 @@ export default defineConfig({
     '/docs/api/organisation/': `${base}/docs/api/organization/`,
     '/docs/verification/': `${base}/docs/concepts/isolation/`,
     '/docs/self-hosting/development/': `${base}/docs/self-hosting/`,
+    '/docs/example/': `${base}/docs/examples/maintenance/`,
   },
   markdown: {
     shikiConfig: {

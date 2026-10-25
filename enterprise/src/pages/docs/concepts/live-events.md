@@ -73,9 +73,9 @@ credential, then:
   object type it is about. A link between an `employee` and a restricted
   `salary_band` is not delivered to someone who cannot view `salary_band`;
 - for a type the subscriber sees only in part (the
-  [objects assigned to them](/docs/concepts/ontology/#assigned-objects)),
+  [objects shared with them](/docs/concepts/ontology/#shared-and-assigned-objects)),
   an event goes out only if they see every object it names, and the type's
-  `type.validation` events never do. An object reassigned to the subscriber
+  `type.validation` events never do. An object shared with the subscriber
   starts sending them its events;
 - an ended session, a deactivated user, or a lost `view_objects` ends the
   stream.
