@@ -157,7 +157,7 @@ curl -X POST "$BASE/v1/actions/open_work_order/apply" \
 | `200` | | a retry with the same key and request; the stored result with `replayed: true` |
 | `403` | `forbidden` | no grant, no view access to a touched type, or (OAuth) no `actions:apply` scope |
 | `404` | `not_found` | no such action, or it was deleted |
-| `409` | `version_conflict` | an object is not at its expected version, or changed before the edits ran |
+| `409` | `version_conflict` | an object is not at its expected version, or it or the links between the parameters' objects changed before the edits ran (path `links`) |
 | `409` | `idempotency_conflict` | the key was used for a different request |
 | `409` | `conflict` | an edit would duplicate a unique value |
 | `422` | `validation_failed` | a parameter or an edit breaks its rules; paths `params.x`, `edits[i].properties.x` |

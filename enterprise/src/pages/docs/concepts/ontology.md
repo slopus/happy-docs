@@ -77,11 +77,34 @@ attach files its writer could already read.
 | `uuid`, `cuid` | strings | a UUID, a cuid2 (built-in) |
 | `format` `{name, version}` | strings, including nested values | one of the organization's own [formats](/docs/concepts/validators/#formats) |
 | `unique` | top-level scalar properties other than booleans | no two objects of the type share the value |
+| `sequence` | top-level integers, from the start | numbered by the server: 1, 2, 3, ... (see [Sequences](#sequences)) |
 | `validator` `{name, version}` | any type, including nested values | a [custom validator](/docs/concepts/validators/) |
 
 A property may have up to 20 rules. Rules that do not fit their type (`email`
 on an integer, an invalid regex) are refused with the definition, every
 problem listed in a `422 validation_failed`.
+
+### Sequences
+
+A top-level `integer` property with `{"rule": "sequence"}` is numbered by the
+server: invoice numbers, deal numbers, stock numbers.
+
+```json
+{ "api_name": "number", "type": { "kind": "integer" }, "rules": [{ "rule": "sequence" }] }
+```
+
+- Every create, through REST, MCP, or an action, gets the next number, 1, 2,
+  3, ..., counted per organization, type, and property.
+- Numbers are given out **without gaps, in commit order**. The counter stays
+  locked from the create until its transaction commits, so creates of one
+  type wait for each other for that moment, and a create that rolls back
+  gives its number back. A deleted object's number is not given out again.
+- Writes may not set or change the number (`422`). Within an action, the
+  number is readable once the object is created, for example in an email as
+  `{{created.invoice.number}}`.
+- The rule implies `unique`.
+- It applies only to a property that has it from the start. Adding it to an
+  existing property is refused; add a new property instead.
 
 ## Objects
 

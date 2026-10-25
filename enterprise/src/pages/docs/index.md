@@ -35,7 +35,7 @@ see or affect another.
 | Teams and permissions | The system teams `owners` and `everyone`, custom teams, and seven permissions granted to teams. |
 | Login and security posture | Email codes, invites, DNS-verified allowed domains, required two-factor authentication with TOTP or WebAuthn. See [Authentication](/docs/concepts/authentication/). |
 | An ontology | Object types with typed properties and format rules, versioned schemas, custom validators in sandboxed Python, link types with cardinality, queries, and per-type access, down to the objects shared with each member or their teams. See [The ontology](/docs/concepts/ontology/). |
-| Business actions | The organization's own operations, such as "open a work order": typed parameters, criteria, edits applied all or nothing, safe retries, webhooks and emails after commit, and an audit log. See [Business actions](/docs/concepts/actions/). |
+| Business actions | The organization's own operations, such as "open a work order": typed parameters, criteria, edits applied all or nothing, safe retries, webhooks and emails (to members or customers) after commit, and an audit log. See [Business actions](/docs/concepts/actions/). |
 | Live updates | Every change to the ontology as a resumable stream of server-sent events. See [Live events](/docs/concepts/live-events/). |
 | An MCP server | At `/orgs/{org}/mcp`, behind the organization's own OAuth 2.1 authorization server. See [MCP and OAuth](/docs/concepts/mcp/). |
 | Files | Avatars, an organization photo, and attachments up to 25 MiB, readable by whoever may see an object that refers to them. In a local directory or an S3 bucket. See [Files and email](/docs/concepts/files-and-email/). |
@@ -80,9 +80,14 @@ it ships.
   reports' expenses, and a document does not inherit its folder's sharing.
   Writes can be narrowed further through
   [business actions](/docs/concepts/actions/).
-- **Actions change only the objects they are given.** An action cannot
-  update every document in a folder; each object it edits is a parameter or
-  one it creates.
+- **Actions see and change only the objects they are given.** An action
+  cannot update every document in a folder, and its criteria cannot ask
+  whether a car has any reservation: they see their parameters' objects, the
+  links between them, and the objects the action creates.
+- **No scheduled actions.** Nothing runs on its own at a time, so a
+  reservation that has run out waits for someone to release it.
+- **Emails go to one person each.** An action emails a member or an outside
+  address, not a team.
 - **Every reader is a member.** There are no share links for people outside
   the organization.
 - **No full-text search.** Filters match property values, not the contents
@@ -105,7 +110,7 @@ it ships.
   connect, and where your data and UI come from.
 - [Quickstart](/docs/quickstart/): run it locally, create an organization,
   log in, and define an object type.
-- [Use cases](/docs/examples/): complete examples, from machine
-  maintenance to document management, each run end to end.
+- [Use cases](/docs/examples/): complete examples, machine maintenance,
+  document management, and car sales, each run end to end.
 - [API reference](/docs/api/): every endpoint, with examples.
 - [Self-hosting](/docs/self-hosting/): roles, configuration, deployment.

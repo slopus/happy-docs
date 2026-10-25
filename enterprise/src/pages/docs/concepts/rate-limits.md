@@ -13,6 +13,7 @@ lead: Sliding-window limits protect login, second factors, and OAuth. They are k
 | Second-factor attempts (REST and OAuth pages) | 60 per 15 minutes | 20 per 15 minutes per user, across sessions (10 failures also end a session) |
 | OAuth token and revocation | 120 per minute | 60 per minute per client |
 | OAuth client registration | 20 per hour | 100 per hour per organization |
+| Action emails to outside addresses | | 200 per hour per organization; deliveries over the limit wait |
 
 ## Behavior
 

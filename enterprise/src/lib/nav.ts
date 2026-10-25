@@ -24,6 +24,7 @@ export const NAV: NavGroup[] = [
       { title: 'Use cases', href: 'examples/' },
       { title: 'Machine maintenance', href: 'examples/maintenance/' },
       { title: 'Document management', href: 'examples/documents/' },
+      { title: 'Car sales', href: 'examples/car-sales/' },
     ],
   },
   {

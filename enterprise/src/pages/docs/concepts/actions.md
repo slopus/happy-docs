@@ -106,7 +106,7 @@ Every criterion must hold for the action to apply. A criterion is either a
 declarative `condition` or Python `code`.
 
 **Conditions** combine `and`, `or`, `not`, `eq`, `ne`, `lt`, `lte`, `gt`,
-`gte`, and `in` over these expressions:
+`gte`, `in`, and `is_null` over these expressions:
 
 | Expression | Value |
 |---|---|
@@ -116,8 +116,22 @@ declarative `condition` or Python `code`.
 | `{"now": true}` | the time of the request |
 | `{"value": "open"}` | a literal |
 
+One more condition looks at links:
+
+```json
+{ "op": "linked", "link": "reservation_car",
+  "from": { "param": "reservation" }, "to": { "param": "car" } }
+```
+
+It holds when a link of that type, visible to the caller, joins the two
+object parameters' objects: the reservation is for this car, the trade-in
+belongs to this deal. Without it, a caller could pass a car and someone
+else's reservation and have the criteria judge them as a pair.
+
 **Code** defines `check(ctx)` and returns `True`, or a message saying why
-not. `ctx` is `{action, params, objects, caller {id, kind}, now}`:
+not. `ctx` is `{action, params, objects, links, caller {id, kind}, now}`,
+where `links` lists the links between the parameters' objects, of the link
+types the definition uses, as `{link, from, to}`:
 
 ```python
 def check(ctx):
@@ -168,14 +182,16 @@ is written:
    `403`.
 2. **Parameters**: checked like properties. `422 validation_failed`, with
    paths like `params.summary`.
-3. **Snapshot**: the parameters' objects are read. Criteria and edits see
-   this snapshot.
+3. **Snapshot**: the parameters' objects, and the links between them, are
+   read. Criteria and edits see this snapshot.
 4. **Expected versions**: if the request names `expected_versions`
    (`{param: version}`) and an object has moved on, `409 version_conflict`.
 5. **Criteria**: `422 criteria_failed`.
-6. **Edits**: the snapshot's objects are locked and their versions checked
-   again, so the criteria held on exactly what commits. If one changed in the
-   meantime, `409 version_conflict`. An edit that breaks its type's rules is
+6. **Edits**: the snapshot's objects are locked, and their versions and the
+   links between them are checked again, so the criteria held on exactly what
+   commits. If one changed in the meantime, `409 version_conflict`, at the
+   parameter's path or at `links`. Link writes lock both their objects, so the
+   links cannot change between this check and the commit. An edit that breaks its type's rules is
    `422` (or `409` for a unique value), with paths like
    `edits[0].properties.summary`.
 7. **Record**: the audit row, the effects, and the events.
@@ -216,7 +232,7 @@ Keys are forgotten after 7 days; the audit row stays.
 ## Effects
 
 Effects reach outside the database: a `webhook`, or an `email` to a user of
-the organization. They are written to an outbox in the same transaction, so
+the organization or to an outside address. They are written to an outbox in the same transaction, so
 they exist exactly when the application commits, and a background job
 delivers them afterwards, at least once. Failed deliveries are retried after
 30 seconds, doubling up to an hour, 10 attempts in all, then marked `failed`.
@@ -230,11 +246,44 @@ delivers them afterwards, at least once. Failed deliveries are retried after
 ]
 ```
 
-An email goes to the user named by `to`, through the configured
-[email provider](/docs/concepts/files-and-email/). Its templates may use
-`{{param.x}}`, `{{object.p.x}}`, `{{created.r}}`, `{{caller.id}}`, and
+**Emails** go through the configured
+[email provider](/docs/concepts/files-and-email/), to exactly one of:
+
+- `to`: a user id expression. The email goes to that user's address while
+  they are an active member of the organization.
+- `to_address`: an address outside the organization, such as a customer or
+  a supplier. The expression must be a string parameter or property with the
+  `email` rule, or a literal address, so an action can only write to
+  addresses that were checked as addresses.
+
+```json
+{ "kind": "email",
+  "to_address": { "object": "deal", "property": "customer_email" },
+  "subject": "Your invoice {{created.invoice.number}}",
+  "text": "Dear {{object.deal.customer_name}}, ..." }
+```
+
+Templates may use `{{param.x}}`, `{{object.p.x}}`, `{{created.r}}` (a created
+object's id), `{{created.r.x}}` (one of its properties, as written, including
+a [sequence](/docs/concepts/ontology/#sequences) number), `{{caller.id}}`, and
 `{{action}}`. The subject is one line of up to 200 characters, the text up to
 5,000.
+
+Emails to outside addresses end with the line
+`Sent for <organization> by Happy Enterprise.` and are limited to 200 an hour
+per organization ([rate limits](/docs/concepts/rate-limits/)). Over the
+limit, a delivery waits for room without using up one of its attempts.
+
+**Conditional effects.** Any effect may carry `when`, a condition in the
+same syntax as criteria. The effect is enqueued only if it held on the
+snapshot the action applied to:
+
+```json
+{ "kind": "email", "to": { "param": "approver" },
+  "when": { "op": "gt", "left": { "param": "amount" }, "right": { "value": 1000 } },
+  "subject": "Discount of {{param.amount}} needs your decision",
+  "text": "{{param.reason}}" }
+```
 
 **Webhooks** must use `https` and a public address. A webhook is a `POST` of
 `{delivery_id, action, action_version, application_id, applied_at,
