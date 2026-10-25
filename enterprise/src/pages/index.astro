@@ -94,7 +94,7 @@ const steps: { who: string; what: string; outcome: string; refused?: boolean }[]
   { who: 'dispatch-bot · REST', what: 'An agent account reports a hydraulic leak on Press 7 and links it to the machine.', outcome: '201 incident' },
   { who: 'dispatch-bot · REST', what: 'It applies assign_incident: an assignment is recorded and Tess is emailed.', outcome: '201 applied' },
   { who: 'dispatch-bot · REST', what: 'Its answer is lost, so it retries with the same idempotency key.', outcome: '200 replayed' },
-  { who: 'Tess · MCP', what: 'Her assistant finds the incident assigned to her and lists the actions she may apply.', outcome: 'close, create order' },
+  { who: 'Tess · MCP', what: 'Her assistant sees only the incidents assigned to her, and lists the actions she may apply.', outcome: '1 incident visible' },
   { who: 'Tess · MCP', what: 'It tries to reassign the incident. Technicians are not granted that action.', outcome: '403 forbidden', refused: true },
   { who: 'Tess · MCP', what: 'It opens a work order: the order, two links, the incident in progress, the machine in maintenance, in one transaction.', outcome: '201 applied' },
   { who: 'Tess · MCP', what: 'It submits the close with the version it read before the work order changed the incident.', outcome: '409 version_conflict', refused: true },
@@ -386,7 +386,7 @@ const steps: { who: string; what: string; outcome: string; refused?: boolean }[]
             </div>
             <div>
               <dt>Not finished.</dt>
-              <dd>Read access is per organization and per object type, and there are no published benchmarks yet. See <a href={docsHref('#current-limits')}>current limits</a>.</dd>
+              <dd>Access goes down to the objects assigned to each member, not to single properties, and there are no published benchmarks yet. See <a href={docsHref('#current-limits')}>current limits</a>.</dd>
             </div>
           </dl>
         </section>

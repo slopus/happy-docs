@@ -43,6 +43,30 @@ The `status` properties are `enum` rules and the people are `user_ref`
 properties, so every write, whether from an action or not, is checked against
 them. Two machines are seeded: Press 7 and Conveyor 2, both `running`.
 
+### Who sees which incidents
+
+`incident` is a restricted type with `assignee` as its
+[assignee property](/docs/concepts/ontology/#assigned-objects):
+
+| Team | Sees |
+|---|---|
+| `dispatch` | every incident, and may edit them (`view_objects` and `edit_objects`, scope `all`) |
+| `supervisors` | every incident (`view_objects`, scope `all`) |
+| `technicians` | only the incidents assigned to them (`view_objects`, scope `assigned`) |
+
+```json
+PUT /v1/ontology/object-types/incident/access
+{ "restricted": true, "assignee_property": "assignee",
+  "grants": [
+    { "team_id": "<dispatch>", "permission": "view_objects" },
+    { "team_id": "<dispatch>", "permission": "edit_objects" },
+    { "team_id": "<supervisors>", "permission": "view_objects" },
+    { "team_id": "<technicians>", "permission": "view_objects", "scope": "assigned" } ] }
+```
+
+Postgres enforces it, so Tess's assistant cannot see or name an incident that
+is not hers by any route: queries, links, MCP tools, or actions.
+
 ## The actions
 
 | Action | Granted to | Does |
@@ -185,7 +209,8 @@ As an owner, through the REST API:
    ([teams API](/docs/api/teams/)). Add Sam to `supervisors`, Tess to
    `technicians`, and the agent to `dispatch`.
 2. Create the object types and link types
-   ([schema API](/docs/api/ontology-schema/)).
+   ([schema API](/docs/api/ontology-schema/)), and restrict `incident` as
+   above.
 3. Create the three action types and grant each to its teams
    (`PUT /v1/ontology/action-types/{type}/access`,
    [actions API](/docs/api/actions/)).
@@ -207,7 +232,9 @@ Authorization: Bearer heat_...
 PUT /v1/ontology/links/incident_machine/<incident>/<press 7>
 ```
 
-Then it assigns the incident to Tess, with an idempotency key:
+It also reports a second, low-severity incident, "Belt squeal on Conveyor
+2", which nobody is assigned yet. Then it assigns the leak to Tess, with an
+idempotency key:
 
 ```http
 POST /v1/actions/assign_incident/apply
@@ -232,7 +259,10 @@ Tess connects her MCP client to the organization and grants it
 `action_create_maintenance_order`, but not `action_assign_incident`:
 technicians are not granted it.
 
-The assistant finds what is assigned to her (`whoami` gives her id):
+Asked for every incident (`query_objects` on `incident`, no filter), the
+assistant gets one: the leak. The belt squeal exists, but it is not assigned
+to Tess, so to her it does not. It narrows the query anyway (`whoami` gives
+her id):
 
 ```json
 { "tool": "query_objects",
@@ -362,3 +392,6 @@ last error, and next attempt.
   replay, not a second work order.
 - **People and agents see the same objects.** The supervisor's app, the
   technician's assistant, and the agent read and change one incident.
+- **Each sees only what is theirs.** The technician's assistant sees the
+  incidents assigned to her and nothing else, enforced by the database, not
+  by the client.

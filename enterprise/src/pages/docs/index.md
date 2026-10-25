@@ -34,7 +34,7 @@ see or affect another.
 | People and agents | Human users log in with an emailed code. Assistants act for a signed-in person over MCP; agent accounts act as themselves with API tokens. See [How it fits](/docs/how-it-fits/#how-it-connects) and [Users, teams, permissions](/docs/concepts/organizations/). |
 | Teams and permissions | The system teams `owners` and `everyone`, custom teams, and seven permissions granted to teams. |
 | Login and security posture | Email codes, invites, DNS-verified allowed domains, required two-factor authentication with TOTP or WebAuthn. See [Authentication](/docs/concepts/authentication/). |
-| An ontology | Object types with typed properties and format rules, versioned schemas, custom validators in sandboxed Python, link types with cardinality, queries, and per-type access. See [The ontology](/docs/concepts/ontology/). |
+| An ontology | Object types with typed properties and format rules, versioned schemas, custom validators in sandboxed Python, link types with cardinality, queries, and per-type access, down to the objects assigned to each member. See [The ontology](/docs/concepts/ontology/). |
 | Business actions | The organization's own operations, such as "open a work order": typed parameters, criteria, edits applied all or nothing, safe retries, webhooks and emails after commit, and an audit log. See [Business actions](/docs/concepts/actions/). |
 | Live updates | Every change to the ontology as a resumable stream of server-sent events. See [Live events](/docs/concepts/live-events/). |
 | An MCP server | At `/orgs/{org}/mcp`, behind the organization's own OAuth 2.1 authorization server. See [MCP and OAuth](/docs/concepts/mcp/). |
@@ -71,13 +71,13 @@ and what it does not cover.
 What Happy Enterprise does not do yet. Each item comes off this list when
 it ships.
 
-- **Read access is per organization and per object type.** A member who may
-  view a type sees every object of it and every property. There are no rules
-  for single objects (only the incidents assigned to my team) or single
-  properties (an employee's name for everyone, their salary for a few).
-  Writes can be narrowed further: a [business action](/docs/concepts/actions/)'s
-  criteria can check the caller against the objects it changes, and a team
-  can be granted an action without `edit_objects`.
+- **Object access goes as far as assignment.** A team sees all objects of a
+  type, or only [the ones assigned to each member](/docs/concepts/ontology/#assigned-objects).
+  There are no rules for single properties (an employee's name for everyone,
+  their salary for a few), for team-wide assignment (the incidents assigned
+  to my team), or for other relationships (a manager sees their reports'
+  expenses). Writes can be narrowed further through
+  [business actions](/docs/concepts/actions/).
 - **No transactions outside actions.** Plain object and link writes are one
   operation each. A change that takes several steps is atomic only when it is
   defined as an action.

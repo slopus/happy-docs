@@ -88,7 +88,8 @@ reaches owner-only actions. So no credential is ever permitted more than its
 user holds, and OAuth grants never administer the organization.
 
 Permissions on ontology objects are further narrowed per object type when an
-owner restricts a type. See [The ontology](/docs/concepts/ontology/#access).
+owner restricts a type, and can be narrowed to the objects assigned to each
+member. See [The ontology](/docs/concepts/ontology/#access).
 
 ## Joining an organization
 

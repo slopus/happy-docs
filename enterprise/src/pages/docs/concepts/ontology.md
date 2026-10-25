@@ -271,15 +271,67 @@ Ontology access combines organization-wide permissions with per-type rules:
 - An owner can **restrict** a type (`PUT .../object-types/{type}/access`).
   Then only owners and teams granted `view_objects` or `edit_objects` *on that
   type* reach its objects. To everyone else the type does not exist: `404`.
+- A restricted type can also limit a team to **the objects assigned to its
+  members**; see [Assigned objects](#assigned-objects) below.
 - Links to types you cannot view are hidden, and you cannot navigate them.
-- Schema changes need `manage_ontology` **and** view access to the type,
+- Schema changes need `manage_ontology` **and** a view of the whole type,
   because whether a change is accepted says something about the stored values.
+  A view of only the objects assigned to you is not enough: `403`.
 - `manage_ontology` alone cannot decide who reads data: access settings are
   owner-only.
 - OAuth grants (MCP clients) never change the schema.
 - A team granted a [business action](/docs/concepts/actions/) may make that
   action's edits without `edit_objects`, but still needs view access to
   every type the action touches.
+
+### Assigned objects
+
+A restricted type may name one of its top-level `user_ref` properties as its
+**assignee property**, such as an incident's `assignee`. A `view_objects`
+grant on the type is then either for all of its objects (`scope: "all"`, the
+default) or only for the objects assigned to the member (`scope:
+"assigned"`): those whose assignee property holds the member's own user id.
+
+```json
+PUT /v1/ontology/object-types/incident/access
+{ "restricted": true,
+  "assignee_property": "assignee",
+  "grants": [
+    { "team_id": "<dispatch>", "permission": "view_objects" },
+    { "team_id": "<dispatch>", "permission": "edit_objects" },
+    { "team_id": "<supervisors>", "permission": "view_objects" },
+    { "team_id": "<technicians>", "permission": "view_objects", "scope": "assigned" } ] }
+```
+
+Here every technician sees only the incidents assigned to them; dispatch and
+supervisors see all of them. Owners always see every object.
+
+Postgres enforces this itself, with a second row level security policy on
+objects that can only narrow what the organization policy shows, for reads
+and for writes. So it holds everywhere the objects are reached:
+
+- **Reads.** Gets, queries, `linked` filters, link navigation, MCP tools, and
+  [actions](/docs/concepts/actions/) see only the objects in reach. Any other
+  object answers `404`, as if it did not exist; passed to an action, it is
+  refused as an unknown object (`422`, at `params.<name>`).
+- **Writes.** An edit grant reaches what its holder can see. A write that
+  would leave an object out of its writer's sight is `403 forbidden` ("you
+  may only write objects assigned to you"): handing your incident to someone
+  else, or creating one assigned to someone else. Hidden objects are never
+  changed.
+- **Links.** Deleting an object linked to objects you cannot see is `409`;
+  removing a link to one is `404`.
+- **Events.** For a type you see only in part, an event reaches you only if
+  you see every object it names when the event is read, and the type's
+  `type.validation` progress events never do. An object reassigned to you
+  starts sending you its events.
+- **Removing the property.** If a schema change removes the assignee
+  property, the type's `assignee_property` is cleared and `assigned` grants
+  reach nothing until a new one is set.
+
+Two things can still hint at hidden objects: a `409` for a `unique` value or
+a link's cardinality can reveal that an object you cannot see holds it, and
+a type's `validation` counts cover only the objects you see.
 
 ## Live updates
 

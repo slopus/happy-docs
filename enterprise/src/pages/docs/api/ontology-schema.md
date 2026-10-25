@@ -99,7 +99,7 @@ The object type. `404` if unknown or restricted from you.
 
 ### PUT /v1/ontology/object-types/{type}
 
-<p class="ep-meta"><span><b>Auth</b>full</span><span><b>Permission</b>manage_ontology and view access to the type</span></p>
+<p class="ep-meta"><span><b>Auth</b>full</span><span><b>Permission</b>manage_ontology and a view of the whole type</span></p>
 
 Replaces the definition and bumps `version`. `properties` is required;
 `display_name` and `description` keep their values when omitted.
@@ -136,14 +136,14 @@ once. Errors:
 
 ### DELETE /v1/ontology/object-types/{type}
 
-<p class="ep-meta"><span><b>Auth</b>full</span><span><b>Permission</b>manage_ontology and view access to the type</span></p>
+<p class="ep-meta"><span><b>Auth</b>full</span><span><b>Permission</b>manage_ontology and a view of the whole type</span></p>
 
 `204`, at once: the type disappears and its `api_name` is free. `409` while
 the type has live objects or link types.
 
 ### GET /v1/ontology/object-types/{type}/versions
 
-<p class="ep-meta"><span><b>Auth</b>full</span><span><b>Permission</b>manage_ontology and view access to the type</span></p>
+<p class="ep-meta"><span><b>Auth</b>full</span><span><b>Permission</b>manage_ontology and a view of the whole type</span></p>
 
 Every version of the definition, newest first.
 
@@ -167,9 +167,11 @@ Every version of the definition, newest first.
 ```json
 {
   "restricted": true,
+  "assignee_property": "assignee",
   "grants": [
-    { "team_id": "m2n4b6v8c0x1z3l5k7j9h0g2", "permission": "edit_objects" },
-    { "team_id": "m2n4b6v8c0x1z3l5k7j9h0g2", "permission": "view_objects" }
+    { "team_id": "m2n4b6v8c0x1z3l5k7j9h0g2", "permission": "edit_objects", "scope": "all" },
+    { "team_id": "m2n4b6v8c0x1z3l5k7j9h0g2", "permission": "view_objects", "scope": "all" },
+    { "team_id": "t3e5c7h9n1i2c3i4a5n6s7x8", "permission": "view_objects", "scope": "assigned" }
   ]
 }
 ```
@@ -185,24 +187,33 @@ type does not exist. Grants have no effect while the type is unrestricted.
 ```json
 {
   "restricted": true,
+  "assignee_property": "assignee",
   "grants": [
     { "team_id": "m2n4b6v8c0x1z3l5k7j9h0g2", "permission": "view_objects" },
-    { "team_id": "m2n4b6v8c0x1z3l5k7j9h0g2", "permission": "edit_objects" }
+    { "team_id": "m2n4b6v8c0x1z3l5k7j9h0g2", "permission": "edit_objects" },
+    { "team_id": "t3e5c7h9n1i2c3i4a5n6s7x8", "permission": "view_objects", "scope": "assigned" }
   ]
 }
 ```
 
-A grant's `permission` is `view_objects` or `edit_objects`. A member still
+A grant's `permission` is `view_objects` or `edit_objects`. Its `scope` is
+`all` (the default) or, for `view_objects` on a type with an
+`assignee_property`, `assigned`: only the objects whose assignee property
+holds the member's own id. `assignee_property` is optional: the `api_name`
+of a top-level `user_ref` property, or `null`. See
+[Assigned objects](/docs/concepts/ontology/#assigned-objects). A member still
 needs the organization-wide permission too: a grant narrows who may use
 `view_objects` on the type, it does not hand it out. Returns the access
 settings and emits a `type.changed` event. `400` for an unknown team or
-permission.
+permission, an `assigned` grant without an `assignee_property` or on
+`edit_objects`, an `assignee_property` that is not a top-level `user_ref`,
+or two grants for the same team and permission.
 
 ## Link types
 
 ### POST /v1/ontology/link-types
 
-<p class="ep-meta"><span><b>Auth</b>full</span><span><b>Permission</b>manage_ontology and view access to both types</span></p>
+<p class="ep-meta"><span><b>Auth</b>full</span><span><b>Permission</b>manage_ontology and a view of both whole types</span></p>
 
 ```json
 {
@@ -225,7 +236,7 @@ that name. A link from a type to itself needs two different names (`400`).
 
 ### PATCH /v1/ontology/link-types/{link}
 
-<p class="ep-meta"><span><b>Auth</b>full</span><span><b>Permission</b>manage_ontology and view access to both types</span></p>
+<p class="ep-meta"><span><b>Auth</b>full</span><span><b>Permission</b>manage_ontology and a view of both whole types</span></p>
 
 ```json
 { "display_name": "Assigned to", "cardinality": "many_to_one" }
@@ -236,7 +247,7 @@ the new cardinality; links of deleted objects do not count.
 
 ### DELETE /v1/ontology/link-types/{link}
 
-<p class="ep-meta"><span><b>Auth</b>full</span><span><b>Permission</b>manage_ontology and view access to both types</span></p>
+<p class="ep-meta"><span><b>Auth</b>full</span><span><b>Permission</b>manage_ontology and a view of both whole types</span></p>
 
 Deletes the link type, at once: it and its links disappear from every read
 (one `link.deleted` event per link) and its names are free. The rows are

@@ -57,6 +57,12 @@ an organization a *tenant*.) Three properties follow:
 The setting is transaction-local, so a pooled connection never carries one
 organization's scope into its next use.
 
+One table carries a second policy: objects also have a *restrictive* policy,
+`object_access`, that limits a member to the objects of restricted types
+they may see, down to the [objects assigned to them](/docs/concepts/ontology/#assigned-objects).
+A restrictive policy can only narrow what the organization policy shows,
+never widen it, so it cannot reach across organizations either.
+
 ### Database roles
 
 The server connects with two runtime roles, neither a superuser and neither
@@ -86,7 +92,8 @@ organization data found in the database catalog, that:
 - a transaction without an organization sees and changes nothing,
 - the organization scope does not outlive its transaction,
 - every table has forced row level security, organization tables have
-  exactly the expected policy, and the role grants are minimal.
+  exactly the expected policy (objects also the restrictive one), and the
+  role grants are minimal.
 
 Because the tests read the catalog, a new table without the policy fails
 them.
