@@ -44,7 +44,9 @@ data: {"type":"employee","id":"o4b8j2e6c0t1q5w9r3y7u2i6"}
 
 Sequence numbers are per organization and gap-free in the outbox; a stream
 skips the ones you may not see or filtered out, so the ids you receive can
-jump.
+jump. Object events carry only the properties you may see:
+[restricted properties](/docs/concepts/ontology/#restricted-properties) are
+stripped for each subscriber when the event is read.
 
 ### Event kinds
 
@@ -56,6 +58,8 @@ jump.
 | `type.created`, `type.changed`, `type.deleted` | `{type, version}` |
 | `type.validation` | `{type, rules_version, state, objects, validated, invalid}`: the background job's progress against new rules, at most once a second (less often on large types) and once when it is done with the type |
 | `link_type.created`, `link_type.changed`, `link_type.deleted` | `{link, from_type, to_type}` |
+| `team.member_added` | `{type, id, user, expires_at}`: a member joined or was renewed on the team `id`, of the team type `type`, until `expires_at` or for good (`null`) |
+| `team.member_removed` | `{type, id, user}` |
 | `action.applied` | the result of an [action](/docs/api/actions/#post-v1-actions-type-apply), after the events of its edits |
 | `reset` (no `id`) | `{reason}`: your cursor is older than the 7 days kept; reload, then carry on |
 

@@ -18,6 +18,7 @@ exactly when its change committed.
 | `type.created`, `type.changed`, `type.deleted` | `type`, `version` (`changed` also on access changes) |
 | `type.validation` | `type`, `rules_version`, `state`, `objects`, `validated`, `invalid`: progress of the background validation |
 | `link_type.created`, `link_type.changed`, `link_type.deleted` | `link`, `from_type`, `to_type` |
+| `team.member_added`, `team.member_removed` | `type`, `id` (the team), `user`, and for `added` `expires_at`: a membership of a team object changed; a membership running out sends nothing |
 | `action.applied` | the [action's result](/docs/concepts/actions/#applying-step-by-step), after the events of its edits; about every type the action touches |
 
 Schema changes never rewrite objects, so they emit only `type.changed`;
@@ -77,6 +78,9 @@ credential, then:
   an event goes out only if they see every object it names, and the type's
   `type.validation` events never do. An object shared with the subscriber
   starts sending them its events;
+- object events are written with every property, and the properties the
+  subscriber may not see ([restricted properties](/docs/concepts/ontology/#restricted-properties))
+  are stripped before delivery, decided at the read like everything else;
 - an ended session, a deactivated user, or a lost `view_objects` ends the
   stream.
 

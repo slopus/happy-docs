@@ -1,7 +1,7 @@
 ---
 layout: ../../../layouts/Docs.astro
 title: Ontology schema
-lead: Object types and their versions, access to restricted types, and link types.
+lead: Object types and their versions, team types, access to restricted types and properties, and link types and team hierarchies.
 ---
 
 The concepts, property types, and format rules are described in
@@ -15,7 +15,10 @@ addressed by their `api_name`.
 <p class="ep-meta"><span><b>Auth</b>full</span><span><b>Permission</b>view_objects or manage_ontology</span></p>
 
 The object and link types you can see: all of them with `manage_ontology`,
-otherwise the types you may view and the link types between them.
+otherwise the types you may view and the link types between them. Each type
+shows only the properties you may see; those you see but may not write are
+listed in `read_only_properties`, which is left out when empty. See
+[Restricted properties](/docs/concepts/ontology/#restricted-properties).
 
 ```json
 {
@@ -30,6 +33,7 @@ otherwise the types you may view and the link types between them.
           "required": true, "rules": [{ "rule": "length", "min": 1, "max": 100 }] }
       ],
       "restricted": false,
+      "kind": "object",
       "version": 2,
       "rules_version": 2,
       "validation": { "rules_version": 2, "state": "enforced", "objects": 120, "validated": 120, "invalid": 0 },
@@ -85,6 +89,11 @@ otherwise the types you may view and the link types between them.
 `201` with the object type at `version` 1. `api_name` matches
 `[a-z][a-z0-9_]{0,62}`; `display_name` is 1-200 characters; `description` up
 to 2000.
+
+`kind` is `object` (the default) or `team`, for a
+[team type](/docs/concepts/ontology/#team-types) whose objects are teams. It
+is set here and never changes. A team type needs a required string property
+`name` (`422` without one), and every later `PUT` must keep it.
 
 - `422 validation_failed` lists every problem with the definition (rules that
   do not fit their type, invalid patterns, duplicate names, too deep nesting,
@@ -158,7 +167,7 @@ Every version of the definition, newest first.
 }
 ```
 
-## Access to restricted types
+## Access to restricted types and properties
 
 ### GET /v1/ontology/object-types/{type}/access
 
@@ -172,6 +181,9 @@ Every version of the definition, newest first.
     { "team_id": "m2n4b6v8c0x1z3l5k7j9h0g2", "permission": "edit_objects", "scope": "all" },
     { "team_id": "m2n4b6v8c0x1z3l5k7j9h0g2", "permission": "view_objects", "scope": "all" },
     { "team_id": "t3e5c7h9n1i2c3i4a5n6s7x8", "permission": "view_objects", "scope": "assigned" }
+  ],
+  "properties": [
+    { "property": "cost", "grants": [{ "team_id": "m2n4b6v8c0x1z3l5k7j9h0g2", "permission": "edit_objects" }] }
   ]
 }
 ```
@@ -180,9 +192,11 @@ Every version of the definition, newest first.
 
 <p class="ep-meta"><span><b>Auth</b>full</span><span><b>Permission</b>owner</span></p>
 
-Sets whether the type is restricted and replaces its grants. When restricted,
-only owners and the granted teams reach its objects, and to everyone else the
-type does not exist. Grants have no effect while the type is unrestricted.
+Sets whether the type is restricted and replaces its grants, and, with
+`properties`, its restricted properties. When restricted, only owners and the
+granted teams reach its objects, and to everyone else the type does not
+exist. Type grants have no effect while the type is unrestricted; property
+restrictions apply either way.
 
 ```json
 {
@@ -204,6 +218,12 @@ value or as an element of a list. `access_properties` is optional (default
 `[]`): the `api_name`s of top-level properties of type `user_ref`,
 `team_ref`, or an array of either. See
 [Shared and assigned objects](/docs/concepts/ontology/#shared-and-assigned-objects).
+
+`properties` lists the restricted properties, each a top-level property by
+`api_name` with its grants, `view_objects` (sees it) or `edit_objects` (sees
+and writes it). The list replaces the previous one; `[]` lifts every property
+restriction, and leaving `properties` out keeps them as they are. See
+[Restricted properties](/docs/concepts/ontology/#restricted-properties).
 A member still needs the organization-wide permission too: a grant narrows
 who may use `view_objects` on the type, it does not hand it out. Returns the
 access settings and emits a `type.changed` event.
@@ -211,8 +231,11 @@ access settings and emits a `type.changed` event.
 `400` for an unknown team or permission, an `assigned` grant without
 `access_properties` or on `edit_objects`, an access property that is not a
 top-level `user_ref` or `team_ref` or an array of either, a property named
-twice, or two grants for the same team and permission. Unknown fields are
-refused, including `assignee_property`, which `access_properties` replaced.
+twice, or two grants for the same team and permission. For `properties`,
+`400` for a name that is not a top-level property, a property named twice, a
+grant other than `view_objects` or `edit_objects`, or a team type's `name`,
+which is never restricted. Unknown fields are refused, including
+`assignee_property`, which `access_properties` replaced.
 
 ## Link types
 
@@ -235,6 +258,14 @@ refused, including `assignee_property`, which `access_properties` replaced.
 `201` with the link type. `api_name`, `forward_name`, and `reverse_name` match
 `[a-z][a-z0-9_]{0,62}`; `display_name` defaults to `api_name`. `cardinality`
 is `one_to_one`, `one_to_many`, `many_to_one`, or `many_to_many`.
+
+`team_hierarchy`, optional, makes the link type a
+[team hierarchy](/docs/concepts/ontology/#team-hierarchies) between two team
+types, from subteam to parent: `nested` (structure only) or `inherited` (the
+subteam's members count as the parent's for every grant). It is set here and
+never changes, and the link type shows it. `400` for another value or a type
+that is not a team type. A link of a hierarchy that would close a cycle is
+`409`, and linking two teams needs edit access to both.
 
 `409` if the `api_name` exists, or if either type already has a link end with
 that name. A link from a type to itself needs two different names (`400`).

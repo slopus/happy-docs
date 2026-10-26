@@ -47,9 +47,9 @@ see or affect another.
 | | |
 |---|---|
 | People and agents | Human users log in with an emailed code. Assistants act for a signed-in person over MCP; agent accounts act as themselves with API tokens. See [How it fits](/docs/how-it-fits/#how-it-connects) and [Users, teams, permissions](/docs/concepts/organizations/). |
-| Teams and permissions | The system teams `owners` and `everyone`, custom teams, and seven permissions granted to teams. |
+| Teams and permissions | The system teams `owners` and `everyone`, custom teams that are objects of the ontology, subteams that pass their members up, memberships that end on time, a history of every membership change, and seven permissions granted to teams. |
 | Login and security posture | Email codes, invites, DNS-verified allowed domains, required two-factor authentication with TOTP or WebAuthn. See [Authentication](/docs/concepts/authentication/). |
-| An ontology | Object types with typed properties and format rules, versioned schemas, custom validators in sandboxed Python, link types with cardinality, queries, and per-type access, down to the objects shared with each member or their teams. See [The ontology](/docs/concepts/ontology/). |
+| An ontology | Object types with typed properties and format rules, versioned schemas, custom validators in sandboxed Python, link types with cardinality, queries, and access per type, down to the objects shared with each member or their teams and to single properties. See [The ontology](/docs/concepts/ontology/). |
 | Business actions | The organization's own operations, such as "open a work order": typed parameters, criteria, edits applied all or nothing, safe retries, webhooks and emails (to members or customers) after commit, and an audit log. See [Business actions](/docs/concepts/actions/). |
 | Live updates | Every change to the ontology as a resumable stream of server-sent events. See [Live events](/docs/concepts/live-events/). |
 | An MCP server | At `/orgs/{org}/mcp`, behind the organization's own OAuth 2.1 authorization server. See [MCP and OAuth](/docs/concepts/mcp/). |
@@ -87,19 +87,24 @@ and what it does not cover.
 What Happy Enterprise does not do yet. Each item comes off this list when
 it ships.
 
-- **Object access goes as far as the object's own properties.** A team sees
-  all objects of a type, or only
+- **Access does not follow links.** A team sees all objects of a type, or
+  only
   [the ones that name the member or a team of theirs](/docs/concepts/ontology/#shared-and-assigned-objects)
-  (an assignee, an owner, a list of viewers or teams). There are no rules for
-  single properties (an employee's name for everyone, their salary for a
-  few), and access does not follow links: a manager does not see their
-  reports' expenses, and a document does not inherit its folder's sharing.
-  Writes can be narrowed further through
-  [business actions](/docs/concepts/actions/).
-- **Actions see and change only the objects they are given.** An action
-  cannot update every document in a folder, and its criteria cannot ask
-  whether a car has any reservation: they see their parameters' objects, the
-  links between them, and the objects the action creates.
+  (an assignee, an owner, a list of viewers or teams), and
+  [single properties](/docs/concepts/ontology/#restricted-properties) can be
+  limited to some teams. But a manager does not see their reports' expenses,
+  and a document does not inherit its folder's sharing. Writes can be
+  narrowed further through [business actions](/docs/concepts/actions/).
+- **Hidden properties still move an object's metadata.** An object's
+  `version`, `updated_at` and validation state, and its type's validation
+  summary, also cover the properties a reader may not see, so they can show
+  that a hidden value changed or breaks a rule.
+- **Actions see and change only what they are given.** Criteria see their
+  parameters' objects, the links between them, and the kind and teams of the
+  caller and the users those objects and parameters name. Edits change those
+  objects, the objects the action creates, and memberships of the teams
+  passed in. So an action cannot update every document in a folder, and its
+  criteria cannot ask whether a car has any reservation.
 - **Schedules have fixed parameters, and nothing reacts to events.** A
   [schedule](/docs/concepts/actions/#schedules) applies one action with the
   same parameters each time, so it cannot release whichever reservations
@@ -110,10 +115,6 @@ it ships.
   have no time zone per organization.
 - **Emails go to one person each.** An action emails a member or an outside
   address, not a team.
-- **Criteria know only the caller.** They see the caller's id and kind, not
-  another user's kind or anyone's team membership, so rules like "agents do
-  not approve agents" record the author's kind on the object when it is
-  created.
 - **Agent accounts cannot use MCP.** The MCP endpoint takes OAuth sessions,
   which start with an email sign-in, so agent accounts work over REST with
   API tokens.

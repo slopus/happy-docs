@@ -153,8 +153,8 @@ before the deal commits, the action is a `409 version_conflict` at `links`.
 ### Discounts with four eyes
 
 `request_discount` applies up to 1,000 at once. Above that it needs an
-`approver`, who may not be the caller, and only then emails them, through an
-effect with `when`:
+`approver`, who may not be the caller and must be on `managers`, and only
+then emails them, through an effect with `when`:
 
 ```python
 LIMIT = 1000
@@ -167,8 +167,14 @@ def check(ctx):
         return 'a discount above ' + str(LIMIT) + ' needs a manager to approve it'
     if p['approver'] == ctx['caller']['id']:
         return 'you cannot approve your own discount'
+    approver = ctx['users'].get(p['approver'], {})
+    if ctx['teams'].get('managers') not in approver.get('teams', []):
+        return 'the approver is not a manager'
     return True
 ```
+
+`ctx['users']` holds the kind and teams of the users the action refers to,
+here the `approver` parameter, and `ctx['teams']` maps team names to ids.
 
 ```json
 "effects": [
@@ -321,8 +327,8 @@ Sam opens a financed deal for Lena on the Model 3 (`open_deal`). It gets
 
 Sam asks for a discount of 2,500 to match a competitor. Without an approver
 it is refused at `criteria.approver` ("a discount above 1000 needs a manager
-to approve it"), and with Sam as the approver, "you cannot approve your own
-discount". With Maya: `201`, the deal's discount is `requested`, and one
+to approve it"), with Sam as the approver, "you cannot approve your own
+discount", and with Tess, "the approver is not a manager". With Maya: `201`, the deal's discount is `requested`, and one
 effect is queued, the email to Maya.
 
 **Denied.** Sam tries `decide_discount`: `403`, it is granted to `managers`
@@ -408,9 +414,8 @@ Accounting's webhook was called once per closed deal.
   A [schedule](/docs/concepts/actions/#schedules) applies an action with
   fixed parameters, so it cannot pick out the reservations that have run
   out.
-- **No email to a team.** The discount email goes to one named manager, and
-  an action cannot check that the person named is a manager. The decision
-  itself still needs the `managers` grant.
+- **No email to a team.** The discount email goes to one named manager,
+  whom the criteria check is on `managers`; it cannot go to the whole team.
 - **Criteria see only the links between their parameters.** An action
   cannot ask whether a car has any reservation, so the car's `status` is kept
   by the actions, with the link type's cardinality behind it.

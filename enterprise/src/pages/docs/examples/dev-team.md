@@ -10,7 +10,7 @@ refused. Everything here uses the public API, so you can load the same model
 into your own organization and replay it. The model needed nothing beyond
 the features the other examples use.
 
-![Pull requests in the web app, with their author kind, head commit, and status](/shots/example-dev-team.webp)
+![Tasks in the web app, with who claimed each one and its status](/shots/example-dev-team.webp)
 
 ## Who takes part
 
@@ -33,7 +33,7 @@ but cannot edit a task's claimant or a pull request's CI result directly
 | `repo` | `name` (unique), `default_branch`, and the review policy `agents_review_agents` |
 | `issue` | `number` (a sequence), `title`, `body`, `reporter`, `status` |
 | `task` | `title`, `claimant`, `claimed_at`, `status`: `open`, `claimed`, `in_review`, or `done` |
-| `pull_request` | `number` (a sequence), `title`, `author`, `author_kind` (`human` or `agent`), `head_sha`, `status`, `ci_status` and `ci_sha`, `approved_by` and `approved_sha`, `merged_by`, `merged_at` |
+| `pull_request` | `number` (a sequence), `title`, `author`, `head_sha`, `status`, `ci_status` and `ci_sha`, `approved_by` and `approved_sha`, `merged_by`, `merged_at` |
 | `review` | `reviewer`, `reviewer_kind`, `sha`, `verdict`: `approve` or `request_changes`; `body` |
 | `budget` | `agent`, `limit`, `spent`, in credits |
 | `run` | `agent`, `estimate`, `cost`, `status`, `started_at`, `finished_at` |
@@ -121,7 +121,7 @@ checks that the run was charged to that budget.
 
 ### Review rules
 
-`review_pr` has five criteria:
+`review_pr` has six criteria:
 
 | Criterion | Holds when |
 |---|---|
@@ -130,19 +130,36 @@ checks that the run was charged to that budget.
 | `current` | the review is of the pull request's `head_sha` |
 | `not_author` | the caller is not its author |
 | `agent_reviews` | the caller is a human, or the author is, or the repository's `agents_review_agents` is on |
+| `maintainer_approves_agents` | an approval by a person of an agent's pull request comes from a maintainer |
 
 ```json
 { "name": "agent_reviews",
   "message": "agents review agents' pull requests only where the repository allows it",
   "condition": { "op": "or", "conditions": [
     { "op": "eq", "left": { "caller": "kind" }, "right": { "value": "human" } },
-    { "op": "eq", "left": { "object": "pull_request", "property": "author_kind" }, "right": { "value": "human" } },
+    { "op": "eq", "left": { "user": { "object": "pull_request", "property": "author" }, "field": "kind" },
+      "right": { "value": "human" } },
     { "op": "eq", "left": { "object": "repo", "property": "agents_review_agents" }, "right": { "value": true } } ] } }
 ```
 
-Criteria see the caller's kind but not another user's, so `submit_pr`
-records the author's kind on the pull request, `"author_kind": {"caller":
-"kind"}`. Only actions write it, so it cannot be changed afterwards.
+`{"user": ..., "field": "kind"}` looks up the kind of the user in the pull
+request's `author`, so nothing about the author is copied onto the pull
+request. The last criterion checks a team:
+
+```json
+{ "name": "maintainer_approves_agents",
+  "message": "only maintainers approve an agent's pull request for people",
+  "condition": { "op": "or", "conditions": [
+    { "op": "ne", "left": { "param": "verdict" }, "right": { "value": "approve" } },
+    { "op": "eq", "left": { "caller": "kind" }, "right": { "value": "agent" } },
+    { "op": "eq", "left": { "user": { "object": "pull_request", "property": "author" }, "field": "kind" },
+      "right": { "value": "human" } },
+    { "op": "contains", "list": { "caller": "teams" }, "value": { "team": "maintainers" } } ] } }
+```
+
+Any developer may request changes, but when a person approves an agent's
+work, that person is on `maintainers`. Agents reviewing agents are governed by
+`agent_reviews` instead.
 
 `merge_pr` checks that the pull request is approved at its head and that CI
 passed the head, so a push after an approval needs a new approval and a new
@@ -234,7 +251,7 @@ maintainer, sees both budgets.
 
 ada submits the limiter as commit `a1b2c3d`, with an idempotency key. The
 answer is lost and ada sends it again: `200`, `replayed: true`. There is one
-pull request, number 1, with `author_kind: "agent"` and `ci_status:
+pull request, number 1, with ada as its `author` and `ci_status:
 "pending"`, and the task is `in_review`.
 
 After commit, CI receives one `submit_pr` delivery, not two: the replay
@@ -250,7 +267,10 @@ report is a replay.
 **Refused twice.** ada approves ada's own pull request. Both reasons come
 back: `criteria.not_author` and `criteria.agent_reviews`.
 
-Eli requests changes. ada pushes commit `e4f5a6b`: the pull request is
+**Refused by a team check.** Eli approves ada's pull request:
+`criteria.maintainer_approves_agents`. Eli is a developer, not a maintainer.
+
+Eli requests changes instead. ada pushes commit `e4f5a6b`: the pull request is
 `open` again, and its CI result `pending`.
 
 **Refused as stale.** CI's late report for `a1b2c3d` arrives now: `422` at
@@ -307,8 +327,9 @@ Every refused request, and both replays, left no record and changed nothing.
   through actions that check the task is theirs and the budget is theirs.
 - **Races have one winner.** Two agents claiming one task cannot both get
   it; the loser is told why.
-- **Review policy is data.** Who may approve whom is in the criteria and in
-  a repository flag a maintainer sets, and it applies to every caller alike.
+- **Review policy is data.** Who may approve whom is in the criteria, in the
+  teams people are on, and in a repository flag a maintainer sets, and it
+  applies to every caller alike.
 - **Integrations get the same guarantees.** CI verifies where a webhook came
   from, reports through an action, and its retries and late results are
   harmless.
@@ -319,10 +340,6 @@ Every refused request, and both replays, left no record and changed nothing.
 
 - **Agent accounts cannot use MCP.** The MCP endpoint takes OAuth sessions,
   which start with an email sign-in. Agents work over REST with API tokens.
-- **Criteria see only the caller's kind.** They cannot look up another
-  user, so the pull request records `author_kind` when it is submitted.
-- **Criteria cannot test team membership.** The agent review policy is a
-  repository property, on top of the team grant for `review_pr`.
 - **Budgets do not reset in this example.** A
   [schedule](/docs/concepts/actions/#schedules) per budget could apply a
   reset action each period; none is set up. Run costs are what the agents

@@ -35,7 +35,7 @@ unset or expired.
 
 Who you are, your organization, what you may do, and where your session
 stands on two-factor authentication. Partial sessions may call it to find out
-what to do next; their `permissions` list is empty.
+what to do next; their `permissions` and `teams` lists are empty.
 
 ```json
 {
@@ -43,12 +43,23 @@ what to do next; their `permissions` list is empty.
   "org": { "id": "c8kq2m7xw3n5p9r1t4v6y0za", "name": "Acme", "photo_file_id": null, "require_2fa": true },
   "permissions": ["invite_members", "view_members", "change_security_posture", "manage_organization",
                   "manage_ontology", "view_objects", "edit_objects"],
+  "teams": [
+    { "id": "o1w2n3e4r5s6t7e8a9m0a1b2", "name": "owners", "kind": "owners", "direct": true },
+    { "id": "e1v2e3r4y5o6n7e8t9e0a1b2", "name": "everyone", "kind": "everyone", "direct": true },
+    { "id": "m2n4b6v8c0x1z3l5k7j9h0g2", "name": "Engineering", "kind": "custom", "direct": false },
+    { "id": "p7l3a9t2f4o8r1m5q6w0e2r4", "name": "Platform", "kind": "custom", "direct": true }
+  ],
   "mfa": { "required": true, "satisfied": true, "factors": ["totp", "webauthn"], "enrollment_required": false }
 }
 ```
 
 `permissions` are the effective ones for this credential: team permissions
 (all of them for owners) intersected with OAuth scopes, if any.
+
+`teams` are your effective teams: those you are a current member of
+(`direct: true`), and every team above them along inherited
+[subteam links](/docs/concepts/organizations/#subteams) (`direct: false`).
+These are the teams your grants come through.
 
 ### PATCH /v1/me
 

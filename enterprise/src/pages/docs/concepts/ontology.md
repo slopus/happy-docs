@@ -1,14 +1,15 @@
 ---
 layout: ../../../layouts/Docs.astro
 title: The ontology
-lead: Each organization describes its own data as object types with typed properties and link types between them. Every write is checked against the current definition; new rules apply to stored data in the background, and deletions are instant.
+lead: Each organization describes its own data, and its teams, as object types with typed properties and link types between them. Every write is checked against the current definition; new rules apply to stored data in the background, and deletions are instant. Access goes down to single objects and single properties.
 ---
 
 The ontology is per organization, stored in tables scoped to the organization
 like everything else. It has four parts:
 
 - **Object types**, such as `employee` or `project`, each with a list of
-  typed properties and format rules. Their definitions are versioned.
+  typed properties and format rules. Their definitions are versioned. Team
+  types are object types whose objects are the organization's teams.
 - **Objects**: JSON property values of one type.
 - **Link types**, such as `works_on` from `employee` to `project`, with a
   cardinality and a name for each end.
@@ -105,6 +106,32 @@ server: invoice numbers, deal numbers, stock numbers.
 - The rule implies `unique`.
 - It applies only to a property that has it from the start. Adding it to an
   existing property is refused; add a new property instead.
+
+### Team types
+
+An object type of kind `team` (`"kind": "team"` when it is created; the kind
+never changes) holds teams: each of its objects is a custom team of the
+organization, with the object's id as the team's id. A team type needs a
+required string property `name`, which names the team (1-100 characters,
+unique across the organization), and may have any other properties, rules,
+validators and actions:
+
+```json
+{
+  "api_name": "squad",
+  "display_name": "Squad",
+  "kind": "team",
+  "properties": [
+    { "api_name": "name", "type": { "kind": "string" }, "required": true },
+    { "api_name": "lead", "type": { "kind": "user_ref" } },
+    { "api_name": "oncall_phone", "type": { "kind": "string" } }
+  ]
+}
+```
+
+Creating, renaming and deleting the object creates, renames and deletes the
+team, and the type's access decides who sees a team and who changes its
+memberships. See [Users, teams, permissions](/docs/concepts/organizations/#teams).
 
 ## Objects
 
@@ -236,6 +263,30 @@ A link type connects a source type (`from_type`) to a target type
   by composite foreign keys.
 - A link is visible only while its link type and both its objects exist.
 
+### Team hierarchies
+
+A link type between two team types may be a team hierarchy:
+`"team_hierarchy": "nested"` or `"inherited"`, set when it is created. Each
+link puts its source team under its target team.
+
+```json
+{
+  "api_name": "subteam_of",
+  "from_type": "squad",
+  "to_type": "squad",
+  "cardinality": "many_to_one",
+  "forward_name": "parent",
+  "reverse_name": "subteams",
+  "team_hierarchy": "inherited"
+}
+```
+
+Through `inherited` links, a subteam's members count as members of its parent
+and of every team above it, for every grant; `nested` links are structure
+only. The hierarchy never has a cycle, through either kind (`409`), and
+linking two teams needs edit access to both. See
+[Subteams](/docs/concepts/organizations/#subteams).
+
 ## Deletion
 
 Deleting an object, a link type, or an object type is instant: it is gone
@@ -304,10 +355,16 @@ Ontology access combines organization-wide permissions with per-type rules:
 - A restricted type can also limit a team to **the objects shared with or
   assigned to each member**; see
   [Shared and assigned objects](#shared-and-assigned-objects) below.
+- An owner can **restrict single properties** of any type, such as a salary
+  or a purchase price, to some teams; see
+  [Restricted properties](#restricted-properties) below.
+- Teams here are effective teams: a grant to a team also reaches the members
+  of its subteams along inherited links.
 - Links to types you cannot view are hidden, and you cannot navigate them.
 - Schema changes need `manage_ontology` **and** a view of the whole type,
-  because whether a change is accepted says something about the stored values.
-  A view of only the objects shared with you is not enough: `403`.
+  every object and every property, because whether a change is accepted says
+  something about the stored values. A view of only the objects shared with
+  you, or without a restricted property, is not enough: `403`.
 - `manage_ontology` alone cannot decide who reads data: access settings are
   owner-only.
 - OAuth grants (MCP clients) never change the schema.
@@ -381,6 +438,53 @@ and for writes. So it holds everywhere the objects are reached:
 Two things can still hint at hidden objects: a `409` for a `unique` value or
 a link's cardinality can reveal that an object you cannot see holds it, and
 a type's `validation` counts cover only the objects you see.
+
+### Restricted properties
+
+Owners may restrict top-level properties of any type, restricted or not, and
+grant teams `view_objects` or `edit_objects` on each one. A restricted
+property is shown to owners and to the members of the teams granted either
+permission on it, and written by owners and the `edit_objects` grantees, who
+also need `edit_objects` on the type. Properties that are not restricted
+follow the type.
+
+```json
+PUT /v1/ontology/object-types/employee/access
+{ "restricted": false,
+  "properties": [
+    { "property": "salary",
+      "grants": [
+        { "team_id": "<hr>", "permission": "edit_objects" },
+        { "team_id": "<finance>", "permission": "view_objects" } ] } ] }
+```
+
+Here HR sees and changes salaries, finance sees them, and everyone else who
+sees employees sees them without one. The restriction goes by the property's
+id, so renaming the property keeps it.
+
+For everyone else, a restricted property does not exist:
+
+- **Reads.** It is absent from objects in every response, MCP tools,
+  `linked` navigation and live events. Event payloads are stripped for each
+  subscriber when the event is read.
+- **Definitions.** It is absent from `GET /v1/ontology` and the type. A
+  property you see but may not write is listed in the type's
+  `read_only_properties`.
+- **Queries.** Filters and sorts on it are refused as on an unknown property.
+- **Files.** A file readable only through it is not readable.
+- **Writes.** A write naming it is refused exactly as one naming a property
+  that does not exist. A read-only property may be sent back unchanged. Every
+  write keeps the hidden values as they are stored.
+- **Errors.** Validation errors, unique conflicts and missing references about
+  hidden values are reported without their path, value or id.
+
+[Actions](/docs/concepts/actions/) read and write whole objects: their grant
+stands in for property access, as it does for `edit_objects`, and their
+results name ids only. A team type's `name` cannot be restricted.
+
+An object's `validation.state`, its `version` and `updated_at`, and the type's
+validation summary cover hidden properties too, so they can show that a
+hidden value changed or fails a rule.
 
 ## Live updates
 

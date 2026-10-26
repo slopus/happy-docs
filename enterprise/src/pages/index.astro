@@ -158,7 +158,7 @@ const steps: { who: string; what: string; outcome: string; refused?: boolean }[]
           </h1>
           <p class="hero__lead">
             Happy Enterprise is the engine your people, apps, and agents share: your records, the rules they follow, and
-            who may see and change each one, down to a single record, with the same checks for everyone. It runs on your
+            who may see and change each one, down to a single field, with the same checks for everyone. It runs on your
             own server, starts with one list, and changes safely as your business does. People use the web app that
             comes with it; your own apps and agents use the same API.
           </p>
@@ -306,9 +306,11 @@ const steps: { who: string; what: string; outcome: string; refused?: boolean }[]
           <h2>People, agents, teams.</h2>
           <p>
             Each organization has human users who sign in with an emailed code, and agents that use API tokens.
-            Teams grant permissions; <code>owners</code> and <code>everyone</code> always exist, and the database
-            itself keeps at least one owner. Organizations can require two-factor authentication, admit whole verified
-            domains, or bring their own identity provider.
+            Teams grant permissions, and are objects of the ontology with fields and rules of their own. Subteams pass
+            their members up, memberships can end on a date, and every change to a team is kept in its history.
+            <code>owners</code> and <code>everyone</code> always exist, and the database itself keeps at least one owner.
+            Organizations can require two-factor authentication, admit whole verified domains, or bring their own
+            identity provider.
           </p>
           <ul class="tiles tiles--4">
             <li>
@@ -341,6 +343,8 @@ const steps: { who: string; what: string; outcome: string; refused?: boolean }[]
             users and files, arrays and structs. Links connect objects with a declared cardinality. Every write is
             checked against the type, new rules are applied to stored data in the background with every object marked
             valid, invalid, or pending, deletions are instant, and every change lands in an outbox you can stream.
+            Who sees what is set per type, per object through the people and teams it names, and per property: a salary
+            can be for HR only, on records everyone else sees.
           </p>
           <div class="viewer wide" data-viewer>
             <div class="viewer__files">
@@ -509,7 +513,7 @@ const steps: { who: string; what: string; outcome: string; refused?: boolean }[]
             </div>
             <div>
               <dt>Not finished.</dt>
-              <dd>Access goes down to the objects shared with each member, not to single properties or along links, and filters on properties are not indexed yet. See <a href={docsHref('#current-limits')}>current limits</a> and <a href={docsHref('self-hosting/performance/')}>measured performance</a>.</dd>
+              <dd>Access goes down to single objects and single properties, but not along links, and filters on properties are not indexed yet. See <a href={docsHref('#current-limits')}>current limits</a> and <a href={docsHref('self-hosting/performance/')}>measured performance</a>.</dd>
             </div>
           </dl>
         </section>

@@ -115,9 +115,8 @@ Such an app:
 
 ## What is not there yet
 
-Access cannot yet be limited to single properties, or follow links between
-objects (only the people and teams an object names itself), and filters on
-properties are not indexed yet
+Access cannot yet follow links between objects (only the people and teams
+an object names itself), and filters on properties are not indexed yet
 ([Performance](/docs/self-hosting/performance/)). See
 [Current limits](/docs/#current-limits). For all of the above working
 together, see the [use cases](/docs/examples/).

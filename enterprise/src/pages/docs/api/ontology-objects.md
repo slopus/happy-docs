@@ -31,6 +31,16 @@ and a `message`), or `pending` until the background job has checked it; see
 [Versions and schema changes](/docs/concepts/ontology/#versions-and-schema-changes).
 A write always leaves the object `valid`.
 
+`properties` holds only the properties you may see. A
+[restricted property](/docs/concepts/ontology/#restricted-properties) you may
+not see is absent from every object, filter and sort here, and a write naming
+it is refused as for a property that does not exist; one you may see but not
+write may be sent back unchanged.
+
+Objects of a [team type](/docs/concepts/ontology/#team-types) are teams.
+Creating one creates the team, changing its `name` renames it (`409` if
+another team has the name), and deleting it deletes the team.
+
 ## Pages
 
 Lists and queries return a page:
@@ -167,7 +177,9 @@ Links the source object `from` to the target object `to` with the link type
 `link` (its `api_name`). Idempotent: `201` when created, `200` when the link
 existed. `409` if the link type's cardinality does not allow it (the message
 names the cardinality; links of deleted objects do not count); `404` if
-either object is not of the declared type.
+either object is not of the declared type. For a
+[team hierarchy](/docs/concepts/ontology/#team-hierarchies), `409` if the link
+would close a cycle; as for any link, it needs edit access to both teams.
 
 ```sh
 curl -X PUT "$BASE/v1/ontology/links/works_on/o4b8j2e6c0t1q5w9r3y7u2i6/o9k3m7p1s5v2x6z0b4d8f2h6" \

@@ -1,7 +1,7 @@
 ---
 layout: ../../../layouts/Docs.astro
 title: Users, teams, permissions
-lead: An organization has human and agent users, two system teams and any number of custom ones, and seven permissions that teams grant to their members.
+lead: An organization has human and agent users, two system teams and any number of custom ones, which can sit under each other, and seven permissions that teams grant to their members.
 ---
 
 ## Users
@@ -30,16 +30,76 @@ deleted or renamed:
 
 - **`owners`.** Its members are the organization's owners. Owners hold every
   permission implicitly, and some actions are owner-only: deactivating
-  members, creating and deleting teams and changing their members and
-  permissions, more tokens for an existing agent, and the access settings of
-  restricted object types.
+  members, `POST /v1/teams` and `DELETE /v1/teams/{team}`, team permissions,
+  more tokens for an existing agent, and the access settings of object
+  types.
 - **`everyone`.** Every user is a member and nobody can leave. A permission
   granted to `everyone` reaches every user.
 
-Owners create **custom teams** (names of 1-100 characters, unique per
-organization), add and remove members, and set each team's permissions. An
-organization that has an active owner always keeps one: the last active owner
-cannot leave `owners` or be deactivated.
+Every other team is a **custom team**, and custom teams live in the
+[ontology](/docs/concepts/ontology/): each one is an object of a **team
+type**, an object type of kind `team`. A team type has a required string
+property `name` (1-100 characters, unique in the organization), which names
+the team, and otherwise any properties, rules, validators and actions you
+give it: a lead, an on-call phone number, a cost center. Creating the object
+creates the team, renaming the object renames the team, and deleting the
+object deletes the team with its memberships, permissions and grants. The
+system teams stay outside the ontology: they are not objects, and they are in
+no hierarchy.
+
+So who sees and changes a team is decided by its type's access, like any
+other object:
+
+- Seeing a team (in the team list, its members, its history) needs view
+  access to its object.
+- Changing its memberships needs edit access to its object.
+- Owners reach every team. Only owners change `owners`, and nobody leaves
+  `everyone`.
+- Owners set each team's permissions.
+
+`POST /v1/teams` creates a team of the organization's default team type, its
+oldest. If there is none yet, the first call creates one, `team`: restricted,
+viewable by `everyone`, editable by owners only. Teams of other types are
+created as their objects. Teams from before team types existed are moved into
+the default team type, keeping their ids, by the maintenance job; until then
+only owners change them.
+
+An organization that has an active owner always keeps one: the last active
+owner cannot leave `owners` or be deactivated.
+
+### Subteams
+
+A team can sit under another one. A link type between team types may be a
+**team hierarchy**, set when the link type is created, and each link of it
+puts a subteam (the link's source) under its parent (the target). There are
+two kinds:
+
+- **`nested`** links are structure only: an org chart, a reporting line.
+- **`inherited`** links make the subteam's members count as members of the
+  parent and of every team above it, for everything a team grants: team
+  permissions, object type grants, action grants, property grants, and
+  objects shared with the team.
+
+The kind belongs to the link type, so every link of it behaves the same, and
+one team type can carry both: `subteam_of` passing members up, `reports_to`
+not. The hierarchy, both kinds together, never has a cycle (`409`), and
+linking a team needs edit access to both teams, so nobody can put a team
+under one they could not change. Removing a link, the team in the middle, or
+the link type ends what came through it at once.
+
+A user's **effective teams** are the teams they are a member of, plus every
+team above those along inherited links. `GET /v1/me` lists them, each marked
+`direct` or not. Grants and [action criteria](/docs/concepts/actions/#criteria)
+both use the effective teams.
+
+### Membership history
+
+Every change to a membership is recorded: added, renewed, or removed, when,
+and by whom, whatever made it (the API, the web app, an action).
+`GET /v1/teams/{team}/history` lists the changes, newest first. Changes to a
+team's memberships also send `team.member_added` and `team.member_removed`
+[live events](/docs/concepts/live-events/) to subscribers who may see the
+team's type. A membership that runs out sends nothing.
 
 ### Memberships that end
 
@@ -62,7 +122,8 @@ bug in a handler cannot break them.
 ## Permissions
 
 Permissions are granted to teams. A user holds a permission if one of their
-teams grants it, or if they are an owner.
+effective teams grants it (a team they are on, or one above it along
+inherited links), or if they are an owner.
 
 | Permission | Allows | OAuth scope |
 |---|---|---|
@@ -83,7 +144,7 @@ Besides these permissions, owners grant teams the right to apply each
 without being able to edit incidents freely.
 
 Everyone may always read their own profile (`GET /v1/me`,
-`GET /v1/members/{own id}`) and the list of teams.
+`GET /v1/members/{own id}`) and the list of the teams they can see.
 
 ### How a request's permissions are decided
 
@@ -102,8 +163,9 @@ reaches owner-only actions. So no credential is ever permitted more than its
 user holds, and OAuth grants never administer the organization.
 
 Permissions on ontology objects are further narrowed per object type when an
-owner restricts a type, and can be narrowed to the objects shared with each
-member or their teams. See [The ontology](/docs/concepts/ontology/#access).
+owner restricts a type, can be narrowed to the objects shared with each
+member or their teams, and per property. See
+[The ontology](/docs/concepts/ontology/#access).
 
 ## Joining an organization
 

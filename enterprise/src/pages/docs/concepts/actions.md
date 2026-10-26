@@ -87,6 +87,10 @@ nothing changes and the response says which.
   unknown one (`422`, at `params.<name>`), and edits that would take an
   object out of the caller's sight are `403`. A `file_ref` parameter must
   name a file the caller can read.
+- Actions read and write whole objects, including
+  [restricted properties](/docs/concepts/ontology/#restricted-properties)
+  the caller may not see: the grant stands in for property access as it does
+  for `edit_objects`. The result names objects by id only.
 - Through MCP, the grant also needs the `actions:apply` scope, and
   `ontology:read` for the touched types. See [MCP and OAuth](/docs/concepts/mcp/).
 
@@ -106,15 +110,37 @@ Every criterion must hold for the action to apply. A criterion is either a
 declarative `condition` or Python `code`.
 
 **Conditions** combine `and`, `or`, `not`, `eq`, `ne`, `lt`, `lte`, `gt`,
-`gte`, `in`, and `is_null` over these expressions:
+`gte`, `in`, `is_null`, and `contains` over these expressions:
 
 | Expression | Value |
 |---|---|
 | `{"param": "summary"}` | a parameter |
 | `{"object": "incident", "property": "state"}` | a property of a parameter's object; also `$id`, `$version`, `$created_by`, `$updated_by`, `$created_at`, `$updated_at` |
-| `{"caller": "id"}`, `{"caller": "kind"}` | who is applying it, and whether they are a `human` or an `agent` |
+| `{"caller": "id"}`, `{"caller": "kind"}`, `{"caller": "teams"}` | who is applying it, whether they are a `human` or an `agent`, and the ids of their teams |
+| `{"team": "maintainers"}` | the id of the team with that name, or `null` |
+| `{"user": <expression>, "field": "kind"}`, `"field": "teams"` | the kind or the team ids of another user: the expression is a user id, such as a `user_ref` parameter or property |
 | `{"now": true}` | the time of the request |
 | `{"value": "open"}` | a literal |
+
+`contains` holds when a list holds a value. With the team expressions it asks
+whether someone is on a team:
+
+```json
+{ "op": "contains", "list": { "caller": "teams" }, "value": { "team": "maintainers" } }
+```
+
+```json
+{ "op": "eq",
+  "left": { "user": { "object": "pull_request", "property": "author" }, "field": "kind" },
+  "right": { "value": "agent" } }
+```
+
+The first holds when the caller is a maintainer, the second when the pull
+request's author is an agent. Teams here are always **effective teams**:
+current memberships, plus every team above them along inherited
+[subteam links](/docs/concepts/organizations/#subteams), the same teams grants
+reach. A user who is not in the organization has no kind and no teams
+(`null`).
 
 One more condition looks at links:
 
@@ -129,9 +155,17 @@ belongs to this deal. Without it, a caller could pass a car and someone
 else's reservation and have the criteria judge them as a pair.
 
 **Code** defines `check(ctx)` and returns `True`, or a message saying why
-not. `ctx` is `{action, params, objects, links, caller {id, kind}, now}`,
-where `links` lists the links between the parameters' objects, of the link
-types the definition uses, as `{link, from, to}`:
+not. `ctx` is `{action, params, objects, links, caller {id, kind, teams},
+teams, users, now}`:
+
+- `links` lists the links between the parameters' objects, of the link types
+  the definition uses, as `{link, from, to}`;
+- `teams` maps team names to ids: every team when the definition has code,
+  otherwise the teams it names;
+- `users` maps user ids to `{kind, teams}` for the caller, the users that
+  `user` expressions name, the `user_ref` parameters, and the `user_ref`
+  values of the parameters' objects, at most 1000.
+
 
 ```python
 def check(ctx):
@@ -156,15 +190,35 @@ Edits are either a list or Python code that returns one:
 | `create_object` `{type, ref?, properties}` | creates an object; later edits refer to it as `{"created": ref}` |
 | `update_object` `{object, properties}` | merges properties into a parameter's object; `null` removes one |
 | `create_link`, `delete_link` `{link, from, to}` | adds or removes a link |
+| `add_member` `{team, user, expires_at?}` | adds a user to a team, or renews their membership, until `expires_at` or for good |
+| `remove_member` `{team, user}` | ends a user's membership of a team |
 
 Values are expressions, as in conditions. Edits reach only the parameters'
 objects and the objects the action creates. Each edit is an ordinary write:
 checked against its type's rules, validators, uniqueness, and link
 cardinality, with its own events, and recorded as made by the caller.
 
+The `team` of a membership edit is an object parameter of a
+[team type](/docs/concepts/ontology/#team-types), so `owners` and `everyone`
+are out of reach; only active users of the organization join, and
+`expires_at` must be in the future (`422` otherwise, at the edit's path). A membership edit
+is recorded in the team's
+[history](/docs/concepts/organizations/#membership-history) as made by the
+caller and sent as a `team.member_added` or `team.member_removed` event. The
+action's grant stands in for edit access to the team, as for any edit, so
+adults may host a guest without managing the guests team freely:
+
+```json
+"edits": [
+  { "op": "add_member", "team": { "param": "stay" }, "user": { "param": "guest" },
+    "expires_at": { "param": "until" } }
+]
+```
+
 **Code** defines `edits(ctx)` and returns such a list with literal values. The
 definition names the `object_types` the code may create and the `link_types`
-it may use, and anything else is refused:
+it may use, and anything else is refused; membership edits may name only
+the team parameters' teams:
 
 ```json
 "edits": { "object_types": ["work_order"], "link_types": ["orders"],
@@ -212,10 +266,16 @@ The result says what changed:
   "created": [{ "type": "work_order", "id": "w7o2r4d6e8r0x1c3v5b7n9m1", "version": 1, "ref": "order" }],
   "updated": [{ "type": "incident", "id": "o4b8j2e6c0t1q5w9r3y7u2i6", "version": 4 }],
   "links": [{ "op": "create", "link": "orders", "from": "o4b8j2e6c0t1q5w9r3y7u2i6", "to": "w7o2r4d6e8r0x1c3v5b7n9m1", "changed": true }],
+  "memberships": [],
   "effects": [{ "id": "e5f1x9q3z7k2m8n4b6v0c2l4", "kind": "webhook", "status": "pending" }],
   "replayed": false
 }
 ```
+
+`memberships` lists the membership edits as `{op, team, user, expires_at,
+changed}`, with `op` `add` or `remove`; `changed` is `false` for removing a
+membership there was none of. The result names objects by id only, so it
+never carries a property the caller may not see.
 
 ## Retries
 

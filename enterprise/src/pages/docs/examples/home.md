@@ -82,6 +82,7 @@ def validate(value):
 | `schedule_task`, `complete_task` | adults; the caretaker schedules tasks | the maintenance calendar |
 | `assign_chore`, `complete_chore`, `approve_chore` | adults and the caretaker assign; adults and kids complete their own; adults approve | chores |
 | `add_shopping_item`, `buy_item` | everyone adds; adults buy, once | the shopping list |
+| `host_guest` | adults | puts a visitor on `guests` until a time |
 
 The household's actions only record what is wanted: `switch_device` sets
 `desired_on` and `pending`. The hub reads pending devices, carries the change
@@ -99,6 +100,32 @@ their own action, whose criterion limits it to doors marked for guests:
   "condition": { "op": "eq", "left": { "object": "device", "property": "guest_access" },
                  "right": { "value": true } } }
 ```
+
+### Hosting a guest
+
+Adults host guests through an action rather than by managing the `guests`
+team: `host_guest` takes the team, the guest, and the end of the stay, and
+adds the membership with an expiry. Its criteria check teams and kinds:
+
+```json
+"criteria": [
+  { "name": "guests_team", "message": "guests stay on the guests team",
+    "condition": { "op": "eq", "left": { "param": "stay" }, "right": { "team": "guests" } } },
+  { "name": "a_visitor", "message": "the household are not guests",
+    "condition": { "op": "not", "condition": { "op": "or", "conditions": [
+      { "op": "contains", "list": { "user": { "param": "guest" }, "field": "teams" }, "value": { "team": "adults" } },
+      { "op": "contains", "list": { "user": { "param": "guest" }, "field": "teams" }, "value": { "team": "kids" } } ] } } },
+  { "name": "a_person", "message": "guests are people",
+    "condition": { "op": "eq", "left": { "user": { "param": "guest" }, "field": "kind" }, "right": { "value": "human" } } }
+],
+"edits": [
+  { "op": "add_member", "team": { "param": "stay" }, "user": { "param": "guest" },
+    "expires_at": { "param": "until" } }
+]
+```
+
+The action's grant stands in for edit access to the team, so adults host
+guests without being able to change `guests`, or any other team, directly.
 
 ### Automations checked by the server
 
@@ -206,15 +233,23 @@ completes it, but may not approve it (`403`); Sam approves it.
 
 ## 4. Gus stays for three days
 
-Before the stay, Gus cannot see the garden gate (`404`). Alex adds Gus to
-`guests` until a time three days ahead:
+Before the stay, Gus cannot see the garden gate (`404`). Alex hosts Gus until
+a time three days ahead:
 
-```http
-PUT /v1/teams/<guests>/members/<gus>
-{ "expires_at": "<in three days>" }
+```json
+POST /v1/actions/host_guest/apply
+{ "params": { "stay": "<guests>", "guest": "<gus>", "until": "<in three days>" } }
 
-204
+201  "memberships": [{ "op": "add", "team": "<guests>", "user": "<gus>",
+                       "expires_at": "<in three days>", "changed": true }]
 ```
+
+The action refuses the wrong guest or team: Kim, who is in `kids`, at
+`criteria.a_visitor`; the `adults` team as the stay, at
+`criteria.guests_team`; the hub, an agent, at `criteria.a_person`. Kim
+applying it is `403`: it is granted to adults only. The guests team's history
+records the change as made by Alex, and subscribers see a
+`team.member_added` event.
 
 The guests team lists Gus with that `membership_expires_at`. Gus opens the
 garden gate (`guest_unlock`). The front door is refused at
@@ -282,8 +317,6 @@ token over REST.
   device.
 - **Nothing runs an action when an event arrives.** Automations are data the
   hub acts on, with the server checking the rule.
-- **Criteria cannot test the caller's teams**, so guests unlock through their
-  own action.
 - **Absent optional parameters are written as removals** by declarative
   edits, so the hub reports a device's whole state each time.
 - **Times are UTC.** Automation hours and schedules have no time zone per
