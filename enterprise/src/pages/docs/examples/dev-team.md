@@ -10,6 +10,8 @@ refused. Everything here uses the public API, so you can load the same model
 into your own organization and replay it. The model needed nothing beyond
 the features the other examples use.
 
+![Pull requests in the web app, with their author kind, head commit, and status](/shots/example-dev-team.webp)
+
 ## Who takes part
 
 | | Identity | Connects with | Teams |

@@ -1,5 +1,5 @@
 // Rehype plugin for the docs pages:
-// * prefixes root-relative links with the site base path,
+// * prefixes root-relative links and image sources with the site base path,
 // * gives headings ids and anchor links,
 // * turns `### GET /v1/path` headings into endpoint headings,
 // * wraps tables in a scroll container and code blocks in a titled frame.
@@ -53,12 +53,11 @@ function walk(node, visit, parent = null, index = 0) {
 export function rehypeDocs({ base }) {
   return (tree) => {
     const slugger = new GithubSlugger();
+    const rooted = (url) => typeof url === 'string' && url.startsWith('/') && !url.startsWith(base + '/') && !url.startsWith('//');
     walk(tree, (node) => {
-      if (node.type !== 'element' || node.tagName !== 'a') return;
-      const href = node.properties?.href;
-      if (typeof href === 'string' && href.startsWith('/') && !href.startsWith(base + '/') && !href.startsWith('//')) {
-        node.properties.href = base + href;
-      }
+      if (node.type !== 'element') return;
+      if (node.tagName === 'a' && rooted(node.properties?.href)) node.properties.href = base + node.properties.href;
+      if (node.tagName === 'img' && rooted(node.properties?.src)) node.properties.src = base + node.properties.src;
     });
     walk(tree, (node, parent, index) => {
       if (node.type !== 'element') return;

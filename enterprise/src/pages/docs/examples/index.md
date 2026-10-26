@@ -1,13 +1,14 @@
 ---
 layout: ../../../layouts/Docs.astro
 title: Use cases
-lead: One backend for the business apps you would otherwise build one at a time. Each example is a complete model with its actions, run end to end by agents, assistants, and people, including the requests that are refused.
+lead: One system for the business apps you would otherwise build one at a time. Each example is a complete model with its actions, run end to end by agents, assistants, and people, including the requests that are refused.
 ---
 
-Every example below is the same server with a different model. The object
+Every example below is the same system with a different model. The object
 types, who sees which objects, and the actions that change them are all
-data you load through the public API. Nothing in the server is specific to
-any of them.
+data you load through the public API, or define in the web app, and can
+change later while the system runs. Nothing in the server or the web app is
+specific to any of them.
 
 | Example | What it models | What it shows |
 |---|---|---|

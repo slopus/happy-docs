@@ -1,11 +1,12 @@
 ---
 layout: ../../layouts/Docs.astro
 title: How it fits
-lead: Happy Enterprise holds your organization's business model and enforces its rules. You bring the agents, the models they run on, the data, and the screens people use.
+lead: Happy Enterprise holds your organization's business model, enforces its rules, and comes with a web app for the people who use it. You bring the agents, the models they run on, and your existing data, and you can add apps of your own.
 ---
 
 ```text
-your app        REST, as a signed-in person ──┐
+web app         REST, as a signed-in person ──┐
+your own app    REST, as a signed-in person ──┤
 MCP client      MCP, for a signed-in person ──┤
 agent process   REST, as an agent account ────┤
 import job      REST, as an agent account ────┤
@@ -20,7 +21,7 @@ import job      REST, as an agent account ────┤
 Every arrow reaches the same objects through the same checks: the type's
 property rules and custom validators, the caller's permissions, and the
 organization boundary. An incident an agent updates is the incident a person
-sees in your app, and both changes arrive on the same
+sees in the web app, and both changes arrive on the same
 [event stream](/docs/concepts/live-events/).
 
 ## What runs the agent
@@ -70,7 +71,7 @@ nightly reconciliation, a triage bot. Give the account its own team with only
 the permissions it needs, and restrict the object types it should not see.
 
 API tokens work on the REST API only, not on the MCP endpoint. An agent
-account that is driven by a model reaches the backend through tools you write
+account that is driven by a model reaches the server through tools you write
 around the REST API.
 
 ## Where existing records come from
@@ -94,15 +95,21 @@ requests, so make the import safe to re-run: on a `409` for the unique source id
 already there; look it up and continue. Creating a link that already exists
 returns `200`, so link steps can simply be repeated.
 
-## Who builds the human interface
+## The human interface
 
-You do. Happy Enterprise is a backend: apart from the sign-in and consent
-pages of the OAuth flow, it serves no UI. Your app:
+People use the [web app](/docs/web-app/) that comes with Happy Enterprise:
+objects in tables and calendars, the ontology editor, action forms, the
+audit log, the live feed, and the organization's people, teams, and
+security settings. It is an ordinary client of the REST API, signed in as
+the person, so it shows them what their permissions allow and nothing more.
+
+You can build your own apps on the same API, next to it or instead of it.
+Such an app:
 
 - signs people in with an emailed code
   ([login API](/docs/api/auth/)) or with JWTs from your identity provider,
-- reads and writes objects through the REST API, under the person's
-  permissions,
+- reads and writes objects, and applies actions, through the REST API,
+  under the person's permissions,
 - follows the [event stream](/docs/api/events/) to show changes from agents
   and other people as they happen.
 

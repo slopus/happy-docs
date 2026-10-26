@@ -1,7 +1,7 @@
 ---
 layout: ../../layouts/Docs.astro
 title: Quickstart
-lead: Run the server locally, create an organization, sign in as its first owner, and store your first objects. About ten minutes.
+lead: Run the server locally, create an organization, sign in as its first owner, store your first objects, and open them in the web app. About ten minutes.
 ---
 
 You need:
@@ -10,7 +10,8 @@ You need:
   next to it if you want [custom validators](/docs/concepts/validators/),
 - Postgres 16 or newer, with a user that may create databases and roles
   (the default `postgres` superuser is fine locally),
-- `curl`, `jq`, and Python 3 with `cryptography` to mint a management token.
+- `curl`, `jq`, and Python 3 with `cryptography` to mint a management token,
+- Node.js 20 or newer and `npm`, for the web app.
 
 ## 1. Prepare the database
 
@@ -156,7 +157,32 @@ In another shell, watch changes as they happen:
 curl -N "$BASE/v1/ontology/events" -H "Authorization: Bearer $TOKEN"
 ```
 
+## 8. Open the web app
+
+The web app is in the distribution's `web/` directory. Its development
+server serves it and proxies both APIs on one origin, `http://localhost:5173`:
+
+```sh
+cd web
+npm ci
+HE_ORG_URL=http://127.0.0.1:8080 HE_MANAGEMENT_URL=http://127.0.0.1:9090 npm run dev
+```
+
+Open `http://localhost:5173`, enter the organization's id (`echo $ORG`) and
+`ada@acme.example`, and type the code the server logs. The `employee` type
+and its objects are under **Objects**, its definition under **Ontology**, and
+changes made through `curl` appear in **Live** as they commit. The operator
+console is at `http://localhost:5173/console`.
+
+To have invite links, the OAuth sign-in pages, and the MCP endpoint go
+through the web app's origin as well, restart the server with
+`PUBLIC_BASE_URL=http://localhost:5173` and
+`MCP_ALLOWED_HOSTS=localhost:5173`. To serve the web app in production, see
+[Running it](/docs/web-app/#running-it).
+
 ## Next
+
+* [Web app](/docs/web-app/): every screen, and what it can and cannot see.
 
 * [Organizations and isolation](/docs/concepts/isolation/): how one organization
   is kept from seeing another.

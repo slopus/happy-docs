@@ -106,7 +106,7 @@ security and covered by machine-checked models and integration tests.
 These layers keep a request handler that forgets to filter by organization,
 or filters by the wrong one, from reaching another organization's data. They
 are not a sandbox for code that sets out to get around them, and they do not
-make it safe to run arbitrary agent-written backend code inside the server.
+make it safe to run arbitrary agent-written code inside the server.
 Code running in the server process has the server's own configuration: the
 connection strings for both runtime roles (and for the owning role, when the
 server runs migrations) and `SERVER_SECRET_KEY`. Such code could open its own

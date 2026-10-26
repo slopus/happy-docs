@@ -9,6 +9,8 @@ and every request in order, including the ones that are refused. Everything
 here uses the public API, so you can load the same model into your own
 organization and replay it.
 
+![The invoice in the web app, with its owner, editors, team, and versions](/shots/example-documents.webp)
+
 ## Who takes part
 
 | | Identity | Connects with | Team |

@@ -1598,6 +1598,34 @@ a.rail__meta-line:hover {
   }
 }
 
+/* screenshots: one per theme on the landing page, framed in the docs */
+
+.shot {
+  margin: 1.75rem 0 0;
+}
+
+.shot img,
+.doc-main img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--tile);
+  border-radius: 10px;
+}
+
+.shot img.shot--dark,
+:root[data-theme='dark'] .shot img.shot--light {
+  display: none;
+}
+
+:root[data-theme='dark'] .shot img.shot--dark {
+  display: block;
+}
+
+.doc-main p > img {
+  margin: 0.5rem 0;
+}
+
 /* Q&A grid */
 
 .qa {

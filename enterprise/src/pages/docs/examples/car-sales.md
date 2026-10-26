@@ -9,6 +9,8 @@ model, the actions, and every request in order, including the ones that are
 refused. Everything here uses the public API, so you can load the same model
 into your own organization and replay it.
 
+![The car type in the web app: a stock_number sequence and the vin format](/shots/example-car-sales.webp)
+
 ## Who takes part
 
 | | Identity | Connects with | Team |

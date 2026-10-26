@@ -1,28 +1,43 @@
 ---
 layout: ../../layouts/Docs.astro
 title: What Happy Enterprise is
-lead: A shared, permissioned business model for your apps and agents. Each organization gets its own members, teams, permissions, and ontology, and every app, person, and agent works on the same objects under the same rules.
+lead: One system for all of an organization's business data, shared by its people and its agents, that changes safely as the business changes.
 ---
 
-Happy Enterprise is a backend only: there is no UI. It is one Rust binary
-on top of one Postgres database, and it serves two HTTP APIs on two separate
-listeners:
+Each organization gets its own members, teams, permissions, and
+**ontology**: typed object types and links that describe its business
+(customers, projects, incidents, machines, and how they relate), and the
+**business actions** that change them. People, assistants, and agent
+accounts all work on the same objects under the same rules.
+
+When the business changes, the model changes with it, while the system
+runs. A new kind of record or a new field is usable at once. A new rule
+applies to every write at once and to the stored objects in the background,
+with each object marked valid, invalid, or pending, and invalid ones kept
+visible rather than dropped. A removed field is gone at once and its values
+never come back. Every object type and action keeps its versions, new
+actions and validators are defined at runtime, and permissions and the
+isolation between organizations apply throughout. See
+[Versions and schema changes](/docs/concepts/ontology/#versions-and-schema-changes).
+
+Happy Enterprise comes with a [web app](/docs/web-app/) for the people in
+an organization and a console for the operator. It is one Rust binary on top
+of one Postgres database, serving two HTTP APIs on two separate listeners:
 
 - The **organization API** (default `0.0.0.0:8080`, the public one) is what
-  your organizations' people, agents, and apps use: login, members and teams, the ontology, the
-  live event stream, OAuth, and an MCP server.
+  your organizations' people, agents, and apps use, the web app included:
+  login, members and teams, the ontology, actions, the live event stream,
+  OAuth, and an MCP server.
 - The **management API** (default `127.0.0.1:9090`) is for you, the operator:
   it creates organizations and registers the signing keys of their identity
   providers.
 
-The design is inspired by Palantir's: an organization describes its data as an
-**ontology** of typed object types and links (customers, projects, incidents,
-machines, and how they relate), and access to every type is a matter of
-permissions that can be granted to teams and audited. A dashboard, a person
-using an assistant, and a background agent all refer to the same incident and
-meet the same validation and permission checks.
-[How it fits](/docs/how-it-fits/) shows where your agents, models, data, and
-UI come in.
+The design is inspired by Palantir's: access to every type is a matter of
+permissions granted to teams and audited, and the web app, a person using an
+assistant, and a background agent all refer to the same incident and meet
+the same validation and permission checks. You can build your own apps on
+the same API. [How it fits](/docs/how-it-fits/) shows where your agents,
+models, data, and apps come in.
 
 ## What an organization gets
 
@@ -38,6 +53,7 @@ see or affect another.
 | Business actions | The organization's own operations, such as "open a work order": typed parameters, criteria, edits applied all or nothing, safe retries, webhooks and emails (to members or customers) after commit, and an audit log. See [Business actions](/docs/concepts/actions/). |
 | Live updates | Every change to the ontology as a resumable stream of server-sent events. See [Live events](/docs/concepts/live-events/). |
 | An MCP server | At `/orgs/{org}/mcp`, behind the organization's own OAuth 2.1 authorization server. See [MCP and OAuth](/docs/concepts/mcp/). |
+| A web app | Objects in tables and calendars, the ontology and its code editor, action forms, the audit log, the live feed, people, teams, security, and an operator console. See [Web app](/docs/web-app/). |
 | Files | Avatars, an organization photo, and attachments up to 25 MiB, readable by whoever may see an object that refers to them. In a local directory or an S3 bucket. See [Files and email](/docs/concepts/files-and-email/). |
 
 ## How it is kept apart
@@ -96,7 +112,7 @@ it ships.
   which start with an email sign-in, so agent accounts work over REST with
   API tokens.
 - **Every reader is a member.** There are no share links for people outside
-  the organization.
+  the organization, in the API or in the web app.
 - **No full-text search.** Filters match property values, not the contents
   of attached files.
 - **No transactions outside actions.** Plain object and link writes are one
