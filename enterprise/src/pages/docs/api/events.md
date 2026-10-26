@@ -60,6 +60,7 @@ stripped for each subscriber when the event is read.
 | `link_type.created`, `link_type.changed`, `link_type.deleted` | `{link, from_type, to_type}` |
 | `team.member_added` | `{type, id, user, expires_at}`: a member joined or was renewed on the team `id`, of the team type `type`, until `expires_at` or for good (`null`) |
 | `team.member_removed` | `{type, id, user}` |
+| `series.points` | `{type, series, object, tags, count, first_at, last_at, points, truncated}`: points a batch wrote to a series of a [timeseries type](/docs/concepts/timeseries/#live-events) with `live` on; at most 100 `points`, `truncated` if there were more |
 | `action.applied` | the result of an [action](/docs/api/actions/#post-v1-actions-type-apply), after the events of its edits |
 | `reset` (no `id`) | `{reason}`: your cursor is older than the 7 days kept; reload, then carry on |
 

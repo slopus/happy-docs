@@ -19,6 +19,7 @@ exactly when its change committed.
 | `type.validation` | `type`, `rules_version`, `state`, `objects`, `validated`, `invalid`: progress of the background validation |
 | `link_type.created`, `link_type.changed`, `link_type.deleted` | `link`, `from_type`, `to_type` |
 | `team.member_added`, `team.member_removed` | `type`, `id` (the team), `user`, and for `added` `expires_at`: a membership of a team object changed; a membership running out sends nothing |
+| `series.points` | `type`, `series`, `object`, `tags`, `count`, `first_at`, `last_at`, `points` (at most 100), `truncated`: one per series a batch changed, for [timeseries types](/docs/concepts/timeseries/#live-events) with `live` on; delivered to those who may read the series |
 | `action.applied` | the [action's result](/docs/concepts/actions/#applying-step-by-step), after the events of its edits; about every type the action touches |
 
 Schema changes never rewrite objects, so they emit only `type.changed`;

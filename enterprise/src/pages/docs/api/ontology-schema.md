@@ -90,10 +90,15 @@ listed in `read_only_properties`, which is left out when empty. See
 `[a-z][a-z0-9_]{0,62}`; `display_name` is 1-200 characters; `description` up
 to 2000.
 
-`kind` is `object` (the default) or `team`, for a
-[team type](/docs/concepts/ontology/#team-types) whose objects are teams. It
-is set here and never changes. A team type needs a required string property
-`name` (`422` without one), and every later `PUT` must keep it.
+`kind` is `object` (the default); `team`, for a
+[team type](/docs/concepts/ontology/#team-types) whose objects are teams; or
+`timeseries`, for a [timeseries type](#timeseries-types) that holds series
+of points. It is set here and never changes. A team type needs a required
+string property `name` (`422` without one), and every later `PUT` must keep
+it.
+
+A property of kind `integer` or `double` may have a `unit`, 1-32 characters
+(`"°C"`, `"kWh"`): a label for readers, not a rule.
 
 - `422 validation_failed` lists every problem with the definition (rules that
   do not fit their type, invalid patterns, duplicate names, too deep nesting,
@@ -167,6 +172,45 @@ Every version of the definition, newest first.
 }
 ```
 
+### Timeseries types
+
+A type of kind `timeseries` also takes `timeseries` settings, on `POST` and
+`PUT`:
+
+```json
+{
+  "api_name": "telemetry",
+  "display_name": "Telemetry",
+  "kind": "timeseries",
+  "properties": [
+    { "api_name": "temperature", "type": { "kind": "double" }, "unit": "°C" },
+    { "api_name": "running", "type": { "kind": "boolean" } }
+  ],
+  "timeseries": { "object_type": "machine", "tags": ["sensor"], "retention_days": 30, "live": true }
+}
+```
+
+| Setting | |
+|---|---|
+| `object_type` | optional: the object type whose objects the series belong to (a type with objects, which you may manage); never changes |
+| `tags` | up to 16 tag names, `api_name`s; a `PUT` may add tags but not remove any |
+| `retention_days` | optional, 1-36,500: points older than this are hidden at once and deleted later |
+| `live` | `true` to emit `series.points` events, default `false` |
+
+The properties are the points' fields: 1-64 of kind `integer`, `double`,
+`boolean`, or `string`, with built-in rules only (`422` otherwise). A `PUT`
+without `timeseries` keeps the settings; with it, the settings are replaced
+as a whole. `400` for `timeseries` settings on another kind of type.
+
+Timeseries types show their settings, with `inherit_object_access` (set
+with the [type's access](#put-v1-ontology-object-types-type-access)), in the
+ontology, the type, and its versions (versions leave
+`inherit_object_access` out). They have no objects or links: the object,
+link type and action endpoints refuse them (`400`), and points have
+[their own endpoints](/docs/api/timeseries/). An object type cannot be
+deleted while a live timeseries type refers to it (`409`). See
+[Timeseries](/docs/concepts/timeseries/).
+
 ## Access to restricted types and properties
 
 ### GET /v1/ontology/object-types/{type}/access
@@ -234,7 +278,14 @@ top-level `user_ref` or `team_ref` or an array of either, a property named
 twice, or two grants for the same team and permission. For `properties`,
 `400` for a name that is not a top-level property, a property named twice, a
 grant other than `view_objects` or `edit_objects`, or a team type's `name`,
-which is never restricted. Unknown fields are refused, including
+which is never restricted.
+
+For a [timeseries type](#timeseries-types) with an `object_type`,
+`inherit_object_access: true` lets whoever may view its object type read
+its series, each only while its object is visible to them; writing still
+needs the timeseries type's own grants. Left as it is when absent; `400` on
+any other type. Timeseries types take no `access_properties` or
+`properties` (`400`). Unknown fields are refused, including
 `assignee_property`, which `access_properties` replaced.
 
 ## Link types

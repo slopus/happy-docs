@@ -53,8 +53,8 @@ each (`action_<name>`).
 |---|---|---|
 | `mcp:read` | `list_members`, `list_teams` (the default scope) | `view_members` for members |
 | `mcp:invite` | `invite_member` | `invite_members` |
-| `ontology:read` | `describe_schema`, `query_objects`, `get_object` | `view_objects` (on the type) |
-| `ontology:write` | `create_object`, `update_object`, with `ontology:read` | `edit_objects` (on the type) |
+| `ontology:read` | `describe_schema`, `query_objects`, `get_object`, `query_timeseries`, `latest_points` | `view_objects` (on the type) |
+| `ontology:write` | `create_object`, `update_object`, `write_points`, with `ontology:read` | `edit_objects` (on the type) |
 | `actions:apply` | `action_<api_name>` tools, with `ontology:read` for the types they touch | the action's grant (no permission on its own) |
 
 A tool runs only if both the grant's scopes and the user's own permissions
@@ -205,6 +205,43 @@ as over REST, and the write emits an `object.created`
 result must satisfy the type. With `expected_version`, the change is refused
 (`conflict`) unless the object is at that version. Returns the updated
 object.
+
+### query_timeseries
+
+<p class="ep-meta"><span><b>Scope</b>ontology:read</span><span><b>Permission</b>view_objects + a view of the series</span></p>
+
+`type`, the timeseries type's `api_name`, plus the body of
+[`POST .../query`](/docs/api/timeseries/#post-v1-ontology-timeseries-type-query):
+
+```json
+{ "type": "telemetry", "object": "o4b8j2e6c0t1q5w9r3y7u2i6", "fields": ["temperature"],
+  "from": "2026-10-26T08:00:00Z", "to": "2026-10-26T09:00:00Z", "max_points": 60 }
+```
+
+Returns raw points or buckets, as the REST endpoint does.
+
+### latest_points
+
+<p class="ep-meta"><span><b>Scope</b>ontology:read</span><span><b>Permission</b>view_objects + a view of the series</span></p>
+
+`type` plus the body of
+[`POST .../latest`](/docs/api/timeseries/#post-v1-ontology-timeseries-type-latest):
+a selection and `fields`. Returns each series with its newest point.
+
+### write_points
+
+<p class="ep-meta"><span><b>Scope</b>ontology:read + ontology:write</span><span><b>Permission</b>view_objects + edit_objects on the timeseries type, and a view of each object</span></p>
+
+```json
+{ "type": "telemetry", "idempotency_key": "mcp-saw-0900",
+  "series": [ { "object": "o4b8j2e6c0t1q5w9r3y7u2i6", "tags": { "sensor": "spindle" },
+                "points": [ { "at": "2026-10-26T09:00:00Z", "values": { "temperature": 41.5 } } ] } ] }
+```
+
+Writes a batch as
+[`POST .../points`](/docs/api/timeseries/#post-v1-ontology-timeseries-type-points)
+does, at most 10,000 points, and returns its result; the ingest log records
+it with `via: mcp`.
 
 ### list_actions
 

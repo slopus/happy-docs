@@ -9,7 +9,9 @@ like everything else. It has four parts:
 
 - **Object types**, such as `employee` or `project`, each with a list of
   typed properties and format rules. Their definitions are versioned. Team
-  types are object types whose objects are the organization's teams.
+  types are object types whose objects are the organization's teams, and
+  [timeseries types](/docs/concepts/timeseries/) hold series of
+  timestamped points instead of objects.
 - **Objects**: JSON property values of one type.
 - **Link types**, such as `works_on` from `employee` to `project`, with a
   cardinality and a name for each end.
@@ -37,7 +39,9 @@ An object type has an `api_name` (`[a-z][a-z0-9_]{0,62}`), a `display_name`
 ```
 
 A property has an `api_name`, an optional `display_name` and `description`,
-a `type`, `required` (default `false`), and `rules`. The server gives each
+a `type`, `required` (default `false`), and `rules`. An `integer` or `double`
+property may also have a `unit` (1-32 characters, such as `"°C"` or
+`"kWh"`), a label for readers, not a rule. The server gives each
 property and struct field an `id` that survives renames (see
 [Property ids](#property-ids)).
 

@@ -32,8 +32,8 @@ The [OAuth endpoints](/docs/api/oauth/) page lists every route.
 |---|---|---|
 | `mcp:read` (the default) | `view_members`, listing teams | `whoami`, `list_members`, `list_teams` |
 | `mcp:invite` | `invite_members` | `invite_member` |
-| `ontology:read` | `view_objects` | `describe_schema`, `query_objects`, `get_object` |
-| `ontology:write` | `edit_objects` (writing needs `ontology:read` too) | `create_object`, `update_object` |
+| `ontology:read` | `view_objects` | `describe_schema`, `query_objects`, `get_object`, `query_timeseries`, `latest_points` |
+| `ontology:write` | `edit_objects` (writing needs `ontology:read` too) | `create_object`, `update_object`, `write_points` |
 | `actions:apply` | no permission on its own: the user's [action](/docs/concepts/actions/) grants, with `ontology:read` for the types each action touches | `list_actions`, one `action_<api_name>` tool per action |
 
 A tool's permission must be allowed by **both** the grant's scopes and the
@@ -43,7 +43,9 @@ owner-only actions, the security posture, organization settings, or the
 ontology's schema.
 
 The ontology tools run the same functions as the REST API: the same
-restricted-type access, value checks, custom validators, and live events. A
+restricted-type access, value checks, custom validators, and live events.
+The [timeseries](/docs/concepts/timeseries/) tools read and write series
+under the same rules as their REST endpoints. A
 refused call is a tool error (`isError: true`) whose text is the REST error:
 
 ```json

@@ -95,6 +95,11 @@ requests, so make the import safe to re-run: on a `409` for the unique source id
 already there; look it up and continue. Creating a link that already exists
 returns `200`, so link steps can simply be repeated.
 
+Measurements are different: sensor readings, metrics, and prices go into a
+[timeseries type](/docs/concepts/timeseries/), in batches of up to 10,000
+points per request. A point written again replaces the earlier one, so a
+re-sent batch changes nothing.
+
 ## The human interface
 
 People use the [web app](/docs/web-app/) that comes with Happy Enterprise:
