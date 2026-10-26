@@ -9,8 +9,8 @@ argument policies, limits, and network safety. Connector tools are called
 through the [MCP endpoint](/docs/api/mcp/#connector-tools).
 
 Every endpoint here but `GET /v1/connector-tools` needs
-`manage_connectors` (`403` without), which no OAuth scope or MCP token
-reaches. A connector is named by its `name` in paths; an unknown or
+`manage_connectors` (`403` without). Like the rest of the REST API, these
+endpoints refuse OAuth access tokens and MCP tokens (`401`). A connector is named by its `name` in paths; an unknown or
 deleted one is `404`.
 
 ## Connectors

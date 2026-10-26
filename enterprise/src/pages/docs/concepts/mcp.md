@@ -117,7 +117,8 @@ A token looks like `hemt_<org>_<token id>_<secret>`.
   nothing. Rotating issues a new token with the same name, scopes, and
   expiry, and revokes the old one at once.
 - **Managed by people.** Tokens are issued, listed, revoked, and rotated
-  with a session or an API token, never with another MCP token.
+  with a session or an API token, never with an MCP token or an OAuth
+  grant (`401`).
 - **Second factors.** Where the organization requires two-factor
   authentication, a person's token works only if it was issued from a
   session that completed a second factor.

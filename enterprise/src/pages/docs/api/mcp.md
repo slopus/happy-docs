@@ -477,7 +477,8 @@ tool error (`isError: true`). See
 
 Long-lived credentials for this endpoint; see
 [MCP tokens](/docs/concepts/mcp/#mcp-tokens). Like the rest of the REST API, these
-endpoints take a session or an API token, and refuse MCP tokens (`401`).
+endpoints take a session or an API token, and refuse OAuth access tokens
+and MCP tokens (`401`).
 
 A token in responses:
 
