@@ -1,7 +1,7 @@
 ---
 layout: ../../layouts/Docs.astro
 title: What Happy Enterprise is
-lead: One system for all of an organization's business data, shared by its people and its agents, that changes safely as the business changes.
+lead: The engine behind all of an organization's business data. Its people, apps, and agents work on the same records under the same checks, and it changes safely as the business changes.
 ---
 
 Each organization gets its own members, teams, permissions, and

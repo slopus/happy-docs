@@ -1,7 +1,7 @@
 ---
 layout: ../../../layouts/Docs.astro
 title: Use cases
-lead: One system for the business apps you would otherwise build one at a time. Each example is a complete model with its actions, run end to end by agents, assistants, and people, including the requests that are refused.
+lead: One engine for the business apps you would otherwise build one at a time. Each example is a complete model with its actions, run end to end by agents, assistants, and people, including the requests that are refused.
 ---
 
 Every example below is the same system with a different model. The object
