@@ -147,20 +147,22 @@ const steps: { who: string; what: string; outcome: string; refused?: boolean }[]
 ];
 ---
 
-<Base title="Happy Enterprise: there are many AI systems; this one is yours">
+<Base title="Happy Enterprise: an AI agent system that adapts to you">
   <div class="frame">
     <Rail current="home" sections={sections} />
     <div class="page-body">
       <main class="landing" id="content">
         <section class="hero">
-          <h1 class="hero__title">
-            There are many AI systems. This one is yours. <a class="soft" href="#one-model">Your data, your rules, your server.</a>
-          </h1>
+          <h1 class="hero__title">An AI agent system that adapts to you.</h1>
+          <p class="hero__sub">
+            Your data, your people and your agents in one secure place, in the cloud or self-hosted. It takes the shape
+            of how you work and keeps changing as you do.
+          </p>
           <p class="hero__lead">
-            Happy Enterprise is the engine your people, apps, and agents share: your records, the rules they follow, and
-            who may see and change each one, down to a single field, with the same checks for everyone. It runs on your
-            own server, starts with one list, and changes safely as your business does. People use the web app that
-            comes with it; your own apps and agents use the same API.
+            Every request is checked against who may see and change each record, down to a single field, and the
+            database itself keeps each organization's data apart from every other's. Sign-in can require a second
+            factor, every action applied is kept in an audit log, and AI assistants act only with the permissions of the
+            person using them.
           </p>
           <div class="hero__actions">
             <a class="btn-primary" href={docsHref('')}>Read the docs</a>
