@@ -1,7 +1,7 @@
 ---
 layout: ../../../layouts/Docs.astro
 title: Users, teams, permissions
-lead: An organization has human and agent users, two system teams and any number of custom ones, which can sit under each other, and seven permissions that teams grant to their members.
+lead: An organization has human and agent users, two system teams and any number of custom ones, which can sit under each other, and eight permissions that teams grant to their members.
 ---
 
 ## Users
@@ -134,6 +134,7 @@ inherited links), or if they are an owner.
 | `manage_ontology` | object types, link types, custom validators and formats, action types | none |
 | `view_objects` | reading ontology objects and links, chat channels, folders and files, and the event stream | `ontology:read`; `chat:read` for chat; `files:read` for filesystems |
 | `edit_objects` | creating, changing, deleting objects and links; writing in chat; writing folders and files | `ontology:write`; `chat:write` for chat; `files:write` for filesystems |
+| `manage_connectors` | registering [connectors](/docs/concepts/connectors/) to outside MCP servers, reviewing their tools, granting them to teams, reading their call logs | none |
 
 A new organization's `everyone` team holds `view_members` and
 `view_objects`.

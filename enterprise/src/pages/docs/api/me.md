@@ -42,7 +42,7 @@ what to do next; their `permissions` and `teams` lists are empty.
   "user": { "id": "h3jd8s0q2l5x7c1v9b4n6m8k", "kind": "human", "display_name": "Ada Lovelace", "...": "..." },
   "org": { "id": "c8kq2m7xw3n5p9r1t4v6y0za", "name": "Acme", "photo_file_id": null, "require_2fa": true },
   "permissions": ["invite_members", "view_members", "change_security_posture", "manage_organization",
-                  "manage_ontology", "view_objects", "edit_objects"],
+                  "manage_ontology", "view_objects", "edit_objects", "manage_connectors"],
   "teams": [
     { "id": "o1w2n3e4r5s6t7e8a9m0a1b2", "name": "owners", "kind": "owners", "direct": true },
     { "id": "e1v2e3r4y5o6n7e8t9e0a1b2", "name": "everyone", "kind": "everyone", "direct": true },

@@ -1,7 +1,7 @@
 ---
 layout: ../../../layouts/Docs.astro
 title: "Example: a small agentic dev team"
-lead: Two people and two coding agents share issues, tasks, and pull requests. Agents claim work, spend their own budgets, and submit code; CI receives signed webhooks and reports back; reviews follow the team's rules; a maintainer's assistant approves over MCP. No server feature was added for it.
+lead: Two people and two coding agents share issues, tasks, and pull requests. Agents claim work, spend their own budgets, and submit code; CI receives signed webhooks and reports back; reviews follow the team's rules; a maintainer's assistant approves over MCP; and the team's git host is connected, so an agent reads only the repositories it is allowed. No server feature was added for it.
 ---
 
 This page walks through one complete scenario: the model, the actions, the
@@ -16,9 +16,9 @@ the features the other examples use.
 
 | | Identity | Connects with | Teams |
 |---|---|---|---|
-| **Dana**, a maintainer | a person, in your app and through an assistant | REST, with a session token; MCP, with an OAuth grant of `ontology:read actions:apply` | `developers`, `maintainers` |
+| **Dana**, a maintainer | a person, in your app and through an assistant | REST, with a session token; MCP, with an OAuth grant of `ontology:read actions:apply`, and a personal MCP token of `connectors:use connectors:write` | `developers`, `maintainers` |
 | **Eli**, a developer | a person, in your app | REST, with a session token | `developers` |
-| **ada** and **bix** | coding agents, as agent accounts | REST, with API tokens | `developers`, `agents` |
+| **ada** and **bix** | coding agents, as agent accounts | REST, with API tokens; ada also MCP, with an MCP token of `connectors:use` | `developers`, `agents` |
 | **ci-bot** | the CI system's agent account | REST, with an API token | `ci` |
 
 **No team holds a write permission.** Everything below changes only through
@@ -206,6 +206,7 @@ As an owner, through the REST API:
    ([actions API](/docs/api/actions/)), and give CI the three webhook
    secrets.
 4. Create the repository and the two budgets.
+5. Connect the team's git host (see [8. The git host](#8-the-git-host)).
 
 ## 1. Dana plans the work
 
@@ -307,6 +308,76 @@ commit `0c0ffee`. ada approves it, which the policy now allows.
 Dana tries to merge before CI has reported: `422` at `criteria.ci_passed`.
 CI reports, and Dana merges.
 
+## 8. The git host
+
+The team's git host is an MCP server with three tools: `list_repos` and
+`read_file {repo, path}`, which read, and `comment {repo, issue, text}`,
+which writes. It holds the repositories `api`, `docs`, and `infra`, and
+`infra` holds production secrets. The owner
+[connects](/docs/concepts/connectors/) it with the credential the git host
+gave the team:
+
+```json
+POST /v1/connectors
+{ "name": "git", "display_name": "Tiny git host", "url": "https://git.tinyteam.example/mcp",
+  "auth": { "kind": "bearer", "token": "..." } }
+```
+
+`POST /v1/connectors/git/sync` lists the three tools as `pending`. The
+owner reads each definition and enables it by its hash, marking `comment`
+as a write:
+
+```json
+PATCH /v1/connectors/git/tools/comment
+{ "state": "enabled", "hash": "<the reviewed hash>", "access": "write" }
+```
+
+Then the grants:
+
+| Tool | `agents` | `maintainers` |
+|---|---|---|
+| `list_repos` | yes | yes |
+| `read_file` | only `{"repo": {"allow": ["api", "docs"]}}` | any repository |
+| `comment` | no | yes |
+
+The owner issues ada an
+[MCP token](/docs/concepts/mcp/#mcp-tokens) of `connectors:use`, for 30
+days:
+
+```http
+POST /v1/mcp-tokens
+{ "name": "ada", "scopes": ["connectors:use"], "user": "<ada>", "expires_in_days": 30 }
+
+201 { "id": "<token>", "token": "hemt_...", "scopes": ["connectors:use"], ... }
+```
+
+**ada reads `api`.** With that token, ada's `tools/list` shows exactly
+`git.list_repos` and `git.read_file`, and `read_file`'s `repo` is an enum of
+`api` and `docs`. Reading `api`'s `README.md` returns the file, after a line
+marking it as external content.
+
+**Refused: `infra`.** ada asks for `infra`'s `README.md`. The grant allows
+only `api` and `docs`, so the call is a tool error and never reaches the git
+host.
+
+**Refused: commenting.** `git.comment` is not granted to `agents`, and
+ada's token lacks `connectors:write` besides, so the call is a tool error.
+
+**Dana comments.** Dana issues a personal token of `connectors:use
+connectors:write`, and comments "on it" on `api` issue 1. The git host
+receives the comment from the team's credential: every call goes out as
+the same remote identity.
+
+The call log (`GET /v1/connectors/git/calls`) shows all four calls, oldest
+first:
+
+| Tool | By | Status |
+|---|---|---|
+| `read_file` (`api`) | ada | `ok` |
+| `read_file` (`infra`) | ada | `denied` |
+| `comment` | ada | `denied` |
+| `comment` | Dana | `ok` |
+
 ## What everyone saw
 
 The audit log tells people, agents, and the assistant apart. Its three
@@ -335,13 +406,18 @@ Every refused request, and both replays, left no record and changed nothing.
   harmless.
 - **An assistant acts as its person.** Dana's assistant can approve because
   Dana can, and the log says it was Dana, through MCP.
+- **Outside tools are granted, not handed over.** Agents never hold the git
+  host's credential. They call only the reviewed tools granted to their
+  team, with the arguments their grant allows, and every call, refused or
+  not, is in the log.
 
 ## What it does not do yet
 
-- **Agent accounts cannot use MCP.** The MCP endpoint takes OAuth sessions,
-  which start with an email sign-in. Agents work over REST with API tokens.
+- **One identity at the git host.** The git host sees every call as the
+  team's credential, not as ada or Dana; only the call log tells them apart.
 - **Budgets do not reset in this example.** A
   [schedule](/docs/concepts/actions/#schedules) per budget could apply a
   reset action each period; none is set up. Run costs are what the agents
   report, not metered.
-- **There is no git.** Commits are the shas agents and CI report.
+- **The git host's commits are not the pull requests' commits.** The shas
+  on pull requests are the ones agents and CI report.

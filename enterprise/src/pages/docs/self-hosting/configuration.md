@@ -81,6 +81,13 @@ later makes existing WebAuthn factors unusable.
 |---|---|---|
 | `ACTION_WEBHOOKS_ALLOW_PRIVATE` | `false` | `true` lets [action](/docs/concepts/actions/) webhooks use `http` and reach private and loopback addresses. Development only. |
 
+## Connectors
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `CONNECTORS_ALLOW_HTTP` | `false` | `true` lets [connectors](/docs/concepts/connectors/#network-safety) and their OAuth servers use `http`. Development only. |
+| `CONNECTORS_ALLOW_ADDRESSES` | none | Comma-separated CIDRs (`10.0.0.0/8`, `192.168.1.5`) and host names that connectors may reach although they are not public, such as an MCP server on your internal network. Everything else that is loopback, private, link-local (cloud metadata included), shared, or reserved is refused. |
+
 ## Validators and logging
 
 | Variable | Default | Meaning |

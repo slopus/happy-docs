@@ -17,6 +17,7 @@ lead: Sliding-window limits protect login, second factors, and OAuth. They are k
 | [Timeseries](/docs/concepts/timeseries/) ingest (REST and MCP) | | 600 batches per minute per organization, 120 per minute per user |
 | [Chat](/docs/concepts/chat/) posts, edits, reactions, and pins (REST and MCP) | | 120 per minute per user |
 | Chat typing notices | | 30 per minute per user |
+| [Connector](/docs/concepts/connectors/) tool calls (MCP) | | 120 per minute per user |
 | [Filesystem](/docs/concepts/filesystem/) writes: new folders, uploads, renames, moves, deletions, restores (REST and MCP) | | 300 per minute per user |
 
 ## Behavior

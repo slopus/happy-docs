@@ -71,8 +71,11 @@ nightly reconciliation, a triage bot. Give the account its own team with only
 the permissions it needs, and restrict the object types it should not see.
 
 API tokens work on the REST API only, not on the MCP endpoint. An agent
-account that is driven by a model reaches the server through tools you write
-around the REST API.
+account driven by a model can use the MCP endpoint with an
+[MCP token](/docs/concepts/mcp/#mcp-tokens) an owner issues for it: scoped
+like an OAuth grant, and acting as the agent. Through the same endpoint it
+can call the tools of outside MCP servers the organization has
+[connected](/docs/concepts/connectors/) and granted to its team.
 
 ## Where existing records come from
 

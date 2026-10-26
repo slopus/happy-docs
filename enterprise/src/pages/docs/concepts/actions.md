@@ -292,8 +292,9 @@ Keys are forgotten after 7 days; the audit row stays. Keys starting with
 
 ## Effects
 
-Effects reach outside the database: a `webhook`, or an `email` to a user of
-the organization or to an outside address. They are written to an outbox in the same transaction, so
+Effects reach outside the database: a `webhook`, an `email` to a user of
+the organization or to an outside address, or a call of a
+[connector](/docs/concepts/connectors/#from-actions) tool. They are written to an outbox in the same transaction, so
 they exist exactly when the application commits, and a background job
 delivers them afterwards, at least once. Failed deliveries are retried after
 30 seconds, doubling up to an hour, 10 attempts in all, then marked `failed`.
@@ -359,6 +360,20 @@ applied_by, params, result}` with three headers:
 Owners read the secret at `GET /v1/ontology/action-types/{type}/webhook-secret`.
 Verify the signature, and deduplicate on the delivery id, since a delivery
 can arrive more than once.
+
+**Connector calls** call a tool of an outside MCP server as the person who
+applied the action:
+
+```json
+{ "kind": "connector", "tool": "git.comment",
+  "arguments": { "repo": "api", "issue": "{{param.issue}}", "text": "Fixed in {{param.commit}}" } }
+```
+
+Applying checks that they may make this call, with these arguments, and
+refuses the application (`403`, or `422` for arguments their grant does not
+allow) otherwise. Delivery checks again, sends the effect's id as an
+idempotency key, and never calls again once the remote has answered. See
+[Connectors](/docs/concepts/connectors/#from-actions).
 
 ## The audit log
 

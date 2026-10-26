@@ -47,7 +47,7 @@ see or affect another.
 | | |
 |---|---|
 | People and agents | Human users log in with an emailed code. Assistants act for a signed-in person over MCP; agent accounts act as themselves with API tokens. See [How it fits](/docs/how-it-fits/#how-it-connects) and [Users, teams, permissions](/docs/concepts/organizations/). |
-| Teams and permissions | The system teams `owners` and `everyone`, custom teams that are objects of the ontology, subteams that pass their members up, memberships that end on time, a history of every membership change, and seven permissions granted to teams. |
+| Teams and permissions | The system teams `owners` and `everyone`, custom teams that are objects of the ontology, subteams that pass their members up, memberships that end on time, a history of every membership change, and eight permissions granted to teams. |
 | Login and security posture | Email codes, invites, DNS-verified allowed domains, required two-factor authentication with TOTP or WebAuthn. See [Authentication](/docs/concepts/authentication/). |
 | An ontology | Object types with typed properties and format rules, versioned schemas, custom validators in sandboxed Python, link types with cardinality, queries, and access per type, down to the objects shared with each member or their teams and to single properties. See [The ontology](/docs/concepts/ontology/). |
 | Business actions | The organization's own operations, such as "open a work order": typed parameters, criteria, edits applied all or nothing, safe retries, webhooks and emails (to members or customers) after commit, and an audit log. See [Business actions](/docs/concepts/actions/). |
@@ -56,7 +56,8 @@ see or affect another.
 | Filesystems | Trees of folders and files: versioned uploads up to 25 MiB, paths, name search, a trash with restore, folders restricted to teams that hide everything under them, live updates, and MCP tools. See [Filesystems](/docs/concepts/filesystem/). |
 | Search | One full-text search across objects' text, chat messages, and file names and text, ranked, with highlighted snippets, finding only what each person could open. See [Search](/docs/concepts/search/). |
 | Live updates | Every change to the ontology as a resumable stream of server-sent events. See [Live events](/docs/concepts/live-events/). |
-| An MCP server | At `/orgs/{org}/mcp`, behind the organization's own OAuth 2.1 authorization server. See [MCP and OAuth](/docs/concepts/mcp/). |
+| An MCP server | At `/orgs/{org}/mcp`, behind the organization's own OAuth 2.1 authorization server, with scoped MCP tokens for agents and scripts. See [MCP and OAuth](/docs/concepts/mcp/). |
+| Connectors | Outside MCP servers the organization connects, their tools reviewed before anyone sees them, granted to teams with limits on their arguments, called through the organization's MCP endpoint or from actions, and logged. See [Connectors](/docs/concepts/connectors/). |
 | A web app | Objects in tables and calendars, the ontology and its code editor, action forms, the audit log, the live feed, people, teams, security, and an operator console. See [Web app](/docs/web-app/). |
 | Files | Avatars, an organization photo, and attachments up to 25 MiB, readable by whoever may see an object that refers to them. In a local directory or an S3 bucket. See [Files and email](/docs/concepts/files-and-email/). |
 
@@ -119,9 +120,10 @@ it ships.
   have no time zone per organization.
 - **Emails go to one person each.** An action emails a member or an outside
   address, not a team.
-- **Agent accounts cannot use MCP.** The MCP endpoint takes OAuth sessions,
-  which start with an email sign-in, so agent accounts work over REST with
-  API tokens.
+- **Connectors act as one identity at the remote.** Every call to an
+  outside MCP server goes out with the organization's credential there,
+  whoever made it; the call log records who did. Their resources and
+  prompts are not served, and calls send no live events.
 - **Every reader is a member.** There are no share links for people outside
   the organization, in the API or in the web app.
 - **Search has no stemming, and skips attachments.**

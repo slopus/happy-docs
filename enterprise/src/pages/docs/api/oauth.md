@@ -25,7 +25,8 @@ RFC 9728 protected resource metadata, linked from the MCP endpoint's `401`.
   "resource": "https://enterprise.example.com/orgs/c8kq2m7xw3n5p9r1t4v6y0za/mcp",
   "authorization_servers": ["https://enterprise.example.com/orgs/c8kq2m7xw3n5p9r1t4v6y0za"],
   "scopes_supported": ["mcp:read", "mcp:invite", "ontology:read", "ontology:write", "actions:apply",
-                       "chat:read", "chat:write", "files:read", "files:write"],
+                       "chat:read", "chat:write", "files:read", "files:write",
+                       "connectors:use", "connectors:write"],
   "bearer_methods_supported": ["header"],
   "resource_name": "Happy Enterprise"
 }
@@ -47,7 +48,8 @@ RFC 8414 authorization server metadata. Also served at
   "revocation_endpoint": "https://enterprise.example.com/orgs/c8kq2m7xw3n5p9r1t4v6y0za/oauth/revoke",
   "revocation_endpoint_auth_methods_supported": ["none"],
   "scopes_supported": ["mcp:read", "mcp:invite", "ontology:read", "ontology:write", "actions:apply",
-                       "chat:read", "chat:write", "files:read", "files:write"],
+                       "chat:read", "chat:write", "files:read", "files:write",
+                       "connectors:use", "connectors:write"],
   "response_types_supported": ["code"],
   "response_modes_supported": ["query"],
   "grant_types_supported": ["authorization_code", "refresh_token"],
