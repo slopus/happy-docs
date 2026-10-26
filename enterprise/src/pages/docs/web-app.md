@@ -123,16 +123,79 @@ directory. Its development server serves it and proxies both APIs on one
 origin, so the OAuth sign-in pages and the MCP endpoint are reachable there
 too. See the [Quickstart](/docs/quickstart/#8-open-the-web-app).
 
-To serve it yourself, build it with `npm run build` and serve the files in
-`web/dist` from one origin that also:
+### In production
 
-- sends `/v1`, `/orgs`, `/.well-known`, and `/health` to the organization API,
-  unchanged;
-- sends `/mgmt` to the management API, without the `/mgmt` prefix, if the
-  operator console should work there;
-- answers any other path with `index.html`.
+Build it with `npm run build` and serve the files in `web/dist` from one
+origin, over HTTPS, at the root of that origin. The app is built for `/`,
+so it cannot sit under a sub-path without a rebuild, and passkeys and the
+console's key signing need a secure context. The same origin must:
 
-Set `PUBLIC_BASE_URL` to that origin, so that invite links (`/invite`) and the
-OAuth pages point at it. See [Configuration](/docs/self-hosting/configuration/).
+- send `/v1`, `/orgs`, `/.well-known`, and `/health` to the organization API,
+  unchanged, with these settings:
+  - **the client's `Host` header kept**, because the MCP endpoint accepts
+    only the host of `PUBLIC_BASE_URL` or those in `MCP_ALLOWED_HOSTS` (nginx
+    sends the upstream's address unless told otherwise; Caddy keeps it);
+  - **response buffering off and a long read timeout**, because live updates
+    are a server-sent event stream (`/v1/ontology/events`);
+  - **a request body limit of at least 25 MiB**, the attachment limit of
+    `POST /v1/files` (nginx's default is 1 MB);
+- send `/mgmt` to the management API without the `/mgmt` prefix, only if the
+  operator console should work there, and only to operators: the
+  management API listens on `127.0.0.1:9090` by default for a reason;
+- answer any other path with `index.html`, except under `/assets/`, where a
+  missing file should be a `404`. Files under `/assets/` have hashed names
+  and can be cached as immutable; `index.html` should be `no-cache`.
+
+Then set, on the server:
+
+- `PUBLIC_BASE_URL` to that origin. It is more than a base URL: it sets the
+  invite links (`<origin>/invite`, a page of the web app), the passkey
+  relying party and origin, the OAuth issuer, and the MCP endpoint's host
+  check.
+- `CLIENT_IP_HEADER=X-Forwarded-For`, so that rate limits key on the client
+  rather than on the proxy. The server takes the last address in the list.
+
+An nginx server block that does all of this:
+
+```nginx
+server {
+  listen 443 ssl;
+  server_name enterprise.example.com;
+  # ssl_certificate ...; ssl_certificate_key ...;
+
+  root /srv/happy-enterprise/web/dist;
+  client_max_body_size 26m;
+
+  location ~ ^/(v1|orgs|\.well-known|health)(/|$) {
+    proxy_pass http://127.0.0.1:8080;
+    proxy_http_version 1.1;
+    proxy_set_header Host $http_host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_buffering off;
+    proxy_read_timeout 1h;
+  }
+
+  location /mgmt/ {
+    allow 10.0.0.0/8;  # operators only
+    deny all;
+    proxy_pass http://127.0.0.1:9090/;
+  }
+
+  location /assets/ {
+    add_header Cache-Control "public, max-age=31536000, immutable";
+    try_files $uri =404;
+  }
+
+  location / {
+    add_header Cache-Control "no-cache";
+    try_files $uri /index.html;
+  }
+}
+```
+
+with `PUBLIC_BASE_URL=https://enterprise.example.com` and
+`CLIENT_IP_HEADER=X-Forwarded-For`. See also
+[Configuration](/docs/self-hosting/configuration/) and
+[Self-hosting](/docs/self-hosting/).
 
 Your own apps can sit next to it: they use the same API under the same rules.

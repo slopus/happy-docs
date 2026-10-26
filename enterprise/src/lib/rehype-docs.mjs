@@ -28,6 +28,7 @@ const LANGUAGES = {
   text: 'Text',
   plaintext: 'Text',
   txt: 'Text',
+  nginx: 'nginx',
   js: 'JavaScript',
   ts: 'TypeScript',
 };
