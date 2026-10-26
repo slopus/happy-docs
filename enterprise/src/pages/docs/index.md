@@ -54,6 +54,7 @@ see or affect another.
 | Timeseries | Series of timestamped points, such as sensor readings, attached to objects and read under their access: idempotent batches, raw, bucketed and downsampled reads, the newest value, retention, and live updates. See [Timeseries](/docs/concepts/timeseries/). |
 | Chat | Public and private channels, direct messages, and channels about one object that follow who sees it, for people and agents: threads, mentions, attachments, reactions, pins, read state, and typing. See [Chat](/docs/concepts/chat/). |
 | Filesystems | Trees of folders and files: versioned uploads up to 25 MiB, paths, name search, a trash with restore, folders restricted to teams that hide everything under them, live updates, and MCP tools. See [Filesystems](/docs/concepts/filesystem/). |
+| Search | One full-text search across objects' text, chat messages, and file names and text, ranked, with highlighted snippets, finding only what each person could open. See [Search](/docs/concepts/search/). |
 | Live updates | Every change to the ontology as a resumable stream of server-sent events. See [Live events](/docs/concepts/live-events/). |
 | An MCP server | At `/orgs/{org}/mcp`, behind the organization's own OAuth 2.1 authorization server. See [MCP and OAuth](/docs/concepts/mcp/). |
 | A web app | Objects in tables and calendars, the ontology and its code editor, action forms, the audit log, the live feed, people, teams, security, and an operator console. See [Web app](/docs/web-app/). |
@@ -123,8 +124,11 @@ it ships.
   API tokens.
 - **Every reader is a member.** There are no share links for people outside
   the organization, in the API or in the web app.
-- **No full-text search.** Filters match property values, not the contents
-  of attached files.
+- **Search has no stemming, and skips attachments.**
+  [Search](/docs/concepts/search/) matches words and their prefixes, not
+  their other forms, and does not look inside struct properties, message
+  fields, attached files, or earlier versions of files. Very common words
+  are slower.
 - **No transactions outside actions.** Plain object and link writes are one
   operation each. A change that takes several steps is atomic only when it is
   defined as an action.
@@ -133,16 +137,15 @@ it ships.
   `order_by` on a property, take 1.3 to 2.3 seconds at a million objects of a
   type. Lookups by id, link traversals, and `linked` filters use indexes.
   See [Performance](/docs/self-hosting/performance/).
-- **Chat has no search, and MCP posts no attachments.** Messages cannot be
-  searched yet, and assistants post text and fields only.
+- **MCP posts no chat attachments.** Assistants post text and fields only.
 - **Single points cannot be deleted.** Points of a
   [timeseries](/docs/concepts/timeseries/) go when retention passes them or
   their series goes, and ingest limits count batches, not points.
-- **Filesystems search names only.** A
-  [filesystem](/docs/concepts/filesystem/) finds folders and files by name,
-  not by content, reading the whole tree each time; uploads are single
-  requests of up to 25 MiB; and every version is kept until its file is
-  purged from the trash.
+- **Filesystem uploads are single requests.** A
+  [filesystem](/docs/concepts/filesystem/) takes uploads of up to 25 MiB
+  in one request, and keeps every version until its file is purged from
+  the trash. Its own name search is a substring match that reads the whole
+  tree.
 - **Files have no quota or cleanup.** Uploads are limited to 25 MiB each,
   but not in total, and attachments that no object refers to are kept. MCP
   clients cannot upload attachments, though they can write files in a

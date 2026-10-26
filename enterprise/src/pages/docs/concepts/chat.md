@@ -155,6 +155,13 @@ some channels.
 user}`, to the streams of the channel's other readers. It has no id, is
 never stored, and never reaches the person typing.
 
+## Search
+
+[Search](/docs/concepts/search/) finds messages by their text, ranked and
+with snippets, in the channels you can read. Messages in private channels
+you are not in, in channels about objects hidden from you, deleted, or
+past retention are never found.
+
 ## Through MCP
 
 Assistants use chat with their own scopes: `chat:read` for
@@ -166,4 +173,6 @@ never opens the other. See [MCP tools and scopes](/docs/api/mcp/#list_channels).
 ## Not there yet
 
 - **Posts through MCP carry no attachments.**
-- **Messages cannot be searched.**
+- **Message fields and attachments are not searched.** Message text is
+  found by [search](/docs/concepts/search/), only in the channels the
+  searcher can read.

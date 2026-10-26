@@ -52,8 +52,10 @@ items stay in the trash for two weeks.
   raises. Writes may name an `expected_version`, and are `409` if the item
   has moved on, so two writers never overwrite each other unknowingly.
 - **Listing** shows folders first, then files, by name.
-- **Search** finds folders and files by part of their name,
-  case-insensitively, with their paths.
+- **Name search** finds folders and files by part of their name,
+  case-insensitively, with their paths. It is a substring match on names
+  only; [search](/docs/concepts/search/) finds names and the text of text
+  files by words, ranked, across every type.
 
 ## File contents
 
@@ -99,8 +101,8 @@ granted one level:
 - **Owners** see every folder and manage everything, except what is in the
   trash under a restricted folder.
 - **Assistants never manage.** OAuth credentials are held to `write`, an
-  owner's included, so access to folders is changed only with a session
-  or an API token.
+  owner's included, so access to folders is changed only by a person in
+  the web app, or with a session or an API token.
 - **Managers keep access.** A restriction must grant `manage` to one of
   the manager's own teams (`422` otherwise); owners need not.
 - **Changes take effect at once.** Restricting a folder hides it, and
@@ -187,12 +189,13 @@ through REST and MCP together.
 
 ## Not there yet
 
-- **Search matches names, not contents**, and it reads the whole tree: at a
-  million items, about 0.6 seconds for a member and 3.6 for an owner, who
-  sees more. Listing a folder and reading an item by id or path stay at a
+- **Name search reads the whole tree**: at a million items, about 0.6
+  seconds for a member and 3.6 for an owner, who sees more. Full-text
+  [search](/docs/concepts/search/) indexes names and the current version
+  of text files up to 1 MiB, but not other files or earlier versions. Listing a folder and reading an item by id or path stay at a
   few milliseconds however large the tree grows.
 - **Uploads are single requests** of up to 25 MiB, with no multipart or
   resumable uploads.
 - **No quota, and every version is kept** until its file is purged.
 - **Assistants restore nothing.** Restoring from the trash, and changing
-  who may use a folder, are in the REST API only.
+  who may use a folder, are done in the web app or the REST API.

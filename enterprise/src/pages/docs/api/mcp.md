@@ -45,7 +45,7 @@ header must be one of `MCP_ALLOWED_HOSTS` (by default the host of
 The server identifies itself as `happy-enterprise`. Its instructions tell the
 client it offers the organization's members, teams, invites, ontology
 (object types, objects, links, timeseries), chat channels, filesystems
-(folders and files), and the actions the user may apply, one tool each
+(folders and files), full-text search across them, and the actions the user may apply, one tool each
 (`action_<name>`).
 
 ## Scopes
@@ -60,6 +60,7 @@ client it offers the organization's members, teams, invites, ontology
 | `chat:write` | `post_message`, `add_reaction`, with `chat:read` | `edit_objects` (on chat types only), and membership |
 | `files:read` | `list_files`, `read_file`, `search_files` | `view_objects` (on filesystem types only), and the folder's level |
 | `files:write` | `write_file`, `make_folder`, `move_file`, `delete_file`, with `files:read` | `edit_objects` (on filesystem types only), and `write` on the folders involved |
+| `ontology:read`, `chat:read`, `files:read` | `search`, over the kinds these reach: objects, messages, files | `view_objects` (on each type searched) |
 | `actions:apply` | `action_<api_name>` tools, with `ontology:read` for the types they touch | the action's grant (no permission on its own) |
 
 A tool runs only if both the grant's scopes and the user's own permissions
@@ -388,6 +389,22 @@ does, and returns the item.
 returns `{"deleted": "<id>"}`. It can be restored through the
 [REST API](/docs/api/filesystem/#post-v1-fs-nodes-node-restore) until the
 type's `trash_days` have passed.
+
+### search
+
+<p class="ep-meta"><span><b>Scope</b>ontology:read, chat:read, or files:read, per kind</span><span><b>Permission</b>view_objects on the types searched</span></p>
+
+```json
+{ "query": "hydraulic leak", "kinds": ["message", "object"], "limit": 10 }
+```
+
+`query` (required), and `kinds` (any of `object`, `message`, `file`),
+`types` (type `api_name`s), `limit` (1-50, default 20), and `cursor`.
+Searches as [`GET /v1/search`](/docs/api/search/#get-v1-search) does, and
+returns the same results. Objects need `ontology:read`, messages
+`chat:read`, and files `files:read`. Without `kinds`, every kind the grant
+reaches is searched; asking for a kind it lacks is `forbidden`, and so is
+a grant that reaches none.
 
 ### list_actions
 

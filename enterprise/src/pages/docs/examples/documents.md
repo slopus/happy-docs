@@ -359,6 +359,17 @@ one: the budget. Asked for folders, it gets Company and Sales. A search for
 Asked for the invoice by id (`get_object`), it gets an error: the invoice
 does not exist for Ben.
 
+[Search](/docs/concepts/search/) says the same. With `ontology:read` and
+`files:read`, the `search` tool looks through documents, folders, and the
+drive. `budget` finds the budget; `invoice` finds neither the invoice nor
+the drive's copy of it, which exist only for finance and records:
+
+```json
+{ "tool": "search", "arguments": { "query": "invoice" } }
+
+→ { "results": [], "kinds": ["object", "file"], "next_cursor": null }
+```
+
 In the drive, it finds only `Company`:
 
 ```json
@@ -475,8 +486,9 @@ the archive's webhook.
   teams only, not single people.
 - **No share links.** Everyone who reads a document is a member of the
   organization.
-- **No full-text search.** `contains` matches titles and other properties,
-  not what is inside the files.
+- **Attachments are not searched.** [Search](/docs/concepts/search/) finds
+  titles, tags, and the drive's names and text files, but not what is
+  inside the scanned PDFs.
 - **MCP clients cannot upload attachments.** They can refer to files their
   user can already read, and with `files:write` they could write files in
   the drive.
