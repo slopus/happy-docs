@@ -1,7 +1,7 @@
 ---
 layout: ../../../layouts/Docs.astro
 title: "Example: machine maintenance"
-lead: A machine breaks down. An agent reports and assigns the incident, a technician's assistant does the work over MCP, and a supervisor approves the close. All three change the same objects, only through actions, and every refusal is explained.
+lead: A machine breaks down. An agent reports and assigns the incident in a channel about it, a technician's assistant reads that channel and does the work over MCP, and a supervisor approves the close. All three change the same objects, only through actions, and every refusal is explained.
 ---
 
 This page walks through one complete scenario: the model, the three
@@ -16,7 +16,7 @@ your own organization and replay it.
 | | Identity | Connects with | Team |
 |---|---|---|---|
 | **dispatch-bot** | an agent account | REST, with its API token | `dispatch` |
-| **Tess**, a technician | a person, through her assistant | MCP, with an OAuth grant of `ontology:read actions:apply` | `technicians` |
+| **Tess**, a technician | a person, through an assistant | MCP, with an OAuth grant of `ontology:read actions:apply chat:read` | `technicians` |
 | **Sam**, a supervisor | a person, in your app | REST, with a session token, watching the event stream | `supervisors` |
 
 Only `dispatch` holds a permission to write (`edit_objects`), so the agent
@@ -67,7 +67,27 @@ PUT /v1/ontology/object-types/incident/access
 ```
 
 Postgres enforces it, so Tess's assistant cannot see or name an incident that
-is not hers by any route: queries, links, MCP tools, or actions.
+is not assigned to Tess by any route: queries, links, MCP tools, or
+actions.
+
+### A channel per incident
+
+`incident_chat` is a [chat type](/docs/concepts/chat/) about incidents. Each
+incident gets a public channel about it, and a message field `kind` marks
+a report, an update, or a question:
+
+```json
+{ "api_name": "incident_chat", "display_name": "Incident chat", "kind": "chat",
+  "chat": { "object_type": "incident", "retention_days": 365 },
+  "properties": [
+    { "api_name": "kind", "type": { "kind": "string" },
+      "rules": [{ "rule": "enum", "values": ["report", "update", "question"] }] } ] }
+```
+
+It is restricted: `dispatch` may read and write in it, `supervisors` and
+`technicians` may read. A channel about an incident is seen only by whoever
+sees the incident, so Tess sees the channel of the incident assigned to
+Tess, and no other.
 
 ## The actions
 
@@ -210,9 +230,9 @@ As an owner, through the REST API:
 1. Create the three teams and give `dispatch` the `edit_objects` permission
    ([teams API](/docs/api/teams/)). Add Sam to `supervisors`, Tess to
    `technicians`, and the agent to `dispatch`.
-2. Create the object types and link types
-   ([schema API](/docs/api/ontology-schema/)), and restrict `incident` as
-   above.
+2. Create the object types, the `incident_chat` chat type, and the link
+   types ([schema API](/docs/api/ontology-schema/)), and restrict
+   `incident` and `incident_chat` as above.
 3. Create the three action types and grant each to its teams
    (`PUT /v1/ontology/action-types/{type}/access`,
    [actions API](/docs/api/actions/)).
@@ -234,9 +254,22 @@ Authorization: Bearer heat_...
 PUT /v1/ontology/links/incident_machine/<incident>/<press 7>
 ```
 
+It opens the incident's channel and posts the report there:
+
+```http
+POST /v1/chat/channels
+{ "type": "incident_chat", "kind": "public", "name": "press-7-leak", "object": "<incident>" }
+
+201 { "id": "<channel>", "object": "<incident>", ... }
+
+POST /v1/chat/channels/<channel>/messages
+{ "text": "Pressure dropped 30% in an hour; Press 7 is down", "fields": { "kind": "report" } }
+```
+
 It also reports a second, low-severity incident, "Belt squeal on Conveyor
-2", which nobody is assigned yet. Then it assigns the leak to Tess, with an
-idempotency key:
+2", which nobody is assigned yet, with its own channel,
+`conveyor-2-belt`. Then it assigns the leak to Tess, with an idempotency
+key:
 
 ```http
 POST /v1/actions/assign_incident/apply
@@ -253,18 +286,20 @@ Suppose the answer is lost on the way back. The agent sends the same request
 again and gets the first result back, `200` with `replayed: true` and the
 same `application_id`. Nothing is applied twice and no second email goes
 out. Tess receives "Incident assigned to you: Hydraulic leak on Press 7".
+The agent tells the channel too, mentioning Tess: "Assigned to
+`<@tess>`. Seal kit is in bay 3".
 
 ## 2. The technician's assistant does the work
 
-Tess connects her MCP client to the organization and grants it
-`ontology:read actions:apply`. Its tools include `action_close_incident` and
+Tess connects an MCP client to the organization and grants it
+`ontology:read actions:apply chat:read`. Its tools include `action_close_incident` and
 `action_create_maintenance_order`, but not `action_assign_incident`:
 technicians are not granted it.
 
 Asked for every incident (`query_objects` on `incident`, no filter), the
 assistant gets one: the leak. The belt squeal exists, but it is not assigned
-to Tess, so to her it does not. It narrows the query anyway (`whoami` gives
-her id):
+to Tess, so for Tess it does not. It narrows the query anyway (`whoami`
+gives Tess's id):
 
 ```json
 { "tool": "query_objects",
@@ -277,6 +312,11 @@ It gets the leak at version 2, finds its machine by following the link
 (`query_objects` on `machine` with `{"op": "linked", "link": "incidents",
 "object": "<incident>"}`), and calls `list_actions`: `close_incident` and
 `create_maintenance_order`.
+
+It lists the channels it can read (`list_channels`) and gets one, the leak's
+`press-7-leak`; `conveyor-2-belt` is about an incident Tess does not see.
+`read_messages` on it returns the report and the assignment update. With
+`chat:read` only, it can read the channel but not post in it.
 
 **Denied.** Asked to reassign the incident, it tries anyway:
 
@@ -354,7 +394,8 @@ the work order, and Press 7 is in `maintenance`.
 
 Sam's event stream carried every change, whoever made it and however they
 connected: the `object.created`, `object.updated`, and `link.created` events
-of each edit, and four `action.applied` events:
+of each edit, the `chat.message.created` events of the incidents' channels,
+and four `action.applied` events:
 
 | Action | Via |
 |---|---|
@@ -395,5 +436,5 @@ last error, and next attempt.
 - **People and agents see the same objects.** The supervisor's app, the
   technician's assistant, and the agent read and change one incident.
 - **Each sees only what is theirs.** The technician's assistant sees the
-  incidents assigned to her and nothing else, enforced by the database, not
-  by the client.
+  incidents assigned to Tess and their channels, and nothing else, enforced
+  by the database, not by the client.

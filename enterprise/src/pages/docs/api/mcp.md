@@ -55,6 +55,8 @@ each (`action_<name>`).
 | `mcp:invite` | `invite_member` | `invite_members` |
 | `ontology:read` | `describe_schema`, `query_objects`, `get_object`, `query_timeseries`, `latest_points` | `view_objects` (on the type) |
 | `ontology:write` | `create_object`, `update_object`, `write_points`, with `ontology:read` | `edit_objects` (on the type) |
+| `chat:read` | `list_channels`, `read_messages` | `view_objects` (on chat types only) |
+| `chat:write` | `post_message`, `add_reaction`, with `chat:read` | `edit_objects` (on chat types only), and membership |
 | `actions:apply` | `action_<api_name>` tools, with `ontology:read` for the types they touch | the action's grant (no permission on its own) |
 
 A tool runs only if both the grant's scopes and the user's own permissions
@@ -242,6 +244,53 @@ Writes a batch as
 [`POST .../points`](/docs/api/timeseries/#post-v1-ontology-timeseries-type-points)
 does, at most 10,000 points, and returns its result; the ingest log records
 it with `via: mcp`.
+
+### list_channels
+
+<p class="ep-meta"><span><b>Scope</b>chat:read</span><span><b>Permission</b>view_objects on the chat type</span></p>
+
+```json
+{ "type": "incident_chat", "member": true }
+```
+
+All arguments are optional: `type`, `object`, `member`, `cursor`, and
+`limit`, as in [`GET /v1/chat/channels`](/docs/api/chat/#get-v1-chat-channels).
+Returns `{"channels": [...], "next_cursor": ...}`.
+
+### read_messages
+
+<p class="ep-meta"><span><b>Scope</b>chat:read</span><span><b>Permission</b>view_objects on the chat type</span></p>
+
+```json
+{ "channel": "c7h2a9n4n1e8l3x6q5w0e2r4", "limit": 20 }
+```
+
+`channel` (required), and `before`, `after`, `thread`, and `limit`, as in
+[`GET .../messages`](/docs/api/chat/#get-v1-chat-channels-channel-messages).
+
+### post_message
+
+<p class="ep-meta"><span><b>Scope</b>chat:read + chat:write</span><span><b>Permission</b>a member, with edit_objects on the chat type</span></p>
+
+```json
+{ "channel": "c7h2a9n4n1e8l3x6q5w0e2r4", "text": "Seal replaced; testing now",
+  "fields": { "kind": "update" }, "idempotency_key": "mcp-tess-7" }
+```
+
+`channel` and `text` (required), and `thread`, `fields`, and
+`idempotency_key`, as in
+[`POST .../messages`](/docs/api/chat/#post-v1-chat-channels-channel-messages).
+No attachments. Returns the message.
+
+### add_reaction
+
+<p class="ep-meta"><span><b>Scope</b>chat:read + chat:write</span><span><b>Permission</b>a member, with edit_objects on the chat type</span></p>
+
+```json
+{ "message": "m3s5g7e9a1b2c4d6e8f0g1h2", "emoji": "+1" }
+```
+
+Reacts as [`PUT .../reactions/{emoji}`](/docs/api/chat/#put-v1-chat-messages-message-reactions-emoji) does.
 
 ### list_actions
 

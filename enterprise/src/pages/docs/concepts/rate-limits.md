@@ -15,6 +15,8 @@ lead: Sliding-window limits protect login, second factors, and OAuth. They are k
 | OAuth client registration | 20 per hour | 100 per hour per organization |
 | Action emails to outside addresses | | 200 per hour per organization; deliveries over the limit wait |
 | [Timeseries](/docs/concepts/timeseries/) ingest (REST and MCP) | | 600 batches per minute per organization, 120 per minute per user |
+| [Chat](/docs/concepts/chat/) posts, edits, reactions, and pins (REST and MCP) | | 120 per minute per user |
+| Chat typing notices | | 30 per minute per user |
 
 ## Behavior
 

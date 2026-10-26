@@ -20,6 +20,7 @@ exactly when its change committed.
 | `link_type.created`, `link_type.changed`, `link_type.deleted` | `link`, `from_type`, `to_type` |
 | `team.member_added`, `team.member_removed` | `type`, `id` (the team), `user`, and for `added` `expires_at`: a membership of a team object changed; a membership running out sends nothing |
 | `series.points` | `type`, `series`, `object`, `tags`, `count`, `first_at`, `last_at`, `points` (at most 100), `truncated`: one per series a batch changed, for [timeseries types](/docs/concepts/timeseries/#live-events) with `live` on; delivered to those who may read the series |
+| `chat.*` | `type`, `channel`, and the channel, member, message, reaction or pin: every change in a [chat channel](/docs/concepts/chat/#live-events), delivered to those who can read the channel; `chat.typing`, without an id, is never stored |
 | `action.applied` | the [action's result](/docs/concepts/actions/#applying-step-by-step), after the events of its edits; about every type the action touches |
 
 Schema changes never rewrite objects, so they emit only `type.changed`;
@@ -57,7 +58,8 @@ data: {"link":"works_on","from_type":"employee","from":"o4b8j2e6c0t1q5w9r3y7u2i6
 - Needs `view_objects`.
 - `types` (object type api names) and `objects` (object ids), each
   comma-separated with up to 100 values, narrow the stream to events about
-  any of them.
+  any of them; `channels` (chat channel ids) to the events in any of those
+  channels.
 - Without a cursor, the stream starts at the next change.
 - The SSE `id` is the event's sequence number. Reconnect with
   `Last-Event-ID: <id>` (browsers do this automatically) or `?after=<id>`

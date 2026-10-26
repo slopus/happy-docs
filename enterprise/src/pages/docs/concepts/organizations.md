@@ -132,8 +132,8 @@ inherited links), or if they are an owner.
 | `change_security_posture` | the 2FA requirement and the allowed (verified) domains | none |
 | `manage_organization` | the organization's name and photo | none |
 | `manage_ontology` | object types, link types, custom validators and formats, action types | none |
-| `view_objects` | reading ontology objects and links, and the event stream | `ontology:read` |
-| `edit_objects` | creating, changing, deleting objects and links | `ontology:write` |
+| `view_objects` | reading ontology objects and links, chat channels, and the event stream | `ontology:read`; `chat:read` for chat |
+| `edit_objects` | creating, changing, deleting objects and links; writing in chat | `ontology:write`; `chat:write` for chat |
 
 A new organization's `everyone` team holds `view_members` and
 `view_objects`.

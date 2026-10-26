@@ -91,9 +91,10 @@ listed in `read_only_properties`, which is left out when empty. See
 to 2000.
 
 `kind` is `object` (the default); `team`, for a
-[team type](/docs/concepts/ontology/#team-types) whose objects are teams; or
+[team type](/docs/concepts/ontology/#team-types) whose objects are teams;
 `timeseries`, for a [timeseries type](#timeseries-types) that holds series
-of points. It is set here and never changes. A team type needs a required
+of points; or `chat`, for a [chat type](#chat-types) that holds channels of
+messages. It is set here and never changes. A team type needs a required
 string property `name` (`422` without one), and every later `PUT` must keep
 it.
 
@@ -211,6 +212,37 @@ link type and action endpoints refuse them (`400`), and points have
 deleted while a live timeseries type refers to it (`409`). See
 [Timeseries](/docs/concepts/timeseries/).
 
+### Chat types
+
+A type of kind `chat` takes `chat` settings, on `POST` and `PUT`:
+
+```json
+{
+  "api_name": "incident_chat",
+  "display_name": "Incident chat",
+  "kind": "chat",
+  "properties": [
+    { "api_name": "kind", "type": { "kind": "string" },
+      "rules": [{ "rule": "enum", "values": ["report", "update", "question"] }] }
+  ],
+  "chat": { "object_type": "incident", "retention_days": 365 }
+}
+```
+
+| Setting | |
+|---|---|
+| `object_type` | optional: the object type whose objects channels may be about (a type with objects, which you may manage); never changes |
+| `retention_days` | optional, 1-36,500: a thread is hidden once its first message is older, and deleted later |
+
+The properties are optional message fields: up to 32 of kind `integer`,
+`double`, `boolean`, or `string`, with built-in rules only (`422`
+otherwise). A `PUT` without `chat` keeps the settings. `400` for `chat`
+settings on another kind of type. Chat types show their settings as `chat`
+in the ontology, the type, and its versions. They have no objects or links:
+channels and messages have [their own endpoints](/docs/api/chat/). A chat
+type cannot be deleted while it has channels, nor an object type while a
+chat type refers to it (`409`). See [Chat](/docs/concepts/chat/).
+
 ## Access to restricted types and properties
 
 ### GET /v1/ontology/object-types/{type}/access
@@ -284,7 +316,7 @@ For a [timeseries type](#timeseries-types) with an `object_type`,
 `inherit_object_access: true` lets whoever may view its object type read
 its series, each only while its object is visible to them; writing still
 needs the timeseries type's own grants. Left as it is when absent; `400` on
-any other type. Timeseries types take no `access_properties` or
+any other type. Timeseries and chat types take no `access_properties` or
 `properties` (`400`). Unknown fields are refused, including
 `assignee_property`, which `access_properties` replaced.
 

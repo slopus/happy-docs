@@ -52,6 +52,7 @@ see or affect another.
 | An ontology | Object types with typed properties and format rules, versioned schemas, custom validators in sandboxed Python, link types with cardinality, queries, and access per type, down to the objects shared with each member or their teams and to single properties. See [The ontology](/docs/concepts/ontology/). |
 | Business actions | The organization's own operations, such as "open a work order": typed parameters, criteria, edits applied all or nothing, safe retries, webhooks and emails (to members or customers) after commit, and an audit log. See [Business actions](/docs/concepts/actions/). |
 | Timeseries | Series of timestamped points, such as sensor readings, attached to objects and read under their access: idempotent batches, raw, bucketed and downsampled reads, the newest value, retention, and live updates. See [Timeseries](/docs/concepts/timeseries/). |
+| Chat | Public and private channels, direct messages, and channels about one object that follow who sees it, for people and agents: threads, mentions, attachments, reactions, pins, read state, and typing. See [Chat](/docs/concepts/chat/). |
 | Live updates | Every change to the ontology as a resumable stream of server-sent events. See [Live events](/docs/concepts/live-events/). |
 | An MCP server | At `/orgs/{org}/mcp`, behind the organization's own OAuth 2.1 authorization server. See [MCP and OAuth](/docs/concepts/mcp/). |
 | A web app | Objects in tables and calendars, the ontology and its code editor, action forms, the audit log, the live feed, people, teams, security, and an operator console. See [Web app](/docs/web-app/). |
@@ -131,6 +132,10 @@ it ships.
   `order_by` on a property, take 1.3 to 2.3 seconds at a million objects of a
   type. Lookups by id, link traversals, and `linked` filters use indexes.
   See [Performance](/docs/self-hosting/performance/).
+- **Chat has no search, and MCP posts no attachments.** Messages cannot be
+  searched yet, and assistants post text and fields only. Channel names are
+  unique per chat type, private channels included, so a taken name shows
+  that a channel exists.
 - **Single points cannot be deleted.** Points of a
   [timeseries](/docs/concepts/timeseries/) go when retention passes them or
   their series goes, and ingest limits count batches, not points.

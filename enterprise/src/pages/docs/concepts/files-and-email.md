@@ -47,7 +47,9 @@ from the store directly. A file can be read:
 - by its owner and holders of `view_members`, if it is an avatar;
 - by its uploader, if it is an attachment;
 - by anyone who may view a live object whose visible properties refer to it
-  through a `file_ref`.
+  through a `file_ref`;
+- by anyone who may read a [chat message](/docs/concepts/chat/#messages)
+  it is attached to.
 
 Anyone else gets `404`, as if the file did not exist.
 

@@ -17,10 +17,11 @@ Opens a `text/event-stream`.
 | `after` | resume after this sequence number |
 | `types` | comma-separated object type api names: events about any of them |
 | `objects` | comma-separated object ids: events about any of them |
+| `channels` | comma-separated [chat channel](/docs/api/chat/) ids: only events in any of them |
 
 `Last-Event-ID` (the header browsers send when an `EventSource` reconnects)
 takes precedence over `after`. Without either, the stream starts at the next
-change. `types` and `objects` take up to 100 values each.
+change. `types`, `objects`, and `channels` take up to 100 values each.
 
 ```sh
 curl -N "$BASE/v1/ontology/events?types=employee" \
@@ -61,6 +62,8 @@ stripped for each subscriber when the event is read.
 | `team.member_added` | `{type, id, user, expires_at}`: a member joined or was renewed on the team `id`, of the team type `type`, until `expires_at` or for good (`null`) |
 | `team.member_removed` | `{type, id, user}` |
 | `series.points` | `{type, series, object, tags, count, first_at, last_at, points, truncated}`: points a batch wrote to a series of a [timeseries type](/docs/concepts/timeseries/#live-events) with `live` on; at most 100 `points`, `truncated` if there were more |
+| `chat.channel.created`, `chat.channel.changed`, `chat.channel.deleted`, `chat.member.added`, `chat.member.removed`, `chat.message.created`, `chat.message.edited`, `chat.message.deleted`, `chat.reaction.added`, `chat.reaction.removed`, `chat.pin.added`, `chat.pin.removed` | `{type, channel, ...}`: a change in a [chat channel](/docs/concepts/chat/#live-events), delivered only while you can read the channel |
+| `chat.typing` (no `id`) | `{type, channel, user}`: someone else is typing in a channel you can read; never stored |
 | `action.applied` | the result of an [action](/docs/api/actions/#post-v1-actions-type-apply), after the events of its edits |
 | `reset` (no `id`) | `{reason}`: your cursor is older than the 7 days kept; reload, then carry on |
 
