@@ -64,6 +64,7 @@ stripped for each subscriber when the event is read.
 | `series.points` | `{type, series, object, tags, count, first_at, last_at, points, truncated}`: points a batch wrote to a series of a [timeseries type](/docs/concepts/timeseries/#live-events) with `live` on; at most 100 `points`, `truncated` if there were more |
 | `chat.channel.created`, `chat.channel.changed`, `chat.channel.deleted`, `chat.member.added`, `chat.member.removed`, `chat.message.created`, `chat.message.edited`, `chat.message.deleted`, `chat.reaction.added`, `chat.reaction.removed`, `chat.pin.added`, `chat.pin.removed` | `{type, channel, ...}`: a change in a [chat channel](/docs/concepts/chat/#live-events), delivered only while you can read the channel |
 | `chat.typing` (no `id`) | `{type, channel, user}`: someone else is typing in a channel you can read; never stored |
+| `fs.node.created`, `fs.node.changed`, `fs.node.moved`, `fs.node.deleted`, `fs.node.restored`, `fs.node.access`, `fs.file.written` | `{type, node, ...}`: a change to a folder or file of a [filesystem type](/docs/concepts/filesystem/#live-events), delivered only while you can see it |
 | `action.applied` | the result of an [action](/docs/api/actions/#post-v1-actions-type-apply), after the events of its edits |
 | `reset` (no `id`) | `{reason}`: your cursor is older than the 7 days kept; reload, then carry on |
 

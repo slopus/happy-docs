@@ -1,7 +1,7 @@
 ---
 layout: ../../../layouts/Docs.astro
 title: "Example: document management"
-lead: Folders and documents shared with people and teams, every version a file. An intake agent files a scanned invoice, a colleague approves it, a manager's assistant finds what was shared with the manager, and unsharing ends that access to the document and its files at once.
+lead: Folders and documents shared with people and teams, every version a file, beside a shared drive with a restricted Finance folder. An intake agent files a scanned invoice, a colleague approves it, a manager's assistant finds what was shared with the manager, and unsharing ends that access to the document and its files at once.
 ---
 
 This page walks through one complete scenario: the model, the six actions,
@@ -17,14 +17,15 @@ organization and replay it.
 |---|---|---|---|
 | **intake-bot** | an agent account that files scanned mail | REST, with its API token | `finance` |
 | **Ann**, in finance | a person, in your app | REST, with a session token | `finance` |
-| **Ben**, a manager | a person, through an assistant | MCP, with an OAuth grant of `ontology:read actions:apply` | none |
+| **Ben**, a manager | a person, through an assistant | MCP, with an OAuth grant of `ontology:read actions:apply files:read` | none |
 | **Cleo**, in records | a person, in your app | REST, with a session token | `records` |
 
 Every member holds `view_objects` through `everyone`, as in any new
-organization. **Nobody holds `edit_objects`.** Folders are set up by the
-owner, and documents change only through the actions below, which every
-member is granted. The actions decide who may add a version, share, or
-finalize.
+organization. Only `finance` holds `edit_objects`, and it reaches only the
+drive: the folder and document types are restricted and grant nobody
+`edit_objects`. **Folders are set up by the owner, and documents change
+only through the actions below**, which every member is granted. The
+actions decide who may add a version, share, or finalize.
 
 ## The model
 
@@ -83,6 +84,36 @@ all four folders; the agent sees Company, Finance, and Invoices.
 
 Postgres enforces it. A document that is not shared with Ben does not exist
 for Ben by any route, and neither do its files.
+
+### The drive
+
+Beside the documents, `drive` is a
+[filesystem type](/docs/concepts/filesystem/): one tree of folders and
+files, every write of a file a version, with deleted items kept for 14
+days.
+
+```json
+{ "api_name": "drive", "display_name": "Drive", "kind": "filesystem",
+  "properties": [], "filesystem": { "trash_days": 14 } }
+```
+
+The owner creates `/Company`, `/Finance`, and `/Finance/Invoices`, and
+restricts `/Finance`:
+
+```json
+PUT /v1/fs/nodes/<finance folder>/access
+{ "restricted": true,
+  "grants": [ { "team_id": "<finance>", "level": "write" },
+              { "team_id": "<records>", "level": "read" } ] }
+```
+
+| Who | Sees | May |
+|---|---|---|
+| everyone | `/Company` | read it; only `finance` holds `edit_objects`, which writing needs |
+| `finance` | `/Company`, `/Finance` and everything in it | write both |
+| `records` | `/Company`, `/Finance` and everything in it | read both |
+
+To Ben, `/Finance` and everything in it do not exist, by any route.
 
 ## The actions
 
@@ -176,8 +207,8 @@ file: one they uploaded, or one already on an object they can see.
 
 As an owner, through the REST API:
 
-1. Create the `finance` and `records` teams, with no permissions
-   ([teams API](/docs/api/teams/)). Add Ann and the agent to `finance`, and
+1. Create the `finance` team, with `edit_objects`, and the `records`
+   team, with no permissions ([teams API](/docs/api/teams/)). Add Ann and the agent to `finance`, and
    Cleo to `records`.
 2. Create the object types and link types
    ([schema API](/docs/api/ontology-schema/)), and restrict both types as
@@ -185,6 +216,8 @@ As an owner, through the REST API:
 3. Create the six action types and grant each to `everyone`
    ([actions API](/docs/api/actions/)).
 4. Create the four folders.
+5. Create the `drive` type, its three folders, and restrict `/Finance`
+   ([filesystem API](/docs/api/filesystem/)).
 
 ## 1. The agent files an invoice
 
@@ -198,8 +231,18 @@ Content-Type: application/pdf
 201 { "id": "<scan>", "purpose": "attachment", "name": "invoice-1042.pdf", ... }
 ```
 
-Only the agent can read the file so far. It files the document in Invoices
-with the scan as version 1:
+Only the agent can read the file so far. It also puts a copy in the drive's
+`/Finance/Invoices`:
+
+```http
+PUT /v1/fs/nodes/<drive invoices>/files/invoice-1042.pdf
+Content-Type: application/pdf
+
+201 { "id": "<drive invoice>", "path": "/Finance/Invoices/invoice-1042.pdf",
+      "content_version": 1, "level": "write", ... }
+```
+
+It files the document in Invoices with the scan as version 1:
 
 ```http
 POST /v1/actions/create_document/apply
@@ -239,7 +282,8 @@ PATCH /v1/ontology/objects/document/<invoice>
 403 { "error": { "code": "forbidden", ... } }
 ```
 
-Nobody holds `edit_objects`; documents change only through actions.
+Ann's team holds `edit_objects`, but the document type is restricted and
+grants it to nobody: documents change only through actions.
 
 **Refused by a criterion.** Ann uploads an approval stamp and tries to add
 it as a version. Seeing the document through a team makes Ann a viewer, not
@@ -257,8 +301,10 @@ The agent makes Ann an editor (`share_document`, role `editor`), and Ann is
 emailed "Invoice 1042 - Acme Paper was shared with you". Ann reads the
 document and notes its version, 3.
 
-Meanwhile the agent uploads a better scan and adds it, stating the version
-it read:
+Meanwhile the agent uploads a better scan, writes it as the next version of
+the drive's copy (`PUT /v1/fs/nodes/<drive invoice>/content`: `200`,
+`content_version` 2), and adds it to the document, stating the version it
+read:
 
 ```http
 POST /v1/actions/add_version/apply
@@ -298,7 +344,8 @@ budget's file, but still not the invoice's (`404`).
 
 ## 5. Ben's assistant
 
-Ben connects an MCP client and grants it `ontology:read actions:apply`.
+Ben connects an MCP client and grants it `ontology:read actions:apply
+files:read`.
 Asked for every document (`query_objects` on `document`, no filter), it gets
 one: the budget. Asked for folders, it gets Company and Sales. A search for
 `budget` in titles finds the same document:
@@ -311,6 +358,26 @@ one: the budget. Asked for folders, it gets Company and Sales. A search for
 
 Asked for the invoice by id (`get_object`), it gets an error: the invoice
 does not exist for Ben.
+
+In the drive, it finds only `Company`:
+
+```json
+{ "tool": "list_files", "arguments": { "type": "drive" } }
+
+→ { "children": [ { "name": "Company", "kind": "folder", "level": "read", ... } ], ... }
+```
+
+Asked for the drive's copy of the invoice by path, it gets `not_found`, as
+it would for a file that was never written:
+
+```json
+{ "tool": "read_file",
+  "arguments": { "type": "drive", "path": "/Finance/Invoices/invoice-1042.pdf" } }
+
+→ error { "code": "not_found", ... }
+```
+
+Ben's own `GET /v1/fs/nodes/<drive invoice>` is `404` too.
 
 **Refused by a criterion.** Asked to make Ben an editor, it tries anyway:
 
@@ -339,6 +406,12 @@ finalize one:
       "details": [{ "path": "criteria.owner",
                     "message": "only the owner finalizes a document" }] } }
 ```
+
+In the drive, Cleo reads the invoice's copy at level `read`, lists its two
+versions (`GET .../versions`: 2, then 1), and downloads the first scan
+(`GET .../content?version=1`). Writing a stamped copy is `403`: records
+may only read `/Finance`. For Ann, in `finance`, the same file shows level
+`write`.
 
 Ann, the budget's owner, finalizes it: `201`, and after commit the records
 archive's webhook is sent. Then Ann stops sharing it with Ben:
@@ -388,16 +461,23 @@ the archive's webhook.
   them every invoice shared with it; removing them hides those at once.
 - **Concurrent edits do not overwrite each other.** The second version
   stated what it read, and was refused until it read again.
+- **A restricted folder hides everything in it.** The drive's `/Finance`
+  is seen by finance and records only, and each reads or writes there at
+  the level its grant gives. Ben's assistant cannot list, find, or read
+  anything in it.
 
 ## What it does not do yet
 
-- **Folders do not pass their sharing on.** Each document carries its own
-  access properties. Sharing a folder does not share its documents, and an
-  action cannot yet update objects it was not given.
+- **Folder objects do not pass their sharing on.** Each document carries
+  its own access properties. Sharing a folder does not share its
+  documents, and an action cannot yet update objects it was not given.
+  The drive's restricted folders do cover everything in them, but grant
+  teams only, not single people.
 - **No share links.** Everyone who reads a document is a member of the
   organization.
 - **No full-text search.** `contains` matches titles and other properties,
   not what is inside the files.
-- **MCP clients cannot upload files.** They can refer to files their user
-  can already read.
+- **MCP clients cannot upload attachments.** They can refer to files their
+  user can already read, and with `files:write` they could write files in
+  the drive.
 - **No upload quota**, and attachments that no object refers to are kept.

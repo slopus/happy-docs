@@ -79,9 +79,11 @@ The channels you may read, by id: `{"channels": [...], "next_cursor": ...}`.
 
 `201` with the channel; you are its first member. A direct message between
 the same people already open returns that channel with `200`. Direct
-messages take no `name`, `topic`, or `object` (`400`). `409` if the chat
-type has a live channel with the name; `422` for an invalid name, topic,
-member list, or object.
+messages take no `name`, `topic`, or `object` (`400`). `409` ("a public
+channel with this name exists") if a new public channel's name is taken by
+a live public channel of the chat type about the same object (or about no
+object); private channels may repeat any name. `422` for an invalid name,
+topic, member list, or object.
 
 ### GET /v1/chat/channels/{channel}
 
@@ -99,8 +101,10 @@ The channel.
 
 Members set the `topic`. The channel's administrator (its creator, or an
 owner for a public channel) changes the `name` and `archived` (`403`
-otherwise). With `expected_version`, `409` unless the channel is at that
-version. Direct messages have no name or topic (`400`). Returns the
+otherwise). Renaming a public channel to a name another live public
+channel about the same object (or about no object) has is `409` ("a public
+channel with this name exists"). With `expected_version`, `409` unless the
+channel is at that version. Direct messages have no name or topic (`400`). Returns the
 channel.
 
 ### DELETE /v1/chat/channels/{channel}

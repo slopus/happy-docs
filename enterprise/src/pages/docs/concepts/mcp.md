@@ -36,6 +36,8 @@ The [OAuth endpoints](/docs/api/oauth/) page lists every route.
 | `ontology:write` | `edit_objects` (writing needs `ontology:read` too) | `create_object`, `update_object`, `write_points` |
 | `chat:read` | `view_objects`, on chat types only | `list_channels`, `read_messages` |
 | `chat:write` | `edit_objects`, on chat types only (with `chat:read`) | `post_message`, `add_reaction` |
+| `files:read` | `view_objects`, on filesystem types only | `list_files`, `read_file`, `search_files` |
+| `files:write` | `edit_objects`, on filesystem types only (with `files:read`) | `write_file`, `make_folder`, `move_file`, `delete_file` |
 | `actions:apply` | no permission on its own: the user's [action](/docs/concepts/actions/) grants, with `ontology:read` for the types each action touches | `list_actions`, one `action_<api_name>` tool per action |
 
 A tool's permission must be allowed by **both** the grant's scopes and the
@@ -50,8 +52,11 @@ The [timeseries](/docs/concepts/timeseries/) tools read and write series
 under the same rules as their REST endpoints. [Chat](/docs/concepts/chat/)
 has scopes of its own: `ontology:read` and `ontology:write` do not reach
 chat, and `chat:read` and `chat:write` reach nothing else, so a grant to
-read incidents does not read their channels, and the other way around. A
-refused call is a tool error (`isError: true`) whose text is the REST error:
+read incidents does not read their channels, and the other way around.
+[Filesystems](/docs/concepts/filesystem/) are the same: `files:read` and
+`files:write` reach only filesystem types, and no other scope reaches
+them. File tools are held to the `write` level, so assistants never change
+who may use a folder. A refused call is a tool error (`isError: true`) whose text is the REST error:
 
 ```json
 { "error": { "code": "validation_failed", "message": "the properties do not satisfy the object type",

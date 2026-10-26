@@ -11,8 +11,9 @@ like everything else. It has four parts:
   typed properties and format rules. Their definitions are versioned. Team
   types are object types whose objects are the organization's teams, and
   [timeseries types](/docs/concepts/timeseries/) hold series of
-  timestamped points and [chat types](/docs/concepts/chat/) channels of
-  messages instead of objects.
+  timestamped points, [chat types](/docs/concepts/chat/) channels of
+  messages, and [filesystem types](/docs/concepts/filesystem/) a tree of
+  folders and files instead of objects.
 - **Objects**: JSON property values of one type.
 - **Link types**, such as `works_on` from `employee` to `project`, with a
   cardinality and a name for each end.

@@ -46,8 +46,12 @@ reported at `fields.<name>`.
 | `group_dm` | its 3 to 9 members | fixed when it is opened |
 
 - **Names** are 1-80 characters of lower-case letters, digits, `-` and `_`,
-  starting with a letter or digit (`press-7-leak`), and unique among a chat
-  type's live channels. Channels also have a topic of up to 250 characters.
+  starting with a letter or digit (`press-7-leak`). A public channel's name
+  is unique among the chat type's live public channels about the same object
+  (or about no object), which whoever creates or renames one already sees.
+  Private channels may repeat any name, so a taken name never shows that a
+  private channel exists. Channels also have a topic of up to 250
+  characters.
 - **Direct messages** have no name, topic, or object, and are opened once
   per set of members: opening the same conversation again returns the
   existing channel.
@@ -161,7 +165,5 @@ never opens the other. See [MCP tools and scopes](/docs/api/mcp/#list_channels).
 
 ## Not there yet
 
-- **Channel names are unique per chat type, private channels included**, so
-  a taken name tells someone that a channel with that name exists.
 - **Posts through MCP carry no attachments.**
 - **Messages cannot be searched.**

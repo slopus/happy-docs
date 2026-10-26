@@ -21,6 +21,7 @@ exactly when its change committed.
 | `team.member_added`, `team.member_removed` | `type`, `id` (the team), `user`, and for `added` `expires_at`: a membership of a team object changed; a membership running out sends nothing |
 | `series.points` | `type`, `series`, `object`, `tags`, `count`, `first_at`, `last_at`, `points` (at most 100), `truncated`: one per series a batch changed, for [timeseries types](/docs/concepts/timeseries/#live-events) with `live` on; delivered to those who may read the series |
 | `chat.*` | `type`, `channel`, and the channel, member, message, reaction or pin: every change in a [chat channel](/docs/concepts/chat/#live-events), delivered to those who can read the channel; `chat.typing`, without an id, is never stored |
+| `fs.*` | `type`, `node`, and what changed: a folder or file of a [filesystem type](/docs/concepts/filesystem/#live-events) created, written, changed, moved, deleted, restored, or restricted; delivered to those who can see it |
 | `action.applied` | the [action's result](/docs/concepts/actions/#applying-step-by-step), after the events of its edits; about every type the action touches |
 
 Schema changes never rewrite objects, so they emit only `type.changed`;

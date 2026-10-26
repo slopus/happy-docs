@@ -93,8 +93,9 @@ to 2000.
 `kind` is `object` (the default); `team`, for a
 [team type](/docs/concepts/ontology/#team-types) whose objects are teams;
 `timeseries`, for a [timeseries type](#timeseries-types) that holds series
-of points; or `chat`, for a [chat type](#chat-types) that holds channels of
-messages. It is set here and never changes. A team type needs a required
+of points; `chat`, for a [chat type](#chat-types) that holds channels of
+messages; or `filesystem`, for a [filesystem type](#filesystem-types) that
+holds a tree of folders and files. It is set here and never changes. A team type needs a required
 string property `name` (`422` without one), and every later `PUT` must keep
 it.
 
@@ -243,6 +244,39 @@ channels and messages have [their own endpoints](/docs/api/chat/). A chat
 type cannot be deleted while it has channels, nor an object type while a
 chat type refers to it (`409`). See [Chat](/docs/concepts/chat/).
 
+### Filesystem types
+
+A type of kind `filesystem` takes `filesystem` settings, on `POST` and
+`PUT`:
+
+```json
+{
+  "api_name": "drive",
+  "display_name": "Drive",
+  "kind": "filesystem",
+  "properties": [
+    { "api_name": "status", "type": { "kind": "string" },
+      "rules": [{ "rule": "enum", "values": ["draft", "final"] }] }
+  ],
+  "filesystem": { "trash_days": 14 }
+}
+```
+
+| Setting | |
+|---|---|
+| `trash_days` | optional, 1-3,650, default 30: how long deleted folders and files can be restored before they are purged |
+
+Creating the type creates its root folder. The properties are optional
+fields of every folder and file: up to 32 of kind `integer`, `double`,
+`boolean`, or `string`, with built-in rules only (`422` otherwise). A `PUT`
+without `filesystem` keeps the settings. `400` for `filesystem` settings on
+another kind of type. Filesystem types show their settings as `filesystem`
+in the ontology, the type, and its versions. They have no objects or links:
+folders and files have [their own endpoints](/docs/api/filesystem/). A
+filesystem type cannot be deleted while it has folders or files out of the
+trash, or folders hidden from you (`409`); once it is deleted, its tree
+goes too. See [Filesystems](/docs/concepts/filesystem/).
+
 ## Access to restricted types and properties
 
 ### GET /v1/ontology/object-types/{type}/access
@@ -316,8 +350,10 @@ For a [timeseries type](#timeseries-types) with an `object_type`,
 `inherit_object_access: true` lets whoever may view its object type read
 its series, each only while its object is visible to them; writing still
 needs the timeseries type's own grants. Left as it is when absent; `400` on
-any other type. Timeseries and chat types take no `access_properties` or
-`properties` (`400`). Unknown fields are refused, including
+any other type. Timeseries, chat and filesystem types take no
+`access_properties` or `properties` (`400`); restricted filesystem folders
+are set per folder, with the [folder access](/docs/api/filesystem/#folder-access)
+endpoints. Unknown fields are refused, including
 `assignee_property`, which `access_properties` replaced.
 
 ## Link types

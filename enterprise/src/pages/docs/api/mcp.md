@@ -43,9 +43,10 @@ header must be one of `MCP_ALLOWED_HOSTS` (by default the host of
 `PUBLIC_BASE_URL`), against DNS rebinding.
 
 The server identifies itself as `happy-enterprise`. Its instructions tell the
-client it offers the organization's members, teams, invites, and ontology
-(object types, objects, links), and the actions the user may apply, one tool
-each (`action_<name>`).
+client it offers the organization's members, teams, invites, ontology
+(object types, objects, links, timeseries), chat channels, filesystems
+(folders and files), and the actions the user may apply, one tool each
+(`action_<name>`).
 
 ## Scopes
 
@@ -57,6 +58,8 @@ each (`action_<name>`).
 | `ontology:write` | `create_object`, `update_object`, `write_points`, with `ontology:read` | `edit_objects` (on the type) |
 | `chat:read` | `list_channels`, `read_messages` | `view_objects` (on chat types only) |
 | `chat:write` | `post_message`, `add_reaction`, with `chat:read` | `edit_objects` (on chat types only), and membership |
+| `files:read` | `list_files`, `read_file`, `search_files` | `view_objects` (on filesystem types only), and the folder's level |
+| `files:write` | `write_file`, `make_folder`, `move_file`, `delete_file`, with `files:read` | `edit_objects` (on filesystem types only), and `write` on the folders involved |
 | `actions:apply` | `action_<api_name>` tools, with `ontology:read` for the types they touch | the action's grant (no permission on its own) |
 
 A tool runs only if both the grant's scopes and the user's own permissions
@@ -291,6 +294,100 @@ No attachments. Returns the message.
 ```
 
 Reacts as [`PUT .../reactions/{emoji}`](/docs/api/chat/#put-v1-chat-messages-message-reactions-emoji) does.
+
+### list_files
+
+<p class="ep-meta"><span><b>Scope</b>files:read</span><span><b>Permission</b>view_objects on the filesystem type</span></p>
+
+```json
+{ "type": "drive", "path": "/Finance/Invoices" }
+```
+
+`type` (required), and the folder by `path` (default `/`) or by id as
+`folder`, with `cursor` and `limit` (1-1,000, default 200). Lists the
+folder as
+[`GET .../children`](/docs/api/filesystem/#get-v1-fs-nodes-folder-children)
+does, with your `level` on each item.
+
+### read_file
+
+<p class="ep-meta"><span><b>Scope</b>files:read</span><span><b>Permission</b>view_objects on the filesystem type</span></p>
+
+```json
+{ "type": "drive", "path": "/Finance/Invoices/invoice-1042.pdf", "version": 1 }
+```
+
+`type` (required), and the file by `path` or by id as `file`, with an
+optional earlier `version`. Returns the file's details, `read_version`, and
+its content as `text` if it is UTF-8 text, otherwise as `base64`. Files
+over 1 MiB are refused; download them with
+[`GET .../content`](/docs/api/filesystem/#get-v1-fs-nodes-file-content).
+
+### search_files
+
+<p class="ep-meta"><span><b>Scope</b>files:read</span><span><b>Permission</b>view_objects on the filesystem type</span></p>
+
+```json
+{ "type": "drive", "query": "invoice", "limit": 20 }
+```
+
+`type` and `query` (required), and `limit` (1-100, default 50). Finds
+folders and files by part of their name, with their paths, as
+[`GET .../search`](/docs/api/filesystem/#get-v1-fs-trees-type-search) does.
+
+### write_file
+
+<p class="ep-meta"><span><b>Scope</b>files:read + files:write</span><span><b>Permission</b>edit_objects on the filesystem type; write on the folder</span></p>
+
+```json
+{ "type": "drive", "path": "/Company/handbook.md", "text": "# Handbook\n", "expected_version": 0 }
+```
+
+`type` and `path` (required; its folder must exist), the content as `text`
+or as `base64` (one of them), and optional `content_type` and
+`expected_version`. Writes a new file or a new version of the file at that
+path, as
+[`PUT .../files/{name}`](/docs/api/filesystem/#put-v1-fs-nodes-folder-files-name)
+does: the same content again changes nothing. Returns the file.
+
+### make_folder
+
+<p class="ep-meta"><span><b>Scope</b>files:read + files:write</span><span><b>Permission</b>edit_objects on the filesystem type; write on the parent folder</span></p>
+
+```json
+{ "type": "drive", "path": "/Company/Policies" }
+```
+
+`type` and `path` (required; the parent must exist), and optional
+`fields`. Returns the folder.
+
+### move_file
+
+<p class="ep-meta"><span><b>Scope</b>files:read + files:write</span><span><b>Permission</b>edit_objects on the filesystem type; write on the item, its folder, and the target</span></p>
+
+```json
+{ "type": "drive", "path": "/Company/handbook.md", "to_folder": "/Company/Policies",
+  "new_name": "handbook-2026.md" }
+```
+
+`type` (required), the item by `path` or by id as `node`, and `to_folder`
+(a path), `new_name`, or both, with an optional `expected_version`. Moves
+or renames as [`PATCH /v1/fs/nodes/{node}`](/docs/api/filesystem/#patch-v1-fs-nodes-node)
+does, and returns the item.
+
+### delete_file
+
+<p class="ep-meta"><span><b>Scope</b>files:read + files:write</span><span><b>Permission</b>edit_objects on the filesystem type; write on the item, its folder, and every folder under it you see</span></p>
+
+```json
+{ "type": "drive", "path": "/Company/Policies/handbook-2026.md" }
+```
+
+`type` (required), the item by `path` or by id as `node`, and an optional
+`expected_version`. Moves it to the trash, with everything under it, and
+returns `{"deleted": "<id>"}`. It can be restored through the
+[REST API](/docs/api/filesystem/#post-v1-fs-nodes-node-restore) until the
+type's `trash_days` have passed.
 
 ### list_actions
 

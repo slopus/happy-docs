@@ -53,6 +53,7 @@ see or affect another.
 | Business actions | The organization's own operations, such as "open a work order": typed parameters, criteria, edits applied all or nothing, safe retries, webhooks and emails (to members or customers) after commit, and an audit log. See [Business actions](/docs/concepts/actions/). |
 | Timeseries | Series of timestamped points, such as sensor readings, attached to objects and read under their access: idempotent batches, raw, bucketed and downsampled reads, the newest value, retention, and live updates. See [Timeseries](/docs/concepts/timeseries/). |
 | Chat | Public and private channels, direct messages, and channels about one object that follow who sees it, for people and agents: threads, mentions, attachments, reactions, pins, read state, and typing. See [Chat](/docs/concepts/chat/). |
+| Filesystems | Trees of folders and files: versioned uploads up to 25 MiB, paths, name search, a trash with restore, folders restricted to teams that hide everything under them, live updates, and MCP tools. See [Filesystems](/docs/concepts/filesystem/). |
 | Live updates | Every change to the ontology as a resumable stream of server-sent events. See [Live events](/docs/concepts/live-events/). |
 | An MCP server | At `/orgs/{org}/mcp`, behind the organization's own OAuth 2.1 authorization server. See [MCP and OAuth](/docs/concepts/mcp/). |
 | A web app | Objects in tables and calendars, the ontology and its code editor, action forms, the audit log, the live feed, people, teams, security, and an operator console. See [Web app](/docs/web-app/). |
@@ -133,15 +134,19 @@ it ships.
   type. Lookups by id, link traversals, and `linked` filters use indexes.
   See [Performance](/docs/self-hosting/performance/).
 - **Chat has no search, and MCP posts no attachments.** Messages cannot be
-  searched yet, and assistants post text and fields only. Channel names are
-  unique per chat type, private channels included, so a taken name shows
-  that a channel exists.
+  searched yet, and assistants post text and fields only.
 - **Single points cannot be deleted.** Points of a
   [timeseries](/docs/concepts/timeseries/) go when retention passes them or
   their series goes, and ingest limits count batches, not points.
+- **Filesystems search names only.** A
+  [filesystem](/docs/concepts/filesystem/) finds folders and files by name,
+  not by content, reading the whole tree each time; uploads are single
+  requests of up to 25 MiB; and every version is kept until its file is
+  purged from the trash.
 - **Files have no quota or cleanup.** Uploads are limited to 25 MiB each,
   but not in total, and attachments that no object refers to are kept. MCP
-  clients cannot upload files.
+  clients cannot upload attachments, though they can write files in a
+  filesystem.
 
 ## Where to go next
 

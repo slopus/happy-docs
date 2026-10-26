@@ -51,6 +51,12 @@ from the store directly. A file can be read:
 - by anyone who may read a [chat message](/docs/concepts/chat/#messages)
   it is attached to.
 
+Files in a [filesystem type](/docs/concepts/filesystem/) are kept in the
+same blob store, up to 25 MiB per version, but are not these files: they
+are read through the [filesystem endpoints](/docs/api/filesystem/), by
+whoever sees their folder, and every version is kept until the trash
+purges the file.
+
 Anyone else gets `404`, as if the file did not exist.
 
 So an attachment follows the objects that refer to it. A write may only add
@@ -68,8 +74,9 @@ downloads, with `Content-Disposition: attachment` and the file's name
 (RFC 6266, with a UTF-8 `filename*`).
 
 Not built yet: there is no upload quota, attachments that nothing refers to
-are kept forever, and MCP clients cannot upload files (they can refer to
-files their user can already read).
+are kept forever, and MCP clients cannot upload attachments (they can refer
+to files their user can already read, and write files in a
+[filesystem](/docs/concepts/filesystem/)).
 
 ### Stores
 
