@@ -100,8 +100,14 @@ it ships.
   cannot update every document in a folder, and its criteria cannot ask
   whether a car has any reservation: they see their parameters' objects, the
   links between them, and the objects the action creates.
-- **No scheduled actions.** Nothing runs on its own at a time, so a
-  reservation that has run out waits for someone to release it.
+- **Schedules have fixed parameters, and nothing reacts to events.** A
+  [schedule](/docs/concepts/actions/#schedules) applies one action with the
+  same parameters each time, so it cannot release whichever reservations
+  have run out. No action runs because another was applied or an event
+  arrived, and there is no signed inbound webhook endpoint: integrations
+  report with an API token.
+- **Times are UTC.** Schedules and anything an action computes from the time
+  have no time zone per organization.
 - **Emails go to one person each.** An action emails a member or an outside
   address, not a team.
 - **Criteria know only the caller.** They see the caller's id and kind, not
@@ -134,7 +140,7 @@ it ships.
 - [Quickstart](/docs/quickstart/): run it locally, create an organization,
   log in, and define an object type.
 - [Use cases](/docs/examples/): complete examples, machine maintenance,
-  document management, car sales, and an agentic dev team, each run end to
-  end.
+  document management, car sales, an agentic dev team, and a smart home,
+  each run end to end.
 - [API reference](/docs/api/): every endpoint, with examples.
 - [Self-hosting](/docs/self-hosting/): roles, configuration, deployment.

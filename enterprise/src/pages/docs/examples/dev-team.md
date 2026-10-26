@@ -323,6 +323,8 @@ Every refused request, and both replays, left no record and changed nothing.
   user, so the pull request records `author_kind` when it is submitted.
 - **Criteria cannot test team membership.** The agent review policy is a
   repository property, on top of the team grant for `review_pr`.
-- **Budgets do not reset.** There are no scheduled actions to refill them
-  each period, and run costs are what the agents report, not metered.
+- **Budgets do not reset in this example.** A
+  [schedule](/docs/concepts/actions/#schedules) per budget could apply a
+  reset action each period; none is set up. Run costs are what the agents
+  report, not metered.
 - **There is no git.** Commits are the shas agents and CI report.

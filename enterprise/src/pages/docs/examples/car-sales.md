@@ -404,8 +404,10 @@ Accounting's webhook was called once per closed deal.
 ## What it does not do yet
 
 - **Reservations do not expire on their own.** After `until`, anyone who
-  sees a reservation may release it, but nothing releases it automatically;
-  that needs scheduled actions.
+  sees a reservation may release it, but nothing releases it automatically.
+  A [schedule](/docs/concepts/actions/#schedules) applies an action with
+  fixed parameters, so it cannot pick out the reservations that have run
+  out.
 - **No email to a team.** The discount email goes to one named manager, and
   an action cannot check that the person named is a manager. The decision
   itself still needs the `managers` grant.

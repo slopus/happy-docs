@@ -1,7 +1,7 @@
 ---
 layout: ../../../layouts/Docs.astro
 title: Actions
-lead: Define action types, grant teams the right to apply them, apply them, and read the audit log.
+lead: Define action types, grant teams the right to apply them, apply them, schedule them, and read the audit log.
 ---
 
 [Business actions](/docs/concepts/actions/) explains parameters, criteria,
@@ -155,6 +155,7 @@ curl -X POST "$BASE/v1/actions/open_work_order/apply" \
 |---|---|---|
 | `201` | | applied; the body is the [result](/docs/concepts/actions/#applying-step-by-step) |
 | `200` | | a retry with the same key and request; the stored result with `replayed: true` |
+| `400` | `bad_request` | an `idempotency_key` starting with `schedule:`, which only schedules use |
 | `403` | `forbidden` | no grant, no view access to a touched type, or (OAuth) no `actions:apply` scope |
 | `404` | `not_found` | no such action, or it was deleted |
 | `409` | `version_conflict` | an object is not at its expected version, or it or the links between the parameters' objects changed before the edits ran (path `links`) |
@@ -181,8 +182,10 @@ An application in the log:
 }
 ```
 
-`method` is `session`, `oauth`, `external_jwt`, or `api_token`; `via` is
-`rest` or `mcp`.
+`method` is `session`, `oauth`, `external_jwt`, `api_token`, or `schedule`;
+`via` is `rest`, `mcp`, or `schedule`. An application made by a
+[schedule](#schedules) is by the schedule's agent and carries its
+`schedule_id`.
 
 ### GET /v1/action-applications
 
@@ -207,3 +210,96 @@ One application, with the delivery state of each effect:
 
 `status` is `pending`, `delivered`, or `failed`. `404` for another user's
 application unless you are an owner.
+
+## Schedules
+
+[Schedules](/docs/concepts/actions/#schedules) apply an action on a
+recurrence, as an agent. Schedules are addressed by their `api_name`. Every
+endpoint here is for owners.
+
+A schedule in responses:
+
+```json
+{
+  "id": "s1c2h3e4d5u6l7e8x9y0z1a2",
+  "api_name": "bins",
+  "description": "Kim takes out the bins every week",
+  "action": "assign_chore",
+  "run_as": "c4r3t4k3r0a1g2e3n4t5x6y7",
+  "params": { "title": "Take out the bins", "assignee": "k1m2u3s4e5r6x7y8z9a0b1c2", "points": 5 },
+  "occurrence_param": "due_at",
+  "every": 1,
+  "unit": "week",
+  "starts_at": "2026-11-02T08:00:00Z",
+  "ends_at": null,
+  "enabled": true,
+  "next_occurrence": 1,
+  "next_at": "2026-11-09T08:00:00Z",
+  "runs": 1,
+  "failures": 0,
+  "last_occurrence_at": "2026-11-02T08:00:00Z",
+  "last_run_at": "2026-11-02T08:00:03Z",
+  "last_application_id": "p2m4k6j8h0g1f3d5s7a9q1w3",
+  "last_error": null,
+  "created_by": "h3jd8s0q2l5x7c1v9b4n6m8k",
+  "created_at": "2026-11-01T12:00:00Z",
+  "updated_at": "2026-11-02T08:00:03Z"
+}
+```
+
+`next_at` is `null` once the schedule has ended.
+
+### GET /v1/ontology/action-schedules
+
+<p class="ep-meta"><span><b>Auth</b>full</span><span><b>Permission</b>owner</span></p>
+
+`{"schedules": [...]}`.
+
+### POST /v1/ontology/action-schedules
+
+<p class="ep-meta"><span><b>Auth</b>full</span><span><b>Permission</b>owner</span></p>
+
+```json
+{ "api_name": "bins", "description": "Kim takes out the bins every week",
+  "action": "assign_chore", "run_as": "<an agent>",
+  "params": { "title": "Take out the bins", "assignee": "<kim>", "points": 5 },
+  "occurrence_param": "due_at",
+  "every": 1, "unit": "week", "starts_at": "2026-11-02T08:00:00Z" }
+```
+
+`api_name` is `[a-z][a-z0-9_]{0,62}`, unique among the organization's
+schedules (`409`). `every` is 1-1000 and `unit` one of `minute`, `hour`,
+`day`, `week`, `month`. `ends_at`, `params` (default `{}`), `occurrence_param`,
+`enabled` (default `true`), and `description` (up to 2,000 characters) are
+optional. `201` with the schedule.
+
+`422` for an unknown action, a parameter the action does not have, an
+`occurrence_param` that is not one of its timestamp parameters or is also in
+`params`, a `run_as` that is not an active agent, or an `ends_at` not after
+`starts_at`. Whether the parameters satisfy the action is checked when each
+occurrence is applied.
+
+### GET /v1/ontology/action-schedules/{schedule}
+
+<p class="ep-meta"><span><b>Auth</b>full</span><span><b>Permission</b>owner</span></p>
+
+The schedule.
+
+### PATCH /v1/ontology/action-schedules/{schedule}
+
+<p class="ep-meta"><span><b>Auth</b>full</span><span><b>Permission</b>owner</span></p>
+
+```json
+{ "enabled": false }
+```
+
+Changes `description`, `params`, or `enabled`; the action, the agent, and the
+recurrence never change. A paused schedule that is enabled again applies only
+its latest due occurrence. New `params` make a rerun of an occurrence the job
+had started a `409 idempotency_conflict`, recorded as a failure.
+
+### DELETE /v1/ontology/action-schedules/{schedule}
+
+<p class="ep-meta"><span><b>Auth</b>full</span><span><b>Permission</b>owner</span></p>
+
+`204`. Applications it made stay in the audit log.

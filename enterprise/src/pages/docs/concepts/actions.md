@@ -227,7 +227,8 @@ names one application per organization, action, and caller:
 - the same key with different ones is `409 idempotency_conflict`;
 - two concurrent requests with one key wait for each other.
 
-Keys are forgotten after 7 days; the audit row stays.
+Keys are forgotten after 7 days; the audit row stays. Keys starting with
+`schedule:` are reserved for [schedules](#schedules) (`400`).
 
 ## Effects
 
@@ -303,8 +304,8 @@ can arrive more than once.
 
 Every committed application is recorded: the action and its version, who
 applied it and whether they are a human or an agent, the credential (a
-session, an OAuth grant with its client, an external JWT, or an API token),
-whether it came through REST or MCP, the parameters, and the result. Refused
+session, an OAuth grant with its client, an external JWT, an API token, or a
+[schedule](#schedules)), whether it came through REST, MCP, or a schedule, the parameters, and the result. Refused
 applications leave no record beyond their response. The organization API's
 database role may add to the log but not change or delete it.
 
@@ -315,6 +316,50 @@ last error, and next attempt.
 Each application also emits an `action.applied`
 [event](/docs/concepts/live-events/) carrying its result, after the events of
 the objects it changed.
+
+## Schedules
+
+Owners can schedule an action to be applied on a recurrence: a monthly
+check, a weekly chore, a nightly cleanup.
+
+```json
+POST /v1/ontology/action-schedules
+{ "api_name": "smoke_alarms",
+  "description": "Test the smoke alarms every month",
+  "action": "schedule_task",
+  "run_as": "<caretaker agent>",
+  "params": { "room": "<hall>", "title": "Test the smoke alarms" },
+  "occurrence_param": "due_at",
+  "every": 1, "unit": "month",
+  "starts_at": "2026-11-01T09:00:00Z" }
+```
+
+- **When.** Every 1 to 1,000 `unit`s, which are `minute`, `hour`, `day`,
+  `week`, or `month`, from `starts_at` until `ends_at`, if set. Months are
+  calendar months from `starts_at`, on its day of the month, or the month's
+  last day when it has fewer. Times are UTC.
+- **As whom.** Each occurrence is applied as `run_as`, an active agent of the
+  organization. The agent needs the action's grant like anyone else, and its
+  permissions decide what the action reaches.
+- **With what.** `params` are fixed. `occurrence_param`, if set, names a
+  timestamp parameter that receives each occurrence's time, such as a chore's
+  `due_at`.
+- **Once.** The maintenance job applies each occurrence with the idempotency
+  key `schedule:<id>:<n>`, so an occurrence applies at most once, even if the
+  job stops halfway and runs it again. If occurrences were missed, because
+  the schedule was paused or the server was down, only the latest due one is
+  applied; the others are skipped.
+- **Refusals.** An occurrence that is refused (no grant, failed criteria, a
+  deactivated agent, a deleted action) still counts as a run: it adds to the
+  schedule's `failures` and sets `last_error`, and the schedule goes on.
+
+A schedule shows its progress: `next_occurrence` and `next_at` (`null` once
+it has ended), `runs`, `failures`, `last_occurrence_at`, `last_run_at`,
+`last_application_id`, and `last_error`. Its `description`, `params`, and
+`enabled` can change; its action, agent, and recurrence cannot, so delete it
+and create another. In the audit log, its applications are by the agent,
+with `method` and `via` both `schedule` and the schedule's id. See the
+[Actions API](/docs/api/actions/#schedules).
 
 ## Versions
 

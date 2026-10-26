@@ -118,6 +118,18 @@ const cases: { title: string; href: string; what: string; uses: string }[] = [
     what: 'Issues, tasks, pull requests, and reviews for people and coding agents. Agents claim work and spend their own budgets; CI reports back through signed webhooks.',
     uses: 'races · private budgets · review policy · webhooks in and out',
   },
+  {
+    title: 'Smart home and household',
+    href: 'examples/home/',
+    what: 'Devices, scenes, chores, and a maintenance calendar. A hub agent carries out changes, schedules add the recurring work, and a guest’s access ends with the stay.',
+    uses: 'scheduled actions · expiring memberships · automations · calendars',
+  },
+  {
+    title: 'Your own',
+    href: 'concepts/ontology/',
+    what: 'Define your own types, rules, and actions in the web app or through the API, start small, and change them as the business changes.',
+    uses: 'web app · API · versioned changes',
+  },
 ];
 
 // The maintenance example, step by step: who, what, and what came back.
@@ -219,11 +231,11 @@ const steps: { who: string; what: string; outcome: string; refused?: boolean }[]
         <section class="section" id="use-cases">
           <h2>One system for the apps you would otherwise build.</h2>
           <p>
-            Maintenance tracking, document management, a dealership's sales, and a team's issue tracker are usually
-            separate apps, each with its own database, permission checks, and audit trail. Here each is a model and a set of actions loaded into the same system, used
+            Maintenance tracking, document management, a dealership's sales, a team's issue tracker, and a household's
+            devices and chores are usually separate apps, each with its own database, permission checks, and audit trail. Here each is a model and a set of actions loaded into the same system, used
             by the same people and agents under the same rules.
           </p>
-          <ul class="tiles cases">
+          <ul class="tiles tiles--3 cases">
             {
               cases.map((c) => (
                 <li>

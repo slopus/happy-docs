@@ -41,6 +41,20 @@ organization), add and remove members, and set each team's permissions. An
 organization that has an active owner always keeps one: the last active owner
 cannot leave `owners` or be deactivated.
 
+### Memberships that end
+
+A membership of a custom team may end at a set time, `expires_at`: a guest
+for the length of a stay, a contractor for a project. From then on it counts
+for nothing. No team permission, object type grant, action grant, or object
+shared with the team reaches the member through it, and live streams see the
+change too. Nothing has to run for this: every check reads only current
+memberships, so the first request after `expires_at` already sees it.
+
+Adding the member again renews the membership, until a new time or for good.
+Memberships of `owners` and `everyone` never end, so owners stay owners. An
+ended membership does not deactivate the user: they remain a member of the
+organization, in `everyone`.
+
 These rules are enforced twice. The handlers check them, and database
 triggers enforce the same invariants independently of the application, so a
 bug in a handler cannot break them.

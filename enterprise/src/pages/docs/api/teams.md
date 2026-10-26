@@ -54,7 +54,10 @@ Deletes a custom team. `204`. `409` for `owners` and `everyone`.
 
 <p class="ep-meta"><span><b>Auth</b>full</span><span><b>Permission</b>view_members</span></p>
 
-The team's members as [user objects](/docs/api/me/#the-user-object).
+The team's current members as [user objects](/docs/api/me/#the-user-object),
+each with `membership_expires_at`: when the membership ends, or `null`.
+Members whose membership has ended are not listed, and the team's
+`member_count` does not count them.
 
 ### PUT /v1/teams/{team}/members/{user}
 
@@ -63,6 +66,17 @@ The team's members as [user objects](/docs/api/me/#the-user-object).
 Adds an active user to the team. Adding to `owners` makes the user an owner.
 `204`. `409` for `everyone`, which every user always belongs to; `404` for an
 unknown or deactivated user.
+
+The body is optional. With `expires_at`, the membership ends at that time
+([Memberships that end](/docs/concepts/organizations/#memberships-that-end)):
+
+```json
+{ "expires_at": "2026-11-08T10:00:00Z" }
+```
+
+`expires_at` must be in the future and is for custom teams only (`422`
+otherwise). Sending `PUT` again renews the membership: until the new
+`expires_at`, or for good without one.
 
 ### DELETE /v1/teams/{team}/members/{user}
 
