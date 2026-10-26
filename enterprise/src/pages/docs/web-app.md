@@ -25,7 +25,9 @@ rules. The table updates live as people and agents change objects.
 ![Incidents in a table, with severity, status, assignee, and validation state](/shots/objects-table.webp)
 
 Types with a date or timestamp property also have a calendar view, a month at
-a time, by the property you pick: test drives, reservations, agent runs.
+a time, by the property you pick: test drives, reservations, agent runs. A
+[schedule](/docs/concepts/actions/#schedules) that creates objects of the
+type shows its upcoming occurrences there too, dashed, before they run.
 
 ![Test drives on a month calendar](/shots/objects-calendar.webp)
 
@@ -78,6 +80,13 @@ webhook and email.
 
 ![The audit log](/shots/audit-log.webp)
 
+Owners also manage [schedules](/docs/concepts/actions/#schedules) here: the
+action, the agent it runs as, the recurrence, the fixed parameters, the next
+occurrences, and every run with its application. A schedule can be paused,
+its parameters changed, or a new one created from a form.
+
+![A monthly schedule: its agent, recurrence, upcoming occurrences, and runs](/shots/schedule.webp)
+
 ## The live feed
 
 The live feed is the organization's event stream as it happens: objects,
@@ -95,6 +104,12 @@ checked against the person's access before it is shown.
   whether two-factor authentication is required.
 
 ![Teams and their permissions](/shots/teams.webp)
+
+Adding someone to a custom team can set when the membership
+[ends](/docs/concepts/organizations/#memberships-that-end), for a guest or a
+contractor, and the end can be changed or removed later.
+
+![A guest's membership of the guests team, with its end](/shots/team-membership-end.webp)
 
 Each person also has their own settings: their profile, their second factors
 (authenticator apps and security keys or passkeys), and their sessions and

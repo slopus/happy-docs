@@ -11,6 +11,8 @@ your own organization and replay it. The model needed two features added for
 it: [scheduled actions](/docs/concepts/actions/#schedules) and
 [memberships that end](/docs/concepts/organizations/#memberships-that-end).
 
+![The maintenance calendar in the web app: next month's smoke alarm check, from the caretaker's schedule, drawn ahead of time](/shots/example-home.webp)
+
 ## Who takes part
 
 | | Identity | Connects with | Team |
@@ -288,7 +290,8 @@ token over REST.
   organization.
 - **Inbound events need an API token.** There is no signed inbound webhook
   endpoint for a device platform to call.
-- **The calendar is one query per type**, and a schedule's future occurrences
-  are not on it until they run.
+- **The calendar is one query per type.** A schedule's future occurrences are
+  not objects until they run; the web app draws them from the schedule, but a
+  query does not return them.
 - **An ended membership leaves the guest a member** of the organization, in
   `everyone`; it does not deactivate them.
