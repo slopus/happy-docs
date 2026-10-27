@@ -1,16 +1,16 @@
 ---
 layout: ../../layouts/Docs.astro
 title: What Happy Enterprise is
-lead: The engine behind all of an organization's business data. Its people, apps, and agents work on the same records under the same checks, and it changes safely as the business changes.
+lead: The engine behind all of an organization's data. Its people, apps, and agents work on the same records under the same checks, and it changes safely as the work changes.
 ---
 
 Each organization gets its own members, teams, permissions, and
-**ontology**: typed object types and links that describe its business
+**ontology**: typed object types and links that describe its work
 (customers, projects, incidents, machines, and how they relate), and the
 **business actions** that change them. People, assistants, and agent
 accounts all work on the same objects under the same rules.
 
-When the business changes, the model changes with it, while the system
+When the work changes, the model changes with it, while the system
 runs. A new kind of record or a new field is usable at once. A new rule
 applies to every write at once and to the stored objects in the background,
 with each object marked valid, invalid, or pending, and invalid ones kept
