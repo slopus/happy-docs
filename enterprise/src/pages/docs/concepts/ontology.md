@@ -149,6 +149,7 @@ An object is the JSON map of its properties, plus metadata:
   "type": "employee",
   "properties": { "name": "Ada", "email": "ada@acme.example", "age": 36 },
   "version": 1,
+  "etag": "q8XyZ3bKp1mWc0rT5vNa2g",
   "validation": { "state": "valid", "rules_version": 3 },
   "created_by": "h3jd8s0q2l5x7c1v9b4n6m8k",
   "updated_by": "h3jd8s0q2l5x7c1v9b4n6m8k",
@@ -166,7 +167,26 @@ between the check and the commit.
 - `PATCH` merges the given properties into the stored ones (`null` removes
   one) and checks the result.
 - `expected_version` makes a write conditional: if the object has moved on,
-  the write is a `409`.
+  the write is a `409`. It takes the object's `version` or its `etag`.
+- A write that changes no value writes nothing: no new version, no event.
+
+### Versions are per reader
+
+What a reader is shown of an object's history comes from the properties
+they can see. `version` counts the changes to those properties (and the
+object's creation), `etag` is a short hash of them, and `updated_at`,
+`updated_by` and the [validation state](#versions-and-schema-changes)
+reflect only them. So a change to a
+[property you cannot see](#restricted-properties) changes nothing you
+observe: not the version, the etag, `updated_at` or `updated_by`, the
+validation state, the order of a `$updated_at` sort or a `validation`
+filter, and no `object.updated` event reaches you.
+
+`expected_version` and actions' `expected_versions` compare with what the
+writer sees, so a change to a hidden property never makes their write a
+`409`. **Prefer the etag.** While you see the same properties, the version
+and the etag agree. When your grants change, so does the set of properties
+you see, and the version can jump or go backwards; the etag stays exact.
 - A `unique` value another object of the type holds is a `409` naming the
   property.
 
@@ -198,13 +218,18 @@ stored objects**:
   rules.
 - A type's `validation` summarizes its objects against the current rules:
   `pending` while some are unchecked, then `violated` if some failed, or
-  `enforced` if all passed.
+  `enforced` if all passed. The summary, and the `type.validation` events,
+  are shown only to readers who see every property of the type.
+- An object's state is per reader: problems with properties you cannot see
+  are never shown or counted, so an object whose only problem is hidden
+  from you is `valid` to you.
 
 ```json
 { "rules_version": 3, "state": "violated", "objects": 1200, "validated": 1200, "invalid": 4 }
 ```
 
-Query `{"op": "validation", "state": "invalid"}` to find the objects to fix.
+Query `{"op": "validation", "state": "invalid"}` to find the objects to fix;
+it filters by the state you are shown.
 A `unique` value is held only by valid objects: an object that shares one
 with another object becomes invalid, and is checked again once the other
 object gives the value up. An object is marked valid only if it passes as
@@ -488,9 +513,9 @@ For everyone else, a restricted property does not exist:
 stands in for property access, as it does for `edit_objects`, and their
 results name ids only. A team type's `name` cannot be restricted.
 
-An object's `validation.state`, its `version` and `updated_at`, and the type's
-validation summary cover hidden properties too, so they can show that a
-hidden value changed or fails a rule.
+An object's `version`, `etag`, `updated_at`, `updated_by` and validation
+state come from the properties you see, so a hidden value changing or failing
+a rule shows nowhere; see [Versions are per reader](#versions-are-per-reader).
 
 ## Live updates
 

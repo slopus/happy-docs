@@ -58,6 +58,10 @@ listed in `read_only_properties`, which is left out when empty. See
 }
 ```
 
+A type's `validation` summary is shown only to callers who see every one of
+its properties; to others, an object type shows no summary, and they get no
+`type.validation` events.
+
 ## Object types
 
 ### POST /v1/ontology/object-types

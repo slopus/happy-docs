@@ -239,7 +239,9 @@ is written:
 3. **Snapshot**: the parameters' objects, and the links between them, are
    read. Criteria and edits see this snapshot.
 4. **Expected versions**: if the request names `expected_versions`
-   (`{param: version}`) and an object has moved on, `409 version_conflict`.
+   (`{param: version or etag}`, as the caller sees the object) and an object
+   has moved on, `409 version_conflict`. A change to a property the caller
+   cannot see is not a move.
 5. **Criteria**: `422 criteria_failed`.
 6. **Edits**: the snapshot's objects are locked, and their versions and the
    links between them are checked again, so the criteria held on exactly what

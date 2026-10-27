@@ -100,10 +100,6 @@ it ships.
   limited to some teams. But a manager does not see their reports' expenses,
   and a document does not inherit its folder's sharing. Writes can be
   narrowed further through [business actions](/docs/concepts/actions/).
-- **Hidden properties still move an object's metadata.** An object's
-  `version`, `updated_at` and validation state, and its type's validation
-  summary, also cover the properties a reader may not see, so they can show
-  that a hidden value changed or breaks a rule.
 - **Actions see and change only what they are given.** Criteria see their
   parameters' objects, the links between them, and the kind and teams of the
   caller and the users those objects and parameters name. Edits change those

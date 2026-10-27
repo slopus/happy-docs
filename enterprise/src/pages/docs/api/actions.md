@@ -149,7 +149,8 @@ curl -X POST "$BASE/v1/actions/open_work_order/apply" \
 ```
 
 `params` holds the parameters. `idempotency_key` (1-200 characters) and
-`expected_versions` (`{param: version}`, for object parameters) are optional.
+`expected_versions` (`{param: version or etag}`, for object parameters, as you
+see them) are optional. Versions in the result are also as you see them.
 
 | Status | `code` | When |
 |---|---|---|

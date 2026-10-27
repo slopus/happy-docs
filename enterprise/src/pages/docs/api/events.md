@@ -36,7 +36,7 @@ data: {"type":"employee","id":"o4b8j2e6c0t1q5w9r3y7u2i6","version":1,"properties
 
 id: 1043
 event: object.updated
-data: {"type":"employee","id":"o4b8j2e6c0t1q5w9r3y7u2i6","version":2,"properties":{"name":"Ada","age":36}}
+data: {"type":"employee","id":"o4b8j2e6c0t1q5w9r3y7u2i6","version":2,"etag":"Lk2pR9cXv4bQ7mNw1sT0ya","updated_at":"2026-10-24T10:05:00Z","updated_by":"h3jd8s0q2l5x7c1v9b4n6m8k","changed":["age"],"properties":{"name":"Ada","age":36}}
 
 id: 1047
 event: object.deleted
@@ -53,7 +53,7 @@ stripped for each subscriber when the event is read.
 
 | `event` | `data` |
 |---|---|
-| `object.created`, `object.updated` | `{type, id, version, properties}` |
+| `object.created`, `object.updated` | `{type, id, version, etag, updated_at, updated_by, properties}`, and for updates `changed`, the properties it changed; all as you see them, and an update that changed no property you see is not sent to you |
 | `object.deleted` | `{type, id}` |
 | `link.created`, `link.deleted` | `{link, from_type, from, to_type, to}` |
 | `type.created`, `type.changed`, `type.deleted` | `{type, version}` |

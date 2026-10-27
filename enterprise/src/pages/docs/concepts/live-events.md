@@ -12,7 +12,7 @@ exactly when its change committed.
 
 | Event | Payload |
 |---|---|
-| `object.created`, `object.updated` | `type`, `id`, `version`, `properties` |
+| `object.created`, `object.updated` | `type`, `id`, `version`, `etag`, `updated_at`, `updated_by`, `properties`, and for updates `changed`: all as the subscriber sees them; an update to properties they cannot see is not delivered |
 | `object.deleted` | `type`, `id` |
 | `link.created`, `link.deleted` | `link`, `from_type`, `from`, `to_type`, `to` |
 | `type.created`, `type.changed`, `type.deleted` | `type`, `version` (`changed` also on access changes) |
@@ -49,7 +49,7 @@ Accept: text/event-stream
 ```text
 id: 1042
 event: object.updated
-data: {"type":"employee","id":"o4b8j2e6c0t1q5w9r3y7u2i6","version":3,"properties":{"name":"Ada","age":37}}
+data: {"type":"employee","id":"o4b8j2e6c0t1q5w9r3y7u2i6","version":3,"etag":"Lk2pR9cXv4bQ7mNw1sT0ya","updated_at":"2026-10-24T10:05:00Z","updated_by":"h3jd8s0q2l5x7c1v9b4n6m8k","changed":["age"],"properties":{"name":"Ada","age":37}}
 
 id: 1043
 event: link.created
@@ -84,7 +84,11 @@ credential, then:
   starts sending them its events;
 - object events are written with every property, and the properties the
   subscriber may not see ([restricted properties](/docs/concepts/ontology/#restricted-properties))
-  are stripped before delivery, decided at the read like everything else;
+  are stripped before delivery, decided at the read like everything else.
+  `version`, `etag`, `updated_at`, `updated_by` and `changed` (the
+  properties the update changed) are the subscriber's own, and an
+  `object.updated` that changed no property they see is not delivered to
+  them at all;
 - an ended session, a deactivated user, or a lost `view_objects` ends the
   stream.
 

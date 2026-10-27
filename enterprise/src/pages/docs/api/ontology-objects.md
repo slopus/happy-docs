@@ -16,6 +16,7 @@ A restricted type you cannot view is `404`, as is an object of another type.
   "type": "employee",
   "properties": { "name": "Ada", "email": "ada@acme.example", "started": "2026-01-05" },
   "version": 1,
+  "etag": "q8XyZ3bKp1mWc0rT5vNa2g",
   "validation": { "state": "valid", "rules_version": 3 },
   "created_by": "h3jd8s0q2l5x7c1v9b4n6m8k",
   "updated_by": "h3jd8s0q2l5x7c1v9b4n6m8k",
@@ -24,8 +25,11 @@ A restricted type you cannot view is `404`, as is an object of another type.
 }
 ```
 
-`version` starts at 1 and grows with every change to the object. Schema
-changes do not change it. `validation` is where the object stands against
+`version` starts at 1 and grows with every change to a property you can
+see; `etag` identifies that state exactly. Both, `updated_at`, `updated_by`
+and `validation` are [per reader](/docs/concepts/ontology/#versions-are-per-reader):
+a change to a property you cannot see changes none of them. Schema changes
+do not change them. `validation` is where the object stands against
 its type's current rules: `valid`, `invalid` (with `errors`, each a `path`
 and a `message`), or `pending` until the background job has checked it; see
 [Versions and schema changes](/docs/concepts/ontology/#versions-and-schema-changes).
@@ -65,7 +69,7 @@ Lists objects. Query parameters, all optional:
 |---|---|
 | `limit` | 1-500, default 50 |
 | `cursor` | `next_cursor` of the previous page |
-| `order_by` | a scalar property, or `$id`, `$created_at`, `$updated_at` (default: `$id`) |
+| `order_by` | a scalar property, or `$id`, `$created_at`, `$updated_at` (your `updated_at`, from the properties you see; default: `$id`) |
 | `direction` | `asc` (default) or `desc` |
 
 ```sh
@@ -123,7 +127,8 @@ on a non-scalar property) or exceeds the limits (100 conditions, 10 levels,
 `linked` filters by links: `{ "op": "linked", "link": "projects", "object": "<project id>" }`
 finds the objects linked to that project through this type's end named
 `projects`. `{ "op": "validation", "state": "invalid" }` finds the objects
-that fail the type's current rules.
+that fail the type's current rules, by the state you are shown: a problem
+with a property you cannot see does not count.
 
 ### GET /v1/ontology/objects/{type}/{id}
 
@@ -136,14 +141,19 @@ The object.
 <p class="ep-meta"><span><b>Auth</b>full</span><span><b>Permission</b>view_objects and edit_objects on the type</span></p>
 
 Merges `properties` into the stored ones (`null` removes a property) and checks
-the result. `expected_version` makes the change conditional.
+the result. `expected_version`, the object's `version` or its `etag` as you
+read it, makes the change conditional. Prefer the etag: it stays exact when
+your grants change, while the version can then jump or go backwards.
 
 ```json
-{ "properties": { "email": "ada@analytical.example", "started": null }, "expected_version": 1 }
+{ "properties": { "email": "ada@analytical.example", "started": null },
+  "expected_version": "q8XyZ3bKp1mWc0rT5vNa2g" }
 ```
 
-Returns the object at its new version. Errors as for creation, plus `409` if
-the object is no longer at `expected_version`.
+Returns the object at its new version. A change to a property you cannot
+see is not a conflict. A write that changes no value writes nothing and
+returns the object as it was. Errors as for creation, plus `409` if the
+object is no longer at `expected_version`.
 
 ### DELETE /v1/ontology/objects/{type}/{id}
 

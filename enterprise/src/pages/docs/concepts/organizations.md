@@ -180,6 +180,9 @@ show that the rules, as modelled, hold. For example:
 - a restricted property is shown only to owners and the teams granted it,
   and hidden values change nothing a caller reads, filters, sorts, or
   receives as events;
+- a change to a property you cannot see is unobservable to you: it changes
+  no version, etag, update time or author, or validation state you are
+  shown, and its event does not reach you;
 - a hidden folder hides everything below it, whatever the query;
 - a chat channel is seen only by those it is public to or who are its
   members, and only while its object is visible to them;
