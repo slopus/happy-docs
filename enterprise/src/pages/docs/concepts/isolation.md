@@ -99,7 +99,25 @@ Because the tests read the catalog, a new table without the policy fails
 them.
 
 Isolation and authorization rules are enforced by PostgreSQL row-level
-security and covered by machine-checked models and integration tests.
+security.
+
+## A formally verified model
+
+The access rules are also written as a formally verified model:
+machine-checked proofs show that the rules, as modelled, keep their
+promises. Among them:
+
+- an organization-scoped read returns only that organization's rows,
+  whatever the query, and a write leaves every other organization's rows
+  unchanged;
+- without an organization in scope, nothing is read or written;
+- a credential is accepted only for its own organization, and a token is
+  never accepted by two of the organization API, the MCP endpoint, and the
+  management API.
+
+The code is tested against that model, with the integration tests above
+and the [permission rules](/docs/concepts/organizations/#a-formally-verified-model).
+The model is verified; the code itself is not formally verified.
 
 ## What this does not cover
 

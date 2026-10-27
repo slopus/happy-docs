@@ -175,9 +175,9 @@ const steps: { who: string; what: string; outcome: string; refused?: boolean }[]
         </section>
 
         <section class="section" id="changes">
-          <h2>Changes as your business changes.</h2>
+          <h2>Changes as your work changes.</h2>
           <p>
-            Businesses take on new kinds of records, tighten rules, add steps to a process, and bring in people and
+            Work takes on new kinds of records, tighter rules, new steps in a process, and new people and
             agents. Each of those is a change to the model, and the system takes it on while it runs: no migration, no
             downtime, and nothing already stored put at risk.
           </p>
@@ -486,8 +486,10 @@ const steps: { who: string; what: string; outcome: string; refused?: boolean }[]
             </li>
           </ul>
           <p style="margin-top:1.25rem">
-            Isolation and authorization rules are enforced by PostgreSQL row-level security and covered by
-            machine-checked models and integration tests.
+            Isolation and authorization rules are enforced by PostgreSQL row-level security. The access rules are a
+            formally verified model: machine-checked proofs show, for example, that one organization never sees
+            another's data, that a hidden folder hides everything below it, and that search returns only what you could
+            open. The code is tested against that model; the code itself is not formally verified.
           </p>
           <p style="margin-top:1rem">
             <a href={docsHref('concepts/isolation/')}>How organizations are kept apart</a>

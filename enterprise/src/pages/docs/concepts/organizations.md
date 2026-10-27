@@ -168,6 +168,28 @@ owner restricts a type, can be narrowed to the objects shared with each
 member or their teams, and per property. See
 [The ontology](/docs/concepts/ontology/#access).
 
+### A formally verified model
+
+The permission rules are a formally verified model: machine-checked proofs
+show that the rules, as modelled, hold. For example:
+
+- no credential is permitted more than its user holds; OAuth grants never
+  act as owners or change the security posture, and MCP tokens never reach
+  owner-only or manage-level rights;
+- a membership that has ended grants nothing, until it is added anew;
+- a restricted property is shown only to owners and the teams granted it,
+  and hidden values change nothing a caller reads, filters, sorts, or
+  receives as events;
+- a hidden folder hides everything below it, whatever the query;
+- a chat channel is seen only by those it is public to or who are its
+  members, and only while its object is visible to them;
+- search returns only what a read would return, and hidden text never
+  matches, scores, or shows in a snippet;
+- a connector tool is listed exactly when a call of it would be accepted.
+
+The code is tested against that model; the code itself is not formally
+verified. See also [Organizations and isolation](/docs/concepts/isolation/#a-formally-verified-model).
+
 ## Joining an organization
 
 Someone becomes a user in one of four ways:
