@@ -136,9 +136,20 @@ key, so the private key can stay in the key's OpenPGP applet (firmware
 `base64url(header).base64url(claims)`. This setup has not been tested by
 the project.
 
-## Not there yet
+## In the console
 
-- **The operator console does not sign in with security keys yet.** It
-  still signs management JWTs in the browser. Until it does, the sign-in,
-  step-up and enrollment ceremonies are run through the
-  [API](/docs/api/management/#operators) with a WebAuthn client.
+The [operator console](/docs/web-app/#the-operator-console) does all of
+this in the browser:
+
+- **Sign-in** offers the methods the server enables: a security key, or a
+  management JWT, pasted or signed from a private key.
+- **Enrollment links** open `/console/enroll`, which registers the key and
+  explains a `key_not_allowed` refusal.
+- **Step-up.** When an operation needs a fresh touch, the console asks for
+  one and retries.
+- **Operators**: add one and copy the link to send, make new links,
+  disable, enable, delete, and remove keys, with the last-key refusal
+  explained.
+- **The audit log**, with filters.
+- The sidebar counts down to the session's end, and returns to sign-in when
+  it ends.

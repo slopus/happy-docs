@@ -125,10 +125,16 @@ revoke there.
 The console, at `/console`, is for whoever runs the server, not for members
 of an organization. It talks to the management API, on its own listener and
 with its own keys: it creates organizations and registers the signing keys of
-their identity providers. It signs in with a management private key, signing
-its token in the browser, and can generate a new key pair whose public half
-you add to `MANAGEMENT_JWT_PUBLIC_KEYS`. It does not yet sign in with
-[security keys](/docs/self-hosting/operators/).
+their identity providers, manages operators and their security keys, and
+shows the management audit log.
+
+It signs in with whatever the server enables: a
+[security key](/docs/self-hosting/operators/), or a management JWT, pasted
+or signed in the browser from a private key (it can generate a key pair
+whose public half you add to `MANAGEMENT_JWT_PUBLIC_KEYS`). Enrollment
+links open its `/console/enroll` page. When an operation needs a fresh
+touch, it asks for one and retries, and the sidebar counts down to the
+session's end.
 
 ![The operator console's list of organizations](/shots/console.webp)
 
