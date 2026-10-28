@@ -24,7 +24,7 @@ validators_unavailable`.
 |---|---|---|
 | Address | `ORG_LISTEN_ADDR`, default `0.0.0.0:8080` | `MANAGEMENT_LISTEN_ADDR`, default `127.0.0.1:9090` |
 | Exposure | public, behind your reverse proxy | private: operators and provisioning only |
-| Credentials | sessions, external JWTs, agent API tokens, OAuth | Ed25519 JWTs from `MANAGEMENT_JWT_PUBLIC_KEYS` |
+| Credentials | sessions, external JWTs, agent API tokens, OAuth, MCP tokens | Ed25519 JWTs from `MANAGEMENT_JWT_PUBLIC_KEYS`, or [operator sessions](/docs/self-hosting/operators/) opened with a security key, as `MANAGEMENT_AUTH` allows |
 | Database role | `happy_enterprise_org` | `happy_enterprise_management` |
 
 The two share no routes, credentials, or database roles. Never put the
@@ -83,7 +83,8 @@ disabling isolation between organizations.
   derives each organization's session signing key (HKDF) and seals TOTP
   secrets. Rotating it logs everyone out and invalidates every TOTP factor.
 * `MANAGEMENT_JWT_PUBLIC_KEYS`: public keys only. Keep the private keys
-  with whoever provisions organizations.
+  with whoever provisions organizations, or use
+  [security keys](/docs/self-hosting/operators/) instead.
 * Email and S3 credentials, as listed in
   [Configuration](/docs/self-hosting/configuration/).
 

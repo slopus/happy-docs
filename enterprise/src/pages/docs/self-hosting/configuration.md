@@ -32,7 +32,7 @@ refuses to start if a required variable is missing or malformed.
 | Variable | Default | Meaning |
 |---|---|---|
 | `SERVER_SECRET_KEY` | required | 32 random bytes, base64url without padding. Derives session signing keys and seals TOTP secrets: rotating it logs everyone out and invalidates TOTP factors. |
-| `MANAGEMENT_JWT_PUBLIC_KEYS` | required | `kid=<base64url raw 32-byte Ed25519 key>[,kid2=...]` |
+| `MANAGEMENT_JWT_PUBLIC_KEYS` | required with `jwt` | `kid=<base64url raw 32-byte Ed25519 key>[,kid2=...]` |
 | `MANAGEMENT_JWT_ISSUER` | `happy-enterprise-management` | Required `iss` of management tokens. |
 
 Generate a server secret with:
@@ -40,6 +40,23 @@ Generate a server secret with:
 ```sh
 openssl rand 32 | basenc --base64url | tr -d =
 ```
+
+## Management
+
+How [operators](/docs/self-hosting/operators/) and provisioning scripts
+authenticate to the management API.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `MANAGEMENT_AUTH` | `jwt` | `jwt`, `webauthn`, or `jwt,webauthn`. With `webauthn` alone no JWT is accepted, and every sensitive change needs a security-key touch. |
+| `MANAGEMENT_WEBAUTHN_RP_ID` | required with `webauthn` | Relying party id of operator keys: the host of the console's origins, or a parent domain. |
+| `MANAGEMENT_WEBAUTHN_ORIGIN` | required with `webauthn` | Comma-separated origins the console runs on (no paths). The first builds enrollment links. |
+| `MANAGEMENT_WEBAUTHN_RP_NAME` | `Happy Enterprise management` | Name shown by authenticators. |
+| `MANAGEMENT_WEBAUTHN_AAGUIDS` | none | Comma-separated AAGUIDs allowed to enroll and sign in; needs `MANAGEMENT_WEBAUTHN_ATTESTATION_CA`. Unset: any authenticator with user verification. |
+| `MANAGEMENT_WEBAUTHN_ATTESTATION_CA` | none | Path of a PEM bundle of attestation root certificates, such as Yubico's FIDO root, that allowed keys' attestations must chain to. Set with `MANAGEMENT_WEBAUTHN_AAGUIDS`. |
+| `MANAGEMENT_SESSION_TTL` | `900` | Seconds an operator session lasts at most. |
+| `MANAGEMENT_SESSION_IDLE` | `300` | Seconds without a request after which an operator session ends. |
+| `MANAGEMENT_STEP_UP_WINDOW` | `300` | Seconds after a security-key assertion during which step-up operations are allowed. |
 
 ## WebAuthn
 

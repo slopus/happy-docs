@@ -18,6 +18,7 @@ lead: Sliding-window limits protect login, second factors, and OAuth. They are k
 | [Chat](/docs/concepts/chat/) posts, edits, reactions, and pins (REST and MCP) | | 120 per minute per user |
 | Chat typing notices | | 30 per minute per user |
 | [Connector](/docs/concepts/connectors/) tool calls (MCP) | | 120 per minute per user |
+| [Management](/docs/self-hosting/operators/) sign-in, step-up, and enrollment | 30 per 10 minutes | 600 per 10 minutes in all |
 | [Filesystem](/docs/concepts/filesystem/) writes: new folders, uploads, renames, moves, deletions, restores (REST and MCP) | | 300 per minute per user |
 
 ## Behavior

@@ -80,6 +80,7 @@ export const NAV: NavGroup[] = [
     items: [
       { title: 'Self-hosting', href: 'self-hosting/' },
       { title: 'Configuration', href: 'self-hosting/configuration/' },
+      { title: 'Operators and security keys', href: 'self-hosting/operators/' },
       { title: 'Performance', href: 'self-hosting/performance/' },
     ],
   },

@@ -127,7 +127,8 @@ of an organization. It talks to the management API, on its own listener and
 with its own keys: it creates organizations and registers the signing keys of
 their identity providers. It signs in with a management private key, signing
 its token in the browser, and can generate a new key pair whose public half
-you add to `MANAGEMENT_JWT_PUBLIC_KEYS`.
+you add to `MANAGEMENT_JWT_PUBLIC_KEYS`. It does not yet sign in with
+[security keys](/docs/self-hosting/operators/).
 
 ![The operator console's list of organizations](/shots/console.webp)
 
