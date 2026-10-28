@@ -71,7 +71,7 @@ use `MANAGEMENT_AUTH=webauthn` alone.
 ## Requiring YubiKeys
 
 By default, any authenticator that does user verification can be enrolled:
-security keys, platform authenticators, and synced passkeys alike. To
+security keys, the authenticators built into laptops and phones, and synced passkeys alike. To
 accept only particular hardware keys, set both:
 
 - `MANAGEMENT_WEBAUTHN_ATTESTATION_CA`: the path of a PEM bundle of
