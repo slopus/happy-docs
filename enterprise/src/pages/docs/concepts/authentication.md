@@ -175,8 +175,9 @@ organization its first owner or reset an owner's password. Redeeming a link
 (`POST /v1/orgs/{org}/auth/password/reset`) sets the password and ends all
 of the user's sessions.
 
-The web app does not sign in with passwords or open set-password links yet;
-use the [API](/docs/api/auth/#passwords).
+The [web app](/docs/web-app/#signing-in) has all of this: password
+sign-in, a password on accepting an invite, the `/reset-password` page,
+**Settings → Password**, and members' **Reset link**.
 
 ### Failed attempts
 

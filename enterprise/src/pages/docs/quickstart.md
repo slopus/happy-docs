@@ -134,26 +134,16 @@ curl -N "$BASE/v1/ontology/events" -H "Authorization: Bearer $TOKEN"
 ## 7. Open the web app
 
 Open `http://localhost:8080`, enter the organization's id (`echo $ORG`) and
-`ada@acme.example`. The web app does not sign in with passwords yet, so it
-emails a code; the image's `log` email provider writes it to the container
-log:
+`ada@acme.example`, choose **Password**, and sign in with the owner's
+password. The `employee` type and its objects are under **Objects**, its
+definition under **Ontology**, and changes made through `curl` appear in
+**Live** as they commit.
 
-```sh
-docker logs happy 2>&1 | grep 'sign-in code'
-```
-
-The `employee` type and its objects are under **Objects**, its definition
-under **Ontology**, and changes made through `curl` appear in **Live** as
-they commit.
-
-The operator console is at `http://localhost:8080/console`. It signs in
-with a security key, not yet with a password; to enroll one, make an
-enrollment link with the admin session and open it:
-
-```sh
-ME=$(curl -s "$BASE/mgmt/v1/auth/me" -H "Authorization: Bearer $ADMIN" | jq -r .operator.id)
-curl -s -X POST "$BASE/mgmt/v1/operators/$ME/enrollments" -H "Authorization: Bearer $ADMIN" | jq -r .url
-```
+The operator console is at `http://localhost:8080/console`; sign in there
+with the admin's username and password. Steps 2 to 4 can all be done in
+the browser instead: the console's setup screen, its organization page with
+the **Owner link** button, and the web app's set-password page. See
+[Docker](/docs/self-hosting/docker/#first-run).
 
 ## Next
 

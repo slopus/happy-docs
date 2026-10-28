@@ -123,9 +123,6 @@ it ships.
   outside MCP server goes out with the organization's credential there,
   whoever made it; the call log records who did. Their resources and
   prompts are not served, and calls send no live events.
-- **Passwords and setup are API-only.** The web app and the console do not
-  yet sign in with passwords, open set-password links, or run first-run
-  setup: use the [API](/docs/api/auth/#passwords) for those.
 - **Every reader is a member.** There are no share links for people outside
   the organization, in the API or in the web app.
 - **Search has no stemming, and skips attachments.**

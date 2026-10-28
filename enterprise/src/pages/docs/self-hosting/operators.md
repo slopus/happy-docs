@@ -191,19 +191,21 @@ the project.
 The [operator console](/docs/web-app/#the-operator-console) does all of
 this in the browser:
 
-- **Sign-in** offers the methods the server enables: a security key, or a
-  management JWT, pasted or signed from a private key.
+- **Setup**, on a new server: the setup code from the log, the admin's
+  username, and a password typed twice.
+- **Sign-in** offers the methods the server enables: a username and
+  password, a security key, or a management JWT, pasted or signed from a
+  private key.
 - **Enrollment links** open `/console/enroll`, which registers the key and
   explains a `key_not_allowed` refusal.
-- **Step-up.** When an operation needs a fresh touch, the console asks for
-  one and retries.
-- **Operators**: add one and copy the link to send, make new links,
-  disable, enable, delete, and remove keys, with the last-credential refusal
-  explained.
+- **Step-up.** When an operation needs a fresh confirmation, the console
+  asks for a touch of the key, or for the password from an operator without
+  one, and retries.
+- **Operators**: add one with a username and password, a key enrollment
+  link, or both; set, change, or remove passwords; make new links;
+  disable, enable, delete, and remove keys, with the last-credential
+  refusal explained.
+- **Owner links** on an organization's page, shown with a copy button.
 - **The audit log**, with filters.
 - The sidebar counts down to the session's end, and returns to sign-in when
   it ends.
-
-The console has no screens for setup, password sign-in or operator
-passwords yet. Until it does, use the
-[API](/docs/api/management/#first-run-setup) for those.

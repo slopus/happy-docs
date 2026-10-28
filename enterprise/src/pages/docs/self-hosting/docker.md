@@ -77,30 +77,44 @@ docker logs happy 2>&1 | grep 'setup code'
 WARN first run: open the console and set the admin password with setup code 7KQM-2XHD-9WPT (or set ADMIN_PASSWORD)
 ```
 
-Send it with the admin's username and password:
-
-```sh
-BASE=http://localhost:8080
-ADMIN=$(curl -s -X POST "$BASE/mgmt/v1/setup" -H "Content-Type: application/json" \
-  -d '{"code": "7KQM-2XHD-9WPT", "username": "admin", "password": "a long admin password"}' | jq -r .token)
-```
+Open the console, `http://localhost:8080/console`. On a new server it shows
+the setup screen: enter the code, the admin's username, and a password
+twice, and you are signed in as the admin.
 
 The code belongs to the process: it changes on every restart until setup is
 done. With several replicas, each logs its own; use `ADMIN_PASSWORD`, or the
-code from the log of the replica your request reaches.
+code from the log of the replica you reach.
 
 **`ADMIN_PASSWORD`.** Set it (and `ADMIN_USERNAME`, default `admin`) in
 `.env`, and the admin is created at startup with no setup step. It is read
 only while no operator has a password; remove it from `.env` afterwards.
 
-The web app has no setup screen yet, so use the API call above.
-
 ## The first organization
 
-The admin creates an organization with its owner's address, then makes a
-set-password link for that owner:
+In the console, the admin:
+
+1. creates an organization with its name and its owner's email address;
+2. on the organization's page, presses **Owner link** (leaving the address
+   empty means the bootstrap owner's) and copies the link;
+3. sends it to the owner, over a channel they trust.
+
+The link opens `/reset-password` in the web app. It works once, within 24
+hours. The owner chooses a password there, which makes them the
+organization's first owner, and then signs in on the sign-in page with
+**Password**. From there the owner runs the organization: invites, whose
+links the web app shows to copy while email goes to the log, teams,
+two-factor policy, and the rest of the [web app](/docs/web-app/).
+
+See [Passwords](/docs/concepts/authentication/#signing-in-with-a-password)
+for how organization passwords work.
+
+### With the API instead
 
 ```sh
+BASE=http://localhost:8080
+ADMIN=$(curl -s -X POST "$BASE/mgmt/v1/setup" -H "Content-Type: application/json" \
+  -d '{"code": "7KQM-2XHD-9WPT", "username": "admin", "password": "a long admin password"}' | jq -r .token)
+
 ORG=$(curl -s -X POST "$BASE/mgmt/v1/organizations" \
   -H "Authorization: Bearer $ADMIN" -H "Content-Type: application/json" \
   -d '{"name": "Acme", "owner_email": "ada@acme.example"}' | jq -r .id)
@@ -113,9 +127,6 @@ curl -s -X POST "$BASE/mgmt/v1/organizations/$ORG/owner-link" -H "Authorization:
   "token": "...", "email": "ada@acme.example", "expires_at": "2026-10-29T10:00:00Z" }
 ```
 
-The link works once, within 24 hours. Redeeming it makes the owner the
-organization's first owner with that password:
-
 ```sh
 curl -s -X POST "$BASE/v1/orgs/$ORG/auth/password/reset" -H "Content-Type: application/json" \
   -d '{"token": "<token from the link>", "password": "a long owner password"}'
@@ -124,14 +135,7 @@ TOKEN=$(curl -s -X POST "$BASE/v1/orgs/$ORG/auth/password" -H "Content-Type: app
   -d '{"email": "ada@acme.example", "password": "a long owner password"}' | jq -r .token)
 ```
 
-From there the owner runs the organization: invites, teams, two-factor
-policy, and everything in the [Quickstart](/docs/quickstart/#5-define-an-object-type).
-The web app does not open set-password links or sign in with passwords yet;
-in the meantime it signs in with an email code, which the `log` provider
-writes to `docker logs happy`.
-
-See [Passwords](/docs/concepts/authentication/#signing-in-with-a-password)
-for how organization passwords work.
+The [Quickstart](/docs/quickstart/) continues from here.
 
 ## Email
 

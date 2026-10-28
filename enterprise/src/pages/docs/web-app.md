@@ -5,8 +5,8 @@ lead: The web app is where people work with their organization's data, change it
 ---
 
 The web app comes with Happy Enterprise. A person signs in to their
-organization with an emailed code, or by accepting an invite, and works under
-their own permissions. Every screen is built from the organization's own
+organization with an emailed code or a password, or by accepting an invite,
+and works under their own permissions. Every screen is built from the organization's own
 model, so a maintenance team sees incidents and machines, a dealership sees
 cars and deals, and neither needs a line of custom code.
 
@@ -95,10 +95,30 @@ checked against the person's access before it is shown.
 
 ![The live feed](/shots/live-feed.webp)
 
+## Signing in
+
+The sign-in page asks for the organization and the work email address.
+When the server has [passwords](/docs/concepts/authentication/#signing-in-with-a-password)
+on, it offers **Email code** or **Password**. A password signs in only
+someone who already has one; joining still takes an invite or an emailed
+code, and a forgotten password needs an emailed code or a reset link from
+an owner.
+
+Accepting an invite asks for a display name and, with passwords on, an
+optional password, so the next sign-in needs no email.
+
+A set-password link opens `/reset-password`. It asks for the new password
+twice, sets it, signs the person out everywhere else, and sends them on to
+sign in. An owner link from the console works the same way, and while the
+organization has no owner it makes that address its first owner.
+
 ## People, teams, and settings
 
 - **People**: members and their profiles, invites, and agent accounts with
-  their API tokens.
+  their API tokens. With passwords on, owners make a **Reset link** for a
+  member, a single-use set-password link to send them. While the server
+  sends no email (`EMAIL_PROVIDER=log`), a new invite shows its link to
+  copy and pass on.
 - **Teams** and the permissions granted to them.
 - **The organization**: its name and photo, verified email domains, and
   whether two-factor authentication is required.
@@ -111,7 +131,9 @@ contractor, and the end can be changed or removed later.
 
 ![A guest's membership of the guests team, with its end](/shots/team-membership-end.webp)
 
-Each person also has their own settings: their profile, their second factors
+Each person also has their own settings: their profile, their **password**
+(set or change it, with the current one; saving signs out their other
+sessions), their second factors
 (authenticator apps and security keys or passkeys), and their sessions and
 **connected apps**, the MCP clients they have granted access, which they can
 revoke there.
@@ -125,18 +147,22 @@ revoke there.
 The console, at `/console`, is for whoever runs the server, not for members
 of an organization. It talks to the management API, on its own listener and
 with its own keys: it creates organizations and registers the signing keys of
-their identity providers, manages operators and their security keys, and
-shows the management audit log.
+their identity providers, makes owner links, manages operators with their
+passwords and security keys, and shows the management audit log.
 
-It signs in with whatever the server enables: a
+On a new server it opens on **setup**: the setup code from the server log,
+the admin's username, and a password typed twice. After that it signs in
+with whatever the server enables: a username and **password**, a
 [security key](/docs/self-hosting/operators/), or a management JWT, pasted
 or signed in the browser from a private key (it can generate a key pair
 whose public half you add to `MANAGEMENT_JWT_PUBLIC_KEYS`). Enrollment
 links open its `/console/enroll` page. When an operation needs a fresh
-touch, it asks for one and retries, and the sidebar counts down to the
-session's end. It does not yet sign in with an operator password or run
-first-run setup; use the [management API](/docs/api/management/#first-run-setup)
-for those.
+confirmation, it asks for a touch of the key, or for the password from an
+operator without one, and retries; the sidebar counts down to the
+session's end.
+
+An organization's page has an **Owner link** button: leave the address
+empty for the bootstrap owner, and copy the single-use link it shows.
 
 ![The operator console's list of organizations](/shots/console.webp)
 
