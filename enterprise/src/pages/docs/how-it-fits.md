@@ -114,7 +114,7 @@ the person, so it shows them what their permissions allow and nothing more.
 You can build your own apps on the same API, next to it or instead of it.
 Such an app:
 
-- signs people in with an emailed code
+- signs people in with an emailed code or a password
   ([login API](/docs/api/auth/)) or with JWTs from your identity provider,
 - reads and writes objects, and applies actions, through the REST API,
   under the person's permissions,

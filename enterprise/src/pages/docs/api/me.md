@@ -153,6 +153,26 @@ Ends one of your sessions or OAuth grants. Its tokens, including an OAuth
 grant's refresh token, stop working at once. `204`; `404` if it is not yours
 or already ended.
 
+## Password
+
+### POST /v1/me/password
+
+<p class="ep-meta"><span><b>Auth</b>full session</span></p>
+
+Sets or changes your [password](/docs/concepts/authentication/#signing-in-with-a-password).
+Needs `ORG_PASSWORD_AUTH` (`404` without it) and a session token: external
+JWTs and API tokens are `400`. If you have a second factor enrolled, the session must have completed it
+(`403 mfa_required`).
+
+```json
+{ "current_password": "the old one", "new_password": "a long new password" }
+```
+
+`current_password` is required once you have a password; a wrong one is
+`401` and counts toward the [backoff](/docs/concepts/authentication/#failed-attempts).
+`new_password` is 12 to 256 characters (`400` otherwise). `204`; your other
+sessions end, this one stays.
+
 ## Second factors
 
 See [Two-factor authentication](/docs/concepts/two-factor/). Enrollment works

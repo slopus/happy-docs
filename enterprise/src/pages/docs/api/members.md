@@ -48,6 +48,23 @@ again. Use it when a device is lost.
 { "revoked": 3 }
 ```
 
+### POST /v1/members/{user}/password-link
+
+<p class="ep-meta"><span><b>Auth</b>full</span><span><b>Permission</b>owner</span></p>
+
+A [set-password link](/docs/concepts/authentication/#signing-in-with-a-password)
+for an active human member, to pass on when they have forgotten their
+password. It works once, within 24 hours, and redeeming it ends all of the
+member's sessions. Needs `ORG_PASSWORD_AUTH`; `404` without it, and for
+agents and unknown or deactivated members.
+
+`201`:
+
+```json
+{ "url": "https://api.acme.example/reset-password?org=c8kq2m7xw3n5p9r1t4v6y0za#token=...",
+  "token": "...", "expires_at": "2026-10-29T10:00:00Z" }
+```
+
 ## Agents
 
 Agents are users of kind `agent` that authenticate with API tokens. They
@@ -137,6 +154,9 @@ the same address is replaced.
 ```json
 { "id": "i5n1v7i3t9e2x6c0q4w8r2t6", "email": "grace@navy.example", "expires_at": "2026-10-31T10:00:00Z" }
 ```
+
+While `EMAIL_PROVIDER=log`, the response also has `invite_url`, the link
+the email would carry, to copy and pass on yourself.
 
 `409` if the address already belongs to a member (active or deactivated).
 `502` if the email could not be sent.

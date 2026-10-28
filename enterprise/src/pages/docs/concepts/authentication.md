@@ -14,7 +14,7 @@ just a claim.
 
 ## Session tokens
 
-Logging in (an email code or an invite) creates a **session** and returns a
+Logging in (an email code, a password, or an invite) creates a **session** and returns a
 session token: an EdDSA JWT with header `kid: "he-session-v1"`, signed with a
 per-organization key the server derives from `SERVER_SECRET_KEY` with HKDF.
 
@@ -124,7 +124,69 @@ to `INVITE_URL?org=<org id>&token=<token>`, where the token is
 
 Accepting it (`POST /v1/orgs/{org}/invites/accept`) proves control of the
 invited address, because the token was only ever sent there. It creates the
-user if needed (with an optional `display_name`) and logs in.
+user if needed (with an optional `display_name`) and logs in. With
+passwords on, it can also set the new user's password.
+
+While email goes to the log (`EMAIL_PROVIDER=log`), the invite response
+carries the link as `invite_url`, in the REST API and the MCP tool alike,
+for the inviter to copy and pass on.
+
+## Signing in with a password
+
+With `ORG_PASSWORD_AUTH=true` (the default in the
+[Docker image](/docs/self-hosting/docker/), off otherwise), people can sign
+in with their address and a password:
+
+```http
+POST /v1/orgs/{org}/auth/password
+{ "email": "ada@acme.example", "password": "..." }
+```
+
+The address is only a login name here: nothing is emailed, and no email
+provider is needed. The session is the same one an email code opens, with
+the same token, lifetime, and second-factor requirement.
+
+A password signs in only an existing, active person who has one. It never
+joins anyone: a verified domain or the bootstrap owner address still needs
+an email code or a link. Passwords are 12 to 256 characters, stored as
+argon2id hashes. An unknown address is checked against a dummy hash, so it
+answers like a wrong password, in about the same time.
+
+A password is set:
+
+- when accepting an invite, with `password`;
+- through a **set-password link**;
+- by the user, with `POST /v1/me/password`. This needs the current
+  password, if there is one, and a full session: one that has completed its
+  enrolled second factor. It ends the user's other sessions.
+
+**Set-password links** work once, within 24 hours, in their organization:
+
+```text
+{PUBLIC_BASE_URL}/reset-password?org=<org id>#token=<token>
+```
+
+The token is in the fragment, so it is not sent to servers or logged along
+the way. Owners make links for their members
+(`POST /v1/members/{user}/password-link`), to reset a forgotten password.
+Whoever runs the server makes
+[owner links](/docs/self-hosting/operators/#owner-links), which give an
+organization its first owner or reset an owner's password. Redeeming a link
+(`POST /v1/orgs/{org}/auth/password/reset`) sets the password and ends all
+of the user's sessions.
+
+The web app does not sign in with passwords or open set-password links yet;
+use the [API](/docs/api/auth/#passwords).
+
+### Failed attempts
+
+Failures back off per account **and** client IP: after 5 failures, that
+pair is locked for a minute, doubling up to an hour, and gets `429` with
+`Retry-After`. Per account, attempts past 20 in 15 minutes from anywhere
+are each slowed by a second, but never locked. So someone guessing from
+one place cannot lock the real user out from another. The same rules apply
+to changing a password and to [operators](/docs/self-hosting/operators/).
+Lockouts are kept per server process.
 
 ## Verified domains
 
@@ -165,6 +227,6 @@ WWW-Authenticate: Bearer
 ```
 
 The reason (unknown organization, unknown `kid`, bad signature, expired,
-revoked, deactivated user, wrong audience) is logged on the server but never
+revoked, deactivated user, wrong audience, wrong password) is logged on the server but never
 returned, so responses do not reveal which organizations, users, keys,
 sessions, or invites exist.

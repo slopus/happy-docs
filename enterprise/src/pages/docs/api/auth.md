@@ -1,7 +1,7 @@
 ---
 layout: ../../../layouts/Docs.astro
 title: Login and sessions
-lead: Email-code login, invite acceptance, completing a second factor, and logging out.
+lead: Email-code and password login, set-password links, invite acceptance, completing a second factor, and logging out.
 ---
 
 See [Authentication](/docs/concepts/authentication/) for the rules behind
@@ -10,7 +10,7 @@ for partial sessions.
 
 ## The login response
 
-Email verification and invite acceptance both answer with a new session:
+Email verification, password sign-in, and invite acceptance all answer with a new session:
 
 ```json
 {
@@ -67,6 +67,56 @@ curl -X POST "$BASE/v1/orgs/$ORG/auth/email/start" \
 expired or used challenge, five failed attempts, or an address that may not
 log in are all the same `401`.
 
+### GET /v1/orgs/{org}/auth/methods
+
+<p class="ep-meta"><span><b>Auth</b>none</span></p>
+
+How people can sign in. The answer is the same for every `{org}`, existing
+or not.
+
+```json
+{ "email_code": true, "password": true }
+```
+
+## Passwords
+
+These routes exist only with `ORG_PASSWORD_AUTH=true`; otherwise they are
+`404`. See [Signing in with a password](/docs/concepts/authentication/#signing-in-with-a-password).
+
+### POST /v1/orgs/{org}/auth/password
+
+<p class="ep-meta"><span><b>Auth</b>none</span><span><b>Rate limit</b>60 / 10 min per IP, and the password backoff</span></p>
+
+```json
+{ "email": "ada@acme.example", "password": "a long owner password" }
+```
+
+`200` with the [login response](#the-login-response), for an active person
+of the organization who has a password. Every failure, whether an unknown
+organization, an unknown address, no password set, or a wrong password, is
+the same `401`. `429` with `Retry-After` while this client is locked out
+for this account. `400` if the address is not a valid email address.
+
+### POST /v1/orgs/{org}/auth/password/reset
+
+<p class="ep-meta"><span><b>Auth</b>link token</span><span><b>Rate limit</b>60 / 10 min per IP</span></p>
+
+Redeems a set-password link: the token from the link's fragment
+(`#token=...`) and the new password, 12 to 256 characters.
+
+```json
+{ "token": "...", "password": "a long new password" }
+```
+
+```json
+{ "user_id": "h3jd8s0q2l5x7c1v9b4n6m8k", "email": "ada@acme.example", "sessions_ended": 2 }
+```
+
+All of the user's sessions end; sign in again with the new password. An
+owner link for an organization without an owner creates its first owner.
+An unknown, used, or expired link, a member link for a deactivated member,
+or an owner link for an address that is no longer an owner's, is `401`. `400` for a password that is too short or too long.
+
 ## Invites
 
 ### POST /v1/orgs/{org}/invites/accept
@@ -79,8 +129,11 @@ needed. `display_name` (optional, 1-200 characters) names a new user;
 otherwise the name is derived from the address.
 
 ```json
-{ "token": "hei_i5n1v7i3t9e2x6c0q4w8r2t6_Zq3...", "display_name": "Grace Hopper" }
+{ "token": "hei_i5n1v7i3t9e2x6c0q4w8r2t6_Zq3...", "display_name": "Grace Hopper", "password": "a long new password" }
 ```
+
+`password` (optional, 12 to 256 characters) sets the user's password; it
+needs `ORG_PASSWORD_AUTH`, and is `400` without it.
 
 `200` with the [login response](#the-login-response). An unknown, revoked,
 used, or expired invite is `401`. `409` if the address belongs to a

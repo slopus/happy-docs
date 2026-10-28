@@ -1,119 +1,93 @@
 ---
 layout: ../../layouts/Docs.astro
 title: Quickstart
-lead: Run the server locally, create an organization, sign in as its first owner, store your first objects, and open them in the web app. About ten minutes.
+lead: Start the Docker image, set the admin password, create an organization, sign in as its first owner, store your first objects, and open them in the web app. About ten minutes.
 ---
 
-You need:
+You need Docker, `curl`, and `jq`, and the source distribution to build
+the image from. To run the binaries without Docker, see
+[Deploying](/docs/self-hosting/).
 
-- the `happy-enterprise` server binary, and `happy-enterprise-monty-worker`
-  next to it if you want [custom validators](/docs/concepts/validators/),
-- Postgres 16 or newer, with a user that may create databases and roles
-  (the default `postgres` superuser is fine locally),
-- `curl`, `jq`, and Python 3 with `cryptography` to mint a management token,
-- Node.js 20 or newer and `npm`, for the web app.
-
-## 1. Prepare the database
-
-Create a database and the two roles the server runs as. The server creates
-the roles itself if they are missing, but without passwords; creating them
-first lets them log in over TCP.
+## 1. Start it
 
 ```sh
-psql -U postgres <<'SQL'
-CREATE DATABASE happy_enterprise;
-CREATE ROLE happy_enterprise_org LOGIN NOINHERIT PASSWORD 'dev-only-1';
-CREATE ROLE happy_enterprise_management LOGIN NOINHERIT PASSWORD 'dev-only-2';
-SQL
-
-export DATABASE_URL=postgres://postgres@localhost/happy_enterprise
-export ORG_DATABASE_URL=postgres://happy_enterprise_org:dev-only-1@localhost/happy_enterprise
-export MANAGEMENT_DATABASE_URL=postgres://happy_enterprise_management:dev-only-2@localhost/happy_enterprise
+docker build -t happy-enterprise .
+docker run -d --name happy -p 8080:8080 -v ./data:/data happy-enterprise
 ```
 
-On startup the server applies its migrations as `DATABASE_URL`'s user, then
-connects as the two runtime roles. It refuses to start if either runtime role
-is a superuser or may bypass row level security. Add a password to
-`DATABASE_URL` if your Postgres asks for one.
+The container runs the server, the web app and its own Postgres, and keeps
+everything in `./data`. The organization API and the web app are on
+`http://localhost:8080`, the management API under
+`http://localhost:8080/mgmt`. See [Docker](/docs/self-hosting/docker/) for
+what it sets up.
 
-## 2. Configure
+## 2. Set the admin password
 
-Generate the server secret and a management key pair. The secret derives
-session signing keys and seals TOTP secrets; the management key signs the
-operator's tokens.
-
-```sh
-export SERVER_SECRET_KEY="$(openssl rand 32 | basenc --base64url | tr -d =)"
-
-read -r MGMT_PUB MGMT_JWT < <(python3 - <<'EOF'
-import base64, json, time
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-from cryptography.hazmat.primitives import serialization
-b64 = lambda b: base64.urlsafe_b64encode(b).rstrip(b"=").decode()
-key = Ed25519PrivateKey.generate()
-pub = key.public_key().public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
-header = b64(json.dumps({"alg": "EdDSA", "typ": "JWT", "kid": "ops"}).encode())
-claims = b64(json.dumps({"sub": "me@example.com", "aud": "happy-enterprise:management",
-    "iss": "happy-enterprise-management", "exp": int(time.time()) + 3600}).encode())
-print(b64(pub), f"{header}.{claims}.{b64(key.sign(f'{header}.{claims}'.encode()))}")
-EOF
-)
-export MANAGEMENT_JWT_PUBLIC_KEYS="ops=$MGMT_PUB"
-export EMAIL_PROVIDER=log   # the default: emails, login codes included, go to the log
-```
-
-## 3. Run
+Until the first operator, the admin, has a password, the server answers
+nothing but setup. It logs a one-time setup code:
 
 ```sh
-./happy-enterprise
+docker logs happy 2>&1 | grep 'setup code'
 ```
 
 ```text
-INFO migrations applied
-INFO organisation API listening addr=0.0.0.0:8080
-INFO management API listening addr=127.0.0.1:9090
+WARN first run: open the console and set the admin password with setup code 7KQM-2XHD-9WPT (or set ADMIN_PASSWORD)
 ```
 
-The organization API is on `:8080`, the management API on `127.0.0.1:9090`. Run
-the remaining steps in a second shell with the same `MGMT_JWT`.
+```sh
+BASE=http://localhost:8080
+ADMIN=$(curl -s -X POST "$BASE/mgmt/v1/setup" -H "Content-Type: application/json" \
+  -d '{"code": "7KQM-2XHD-9WPT", "username": "admin", "password": "a long admin password"}' | jq -r .token)
+```
 
-## 4. Create an organization
+`ADMIN` is an operator session. It lasts 15 minutes (5 without a request),
+and creating organizations needs a sign-in within the last 5. When it runs
+out, sign in again:
 
 ```sh
-ORG=$(curl -s -X POST http://127.0.0.1:9090/v1/organizations \
-  -H "Authorization: Bearer $MGMT_JWT" -H "Content-Type: application/json" \
+ADMIN=$(curl -s -X POST "$BASE/mgmt/v1/auth/password" -H "Content-Type: application/json" \
+  -d '{"username": "admin", "password": "a long admin password"}' | jq -r .token)
+```
+
+## 3. Create an organization
+
+```sh
+ORG=$(curl -s -X POST "$BASE/mgmt/v1/organizations" \
+  -H "Authorization: Bearer $ADMIN" -H "Content-Type: application/json" \
   -d '{"name": "Acme", "owner_email": "ada@acme.example"}' | jq -r .id)
 echo "$ORG"
 ```
 
 The organization exists, but has no users yet. Its system teams and first
-owner are created when `ada@acme.example` logs in.
+owner are created when `ada@acme.example` first signs in.
 
-## 5. Sign in as the owner
+## 4. Sign in as the owner
 
-```sh
-BASE=http://localhost:8080
-CHALLENGE=$(curl -s -X POST "$BASE/v1/orgs/$ORG/auth/email/start" \
-  -H "Content-Type: application/json" -d '{"email": "ada@acme.example"}' | jq -r .challenge_id)
-```
-
-The `log` provider writes the email to the server's output:
-
-```text
-INFO email (log provider) to=ada@acme.example subject=Your Acme sign-in code: 482913 ...
-```
+Make an owner link: a single-use link that sets the owner's password.
 
 ```sh
-TOKEN=$(curl -s -X POST "$BASE/v1/orgs/$ORG/auth/email/verify" \
-  -H "Content-Type: application/json" \
-  -d "{\"challenge_id\": \"$CHALLENGE\", \"code\": \"482913\"}" | jq -r .token)
+LINK=$(curl -s -X POST "$BASE/mgmt/v1/organizations/$ORG/owner-link" -H "Authorization: Bearer $ADMIN")
+echo "$LINK" | jq -r .url
+# http://localhost:8080/reset-password?org=c8kq2m7xw3n5p9r1t4v6y0za#token=...
+```
+
+In a real deployment you would send `url` to the owner. Here, redeem it
+yourself, then sign in with the password:
+
+```sh
+curl -s -X POST "$BASE/v1/orgs/$ORG/auth/password/reset" -H "Content-Type: application/json" \
+  -d "$(jq -nc --arg token "$(echo "$LINK" | jq -r .token)" '{token: $token, password: "a long owner password"}')"
+
+TOKEN=$(curl -s -X POST "$BASE/v1/orgs/$ORG/auth/password" -H "Content-Type: application/json" \
+  -d '{"email": "ada@acme.example", "password": "a long owner password"}' | jq -r .token)
 
 curl -s "$BASE/v1/me" -H "Authorization: Bearer $TOKEN" | jq '{user: .user.display_name, permissions}'
 ```
 
-The token is a session token valid for 30 days, until you log out.
+The token is a session token valid for 30 days, until you log out. The
+address is only a login name here: no email was sent.
 
-## 6. Define an object type
+## 5. Define an object type
 
 ```sh
 curl -s -X POST "$BASE/v1/ontology/object-types" \
@@ -131,7 +105,7 @@ curl -s -X POST "$BASE/v1/ontology/object-types" \
   }'
 ```
 
-## 7. Write and query objects
+## 6. Write and query objects
 
 ```sh
 curl -s -X POST "$BASE/v1/ontology/objects/employee" \
@@ -157,37 +131,38 @@ In another shell, watch changes as they happen:
 curl -N "$BASE/v1/ontology/events" -H "Authorization: Bearer $TOKEN"
 ```
 
-## 8. Open the web app
+## 7. Open the web app
 
-The web app is in the distribution's `web/` directory. Its development
-server serves it and proxies both APIs on one origin, `http://localhost:5173`:
+Open `http://localhost:8080`, enter the organization's id (`echo $ORG`) and
+`ada@acme.example`. The web app does not sign in with passwords yet, so it
+emails a code; the image's `log` email provider writes it to the container
+log:
 
 ```sh
-cd web
-npm ci
-HE_ORG_URL=http://127.0.0.1:8080 HE_MANAGEMENT_URL=http://127.0.0.1:9090 npm run dev
+docker logs happy 2>&1 | grep 'sign-in code'
 ```
 
-Open `http://localhost:5173`, enter the organization's id (`echo $ORG`) and
-`ada@acme.example`, and type the code the server logs. The `employee` type
-and its objects are under **Objects**, its definition under **Ontology**, and
-changes made through `curl` appear in **Live** as they commit. The operator
-console is at `http://localhost:5173/console`.
+The `employee` type and its objects are under **Objects**, its definition
+under **Ontology**, and changes made through `curl` appear in **Live** as
+they commit.
 
-To have invite links, the OAuth sign-in pages, and the MCP endpoint go
-through the web app's origin as well, restart the server with
-`PUBLIC_BASE_URL=http://localhost:5173` and
-`MCP_ALLOWED_HOSTS=localhost:5173`. To serve the web app in production, see
-[Running it](/docs/web-app/#running-it).
+The operator console is at `http://localhost:8080/console`. It signs in
+with a security key, not yet with a password; to enroll one, make an
+enrollment link with the admin session and open it:
+
+```sh
+ME=$(curl -s "$BASE/mgmt/v1/auth/me" -H "Authorization: Bearer $ADMIN" | jq -r .operator.id)
+curl -s -X POST "$BASE/mgmt/v1/operators/$ME/enrollments" -H "Authorization: Bearer $ADMIN" | jq -r .url
+```
 
 ## Next
 
 * [Web app](/docs/web-app/): every screen, and what it can and cannot see.
-
 * [Organizations and isolation](/docs/concepts/isolation/): how one organization
   is kept from seeing another.
 * [The ontology](/docs/concepts/ontology/): property types, format rules,
   links, and queries.
 * [MCP and OAuth](/docs/concepts/mcp/): connect an AI client to your
   organization.
-* [Self-hosting](/docs/self-hosting/): deploy it for real.
+* [Docker](/docs/self-hosting/docker/): a reverse proxy, email, backups, and
+  upgrades, to run it for real.

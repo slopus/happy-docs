@@ -5,7 +5,9 @@ lead: Every environment variable the server reads, with its default.
 ---
 
 The server reads its configuration from the environment at startup and
-refuses to start if a required variable is missing or malformed.
+refuses to start if a required variable is missing or malformed. The
+[Docker image](/docs/self-hosting/docker/#what-the-container-does) sets some
+of these to other defaults, and fills in the database and the secret key.
 
 ## Database
 
@@ -24,8 +26,10 @@ refuses to start if a required variable is missing or malformed.
 | `MANAGEMENT_LISTEN_ADDR` | `127.0.0.1:9090` | Management API listener. Keep it off the public network. |
 | `PUBLIC_BASE_URL` | `http://localhost:8080` | Public origin of the organization API (no path). OAuth issuers and MCP resource URLs derive from it. |
 | `INVITE_URL` | `<PUBLIC_BASE_URL>/invite` | Where invite links point (`?org=<id>&token=<token>` is appended). |
-| `CLIENT_IP_HEADER` | none | Header with the client IP set by your reverse proxy (e.g. `x-real-ip`, or `x-forwarded-for`: last entry), for rate limits. Unset: the TCP peer. Only set it if the proxy overwrites the header. |
+| `CLIENT_IP_HEADER` | none | Header with the client IP set by your reverse proxy (e.g. `x-real-ip`, or `x-forwarded-for`: the last entry, so the proxy must not append to it), for rate limits and password lockouts. Unset: the TCP peer. Only set it if the proxy overwrites the header. |
 | `MCP_ALLOWED_HOSTS` | host of `PUBLIC_BASE_URL` | Comma-separated `Host` values (`host` or `host:port`) the MCP endpoint accepts, against DNS rebinding; `*` accepts any. |
+| `WEB_DIR` | none | Directory of the built [web app](/docs/web-app/), served on the organization listener for every path no API route takes (`index.html` for the app's own paths). |
+| `MANAGEMENT_MOUNT` | none | A path such as `/mgmt`: also serve the management API under it on the organization listener, for the operator console. Leave it unset to keep the management API off the public network. |
 
 ## Keys
 
@@ -48,7 +52,8 @@ authenticate to the management API.
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `MANAGEMENT_AUTH` | `jwt` | `jwt`, `webauthn`, or `jwt,webauthn`. With `webauthn` alone no JWT is accepted, and every sensitive change needs a security-key touch. |
+| `MANAGEMENT_AUTH` | `jwt` | Comma-separated `jwt`, `webauthn`, `password`: how [operators](/docs/self-hosting/operators/) and scripts authenticate. Without `jwt` no JWT is accepted. With `password`, nothing but setup is served until an operator has a password. |
+| `ADMIN_USERNAME`, `ADMIN_PASSWORD` | `admin`; none | The first operator, created at startup while no operator has a password (needs `password` in `MANAGEMENT_AUTH`). Skips the setup code. Remove `ADMIN_PASSWORD` afterwards. |
 | `MANAGEMENT_WEBAUTHN_RP_ID` | required with `webauthn` | Relying party id of operator keys: the host of the console's origins, or a parent domain. |
 | `MANAGEMENT_WEBAUTHN_ORIGIN` | required with `webauthn` | Comma-separated origins the console runs on (no paths). The first builds enrollment links. |
 | `MANAGEMENT_WEBAUTHN_RP_NAME` | `Happy Enterprise management` | Name shown by authenticators. |
@@ -57,6 +62,12 @@ authenticate to the management API.
 | `MANAGEMENT_SESSION_TTL` | `900` | Seconds an operator session lasts at most. |
 | `MANAGEMENT_SESSION_IDLE` | `300` | Seconds without a request after which an operator session ends. |
 | `MANAGEMENT_STEP_UP_WINDOW` | `300` | Seconds after a security-key assertion during which step-up operations are allowed. |
+
+## Organization passwords
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `ORG_PASSWORD_AUTH` | `false` | `true` lets organization users sign in with [passwords](/docs/concepts/authentication/#signing-in-with-a-password). Off, every password route is `404`; stored passwords are kept. |
 
 ## WebAuthn
 
@@ -73,10 +84,12 @@ later makes existing WebAuthn factors unusable.
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `EMAIL_PROVIDER` | `log` | `log` (development only: logs messages, including login codes), `resend`, `ses`, `smtp`, `webhook`. |
+| `EMAIL_PROVIDER` | `log` | `log` (logs messages, including login codes: for development, or for password-only setups), `resend`, `ses`, `cloudflare`, `smtp`, `webhook`. |
 | `EMAIL_FROM` | required unless `log` | Sender address. |
 | `RESEND_API_KEY` | required for `resend` | Resend API key. |
 | `RESEND_API_URL` | `https://api.resend.com` | Resend API base; `/emails` is appended. |
+| `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_EMAIL_API_TOKEN` | required for `cloudflare` | Cloudflare Email Sending: the account id and an API token allowed to send email. `EMAIL_FROM` must be on a domain onboarded to Email Sending in that account. |
+| `CLOUDFLARE_API_URL` | `https://api.cloudflare.com/client/v4` | Cloudflare API base. |
 | `SES_REGION`, `SES_ACCESS_KEY_ID`, `SES_SECRET_ACCESS_KEY` | required for `ses` | Amazon SES v2 `SendEmail`, signed with SigV4. |
 | `SES_SESSION_TOKEN`, `SES_ENDPOINT` | none | Temporary credentials; a custom endpoint. |
 | `SMTP_URL` | required for `smtp` | e.g. `smtps://user:pass@smtp.example.com` or `smtp://host:587?tls=required`. |
@@ -90,7 +103,7 @@ later makes existing WebAuthn factors unusable.
 | `STORAGE_BACKEND` | `local` | `local` or `s3`. |
 | `STORAGE_LOCAL_DIR` | `data/files` | Root directory of the local store. |
 | `S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | required for `s3` | S3 (or compatible) bucket. |
-| `S3_ENDPOINT`, `S3_PREFIX`, `S3_SESSION_TOKEN` | none | Custom endpoint (path-style, e.g. MinIO, R2), key prefix, temporary credentials. |
+| `S3_ENDPOINT`, `S3_PREFIX`, `S3_SESSION_TOKEN` | none | Custom endpoint (path-style, e.g. MinIO, R2), key prefix (put in front of `<organization id>/<file id>` as it is, so end it with `/`), temporary credentials. |
 
 ## Actions
 

@@ -4,6 +4,10 @@ title: Deploying
 lead: One Rust binary, a sandbox worker next to it, and a Postgres database. What to run, what to expose, and what the server checks before it serves traffic.
 ---
 
+The quickest way to run it is the [Docker image](/docs/self-hosting/docker/),
+which puts all of this in one container. This page covers the pieces, for
+running them yourself or for understanding what the image does.
+
 ## What you deploy
 
 | Piece | |
@@ -24,11 +28,29 @@ validators_unavailable`.
 |---|---|---|
 | Address | `ORG_LISTEN_ADDR`, default `0.0.0.0:8080` | `MANAGEMENT_LISTEN_ADDR`, default `127.0.0.1:9090` |
 | Exposure | public, behind your reverse proxy | private: operators and provisioning only |
-| Credentials | sessions, external JWTs, agent API tokens, OAuth, MCP tokens | Ed25519 JWTs from `MANAGEMENT_JWT_PUBLIC_KEYS`, or [operator sessions](/docs/self-hosting/operators/) opened with a security key, as `MANAGEMENT_AUTH` allows |
+| Credentials | sessions, external JWTs, agent API tokens, OAuth, MCP tokens | Ed25519 JWTs from `MANAGEMENT_JWT_PUBLIC_KEYS`, or [operator sessions](/docs/self-hosting/operators/) opened with a password or a security key, as `MANAGEMENT_AUTH` allows |
 | Database role | `happy_enterprise_org` | `happy_enterprise_management` |
 
 The two share no routes, credentials, or database roles. Never put the
 management listener on the public network.
+
+Two settings put more on the organization listener:
+
+* `WEB_DIR`, the directory of the built [web app](/docs/web-app/), serves it
+  for every path no API route takes, with `index.html` for the app's own
+  paths.
+* `MANAGEMENT_MOUNT`, a path such as `/mgmt`, also serves the management API
+  under that path, so the operator console works on the same origin. The
+  management API's credentials and database role stay its own. Leave it
+  unset when the management API must stay off the public network.
+
+## First run
+
+With `password` in `MANAGEMENT_AUTH`, the server serves nothing until an
+operator has a password: both listeners answer `503 setup_required` to
+everything except `/health`, `/v1/setup` and `/v1/auth/methods` (and the web
+app). Create the admin with the setup code the server logs, or with
+`ADMIN_PASSWORD`; see [Operators](/docs/self-hosting/operators/#first-run).
 
 ## Behind a reverse proxy
 
@@ -37,10 +59,15 @@ the public origin (no path), for example `https://api.acme.example`. OAuth
 issuers, MCP resource URLs, invite links, and the WebAuthn relying party all
 derive from it.
 
-* **Client IPs.** Rate limits key on the client IP. Behind a proxy, set
-  `CLIENT_IP_HEADER` to the header it sets (`x-real-ip`, or
-  `x-forwarded-for`, whose last entry is used). Only set it if the proxy
-  overwrites the header; otherwise clients can choose their own IP.
+* **Client IPs.** Rate limits and password lockouts key on the client IP.
+  Behind a proxy, set `CLIENT_IP_HEADER` to the header it sets
+  (`x-real-ip`, or `x-forwarded-for`). Only set it if the proxy overwrites
+  the header; otherwise clients can choose their own IP. The server reads
+  the **last** entry of `X-Forwarded-For`, so the proxy next to the server
+  must pass the header through unchanged rather than append to it. Behind
+  another proxy (a CDN, say), an appending proxy (nginx's
+  `$proxy_add_x_forwarded_for`) adds the outer proxy's address last, and
+  every client looks the same.
 * **Host checks.** The MCP endpoint accepts only the `Host` values in
   `MCP_ALLOWED_HOSTS` (by default the host of `PUBLIC_BASE_URL`). If the
   proxy rewrites `Host`, list what arrives.
@@ -103,7 +130,9 @@ streams on another.
 `data/files`). Every replica must see the same directory. Unfinished uploads
 older than an hour are swept at startup. `STORAGE_BACKEND=s3` uses a bucket
 (AWS, or a compatible server with `S3_ENDPOINT`, path-style). The server
-proxies every download, so the bucket never needs to be public.
+proxies every download, so the bucket never needs to be public. Both stores
+use the same layout, so a local store can be
+[moved to S3 later](/docs/self-hosting/docker/#moving-files-to-s3-later).
 
 ## Shutdown
 

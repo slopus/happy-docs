@@ -32,6 +32,9 @@ of one Postgres database, serving two HTTP APIs on two separate listeners:
   it creates organizations and registers the signing keys of their identity
   providers.
 
+The [Docker image](/docs/self-hosting/docker/) runs the server, the web app
+and Postgres in one container.
+
 The design is inspired by Palantir's: access to every type is a matter of
 permissions granted to teams and audited, and the web app, a person using an
 assistant, and a background agent all refer to the same incident and meet
@@ -46,9 +49,9 @@ see or affect another.
 
 | | |
 |---|---|
-| People and agents | Human users log in with an emailed code. Assistants act for a signed-in person over MCP; agent accounts act as themselves with API tokens. See [How it fits](/docs/how-it-fits/#how-it-connects) and [Users, teams, permissions](/docs/concepts/organizations/). |
+| People and agents | Human users log in with an emailed code or a password. Assistants act for a signed-in person over MCP; agent accounts act as themselves with API tokens. See [How it fits](/docs/how-it-fits/#how-it-connects) and [Users, teams, permissions](/docs/concepts/organizations/). |
 | Teams and permissions | The system teams `owners` and `everyone`, custom teams that are objects of the ontology, subteams that pass their members up, memberships that end on time, a history of every membership change, and eight permissions granted to teams. |
-| Login and security posture | Email codes, invites, DNS-verified allowed domains, required two-factor authentication with TOTP or WebAuthn. See [Authentication](/docs/concepts/authentication/). |
+| Login and security posture | Email codes, passwords, invites, DNS-verified allowed domains, required two-factor authentication with TOTP or WebAuthn. See [Authentication](/docs/concepts/authentication/). |
 | An ontology | Object types with typed properties and format rules, versioned schemas, custom validators in sandboxed Python, link types with cardinality, queries, and access per type, down to the objects shared with each member or their teams and to single properties. See [The ontology](/docs/concepts/ontology/). |
 | Business actions | The organization's own operations, such as "open a work order": typed parameters, criteria, edits applied all or nothing, safe retries, webhooks and emails (to members or customers) after commit, and an audit log. See [Business actions](/docs/concepts/actions/). |
 | Timeseries | Series of timestamped points, such as sensor readings, attached to objects and read under their access: idempotent batches, raw, bucketed and downsampled reads, the newest value, retention, and live updates. See [Timeseries](/docs/concepts/timeseries/). |
@@ -120,6 +123,9 @@ it ships.
   outside MCP server goes out with the organization's credential there,
   whoever made it; the call log records who did. Their resources and
   prompts are not served, and calls send no live events.
+- **Passwords and setup are API-only.** The web app and the console do not
+  yet sign in with passwords, open set-password links, or run first-run
+  setup: use the [API](/docs/api/auth/#passwords) for those.
 - **Every reader is a member.** There are no share links for people outside
   the organization, in the API or in the web app.
 - **Search has no stemming, and skips attachments.**
@@ -159,4 +165,4 @@ it ships.
   document management, car sales, an agentic dev team, and a smart home,
   each run end to end.
 - [API reference](/docs/api/): every endpoint, with examples.
-- [Self-hosting](/docs/self-hosting/): roles, configuration, deployment.
+- [Docker](/docs/self-hosting/docker/) and [Deploying](/docs/self-hosting/): running it, roles, configuration.

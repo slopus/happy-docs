@@ -8,7 +8,7 @@ lead: Two HTTP APIs on two listeners. Requests and responses are JSON, credentia
 |---|---|---|
 | Default address | `0.0.0.0:8080` | `127.0.0.1:9090` (keep it private) |
 | Who calls it | your organizations' users, agents, apps, MCP clients | you, the operator |
-| Credentials | session tokens, external JWTs, agent API tokens, OAuth access tokens (MCP only) | Ed25519 JWTs signed by a key in `MANAGEMENT_JWT_PUBLIC_KEYS` |
+| Credentials | session tokens, external JWTs, agent API tokens, OAuth access tokens (MCP only) | Ed25519 JWTs signed by a key in `MANAGEMENT_JWT_PUBLIC_KEYS`, or operator sessions opened with a password or a security key |
 | JWT audience | `happy-enterprise:org` (REST), `happy-enterprise:mcp` (MCP) | `happy-enterprise:management` |
 | Database access | a role confined by row level security to the request's organization | a role that sees only the list of organizations and their identity provider keys |
 
@@ -85,6 +85,7 @@ Validation and schema errors add `details`, a list of
 | 422 | `criteria_failed` | an action's criteria do not hold, one detail per criterion |
 | 429 | `rate_limited` | see [Rate limits](/docs/concepts/rate-limits/); carries `Retry-After` |
 | 502 | `upstream` | the email provider or object store failed |
+| 503 | `setup_required` | the admin has no password yet; see [First-run setup](/docs/api/management/#first-run-setup) |
 | 503 | `validators_unavailable` | a write owes custom validator or format calls but no sandbox is configured |
 | 500 | `internal` | a bug; details are only in the server log |
 

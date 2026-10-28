@@ -141,6 +141,8 @@ does, and returns:
 { "id": "i5n1v7i3t9e2x6c0q4w8r2t6", "email": "grace@example.com", "expires_at": "2026-10-31T10:00:00Z" }
 ```
 
+plus `invite_url` while `EMAIL_PROVIDER=log`.
+
 ### describe_schema
 
 <p class="ep-meta"><span><b>Scope</b>ontology:read</span><span><b>Permission</b>view_objects</span></p>

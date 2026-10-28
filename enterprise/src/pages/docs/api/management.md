@@ -1,7 +1,7 @@
 ---
 layout: ../../../layouts/Docs.astro
 title: Management API
-lead: Create organizations and register the keys of their identity providers, on a separate listener with its own credentials and database role. Callers are provisioning scripts with JWTs, or operators who sign in with a security key.
+lead: Create organizations and register the keys of their identity providers, on a separate listener with its own credentials and database role. Callers are provisioning scripts with JWTs, or operators who sign in with a password or a security key.
 ---
 
 The management API is for the operator, not for organizations. It listens on
@@ -9,18 +9,23 @@ The management API is for the operator, not for organizations. It listens on
 organization API, and connects to Postgres as `happy_enterprise_management`, a
 role with grants on the list of organizations and their identity provider
 keys, and none on organization data. Keep it off the public network.
+`MANAGEMENT_MOUNT` (`/mgmt` in the [Docker image](/docs/self-hosting/docker/))
+also serves it under that path on the organization listener, for the
+operator console: `POST /mgmt/v1/setup` there is `POST /v1/setup` here.
 
 It never creates users or teams: an organization's system teams and first
-owner come into being when its `owner_email` first logs in.
+owner come into being when its `owner_email` first logs in, with an email
+code or an [owner link](#post-v1-organizations-id-owner-link).
 
 ## Authentication
 
-Every route except `/health`, the sign-in ceremony, and enrollment needs a
+Every route except `/health`, setup, sign-in, and enrollment needs a
 bearer token, of a kind that `MANAGEMENT_AUTH` allows:
 
 - **a management JWT**, with `jwt` (the default), described below;
-- **an operator session** `hems_...`, with `webauthn`, opened by signing in
-  with a [security key](/docs/self-hosting/operators/).
+- **an operator session** `hems_...`, with `webauthn` or `password`, opened
+  by [signing in](/docs/self-hosting/operators/) with a security key or a
+  password.
 
 "any" below means either. Organization API credentials (`heat_`, `hemt_`,
 session tokens) are refused here, and operator sessions by the organization
@@ -65,17 +70,30 @@ holds public keys.
 
 ### Step-up
 
-Creating organizations, registering and revoking their signing keys, and
-every operator and key change need a security-key assertion of the
-operator's own key within the last `MANAGEMENT_STEP_UP_WINDOW` (5
-minutes), at sign-in or with a step-up ceremony. Otherwise they are:
+Creating organizations and owner links, registering and revoking
+organizations' signing keys, and every change to operators, their keys and
+passwords need a fresh confirmation within the last `MANAGEMENT_STEP_UP_WINDOW`
+(5 minutes), at sign-in or with a step-up. An operator with a usable
+security key confirms with a touch of their own key; an operator with only
+a password, by entering it again. Otherwise they are:
 
 ```json
 403 { "error": { "code": "step_up_required",
-      "message": "touch your security key again (POST /v1/auth/step-up/start) to do this" } }
+      "message": "verify again (POST /v1/auth/step-up/start with a security key, or /v1/auth/step-up/password) to do this" } }
 ```
 
 JWT callers are not asked to step up.
+
+### Before setup
+
+With `password` in `MANAGEMENT_AUTH`, until an enabled operator has a
+password, every route except `/health`, `/v1/setup` and `/v1/auth/methods`
+answers, here and on the organization API alike:
+
+```json
+503 { "error": { "code": "setup_required",
+      "message": "set the admin password first (management API POST /v1/setup)" } }
+```
 
 ## Health
 
@@ -86,6 +104,30 @@ JWT callers are not asked to step up.
 ```json
 { "status": "ok" }
 ```
+
+## First-run setup
+
+See [First run](/docs/self-hosting/operators/#first-run).
+
+### GET /v1/setup
+
+<p class="ep-meta"><span><b>Auth</b>none</span></p>
+
+`{"required": true}` until the admin exists.
+
+### POST /v1/setup
+
+<p class="ep-meta"><span><b>Auth</b>setup code</span><span><b>Rate limit</b>30 / 10 min per IP</span></p>
+
+```json
+{ "code": "7KQM-2XHD-9WPT", "username": "admin", "password": "a long admin password", "name": "Sam Rivera" }
+```
+
+The code is the one the server logged at startup. `username` is 1 to 64
+characters of `a-z0-9._-`, starting with a letter or digit; `password` is
+12 to 256 characters; `name` defaults to the username. `201` with a
+session, as [password sign-in](#post-v1-auth-password) returns. `401` for
+a wrong code, `409` once setup is done.
 
 ## Organizations
 
@@ -127,6 +169,32 @@ owner (see [Joining](/docs/concepts/authentication/)).
 <p class="ep-meta"><span><b>Auth</b>any</span></p>
 
 The organization, or `404`.
+
+### POST /v1/organizations/{id}/owner-link
+
+<p class="ep-meta"><span><b>Auth</b>any, with step-up</span></p>
+
+A single-use [set-password link](/docs/self-hosting/operators/#owner-links)
+for an owner, valid for 24 hours. `email` is optional and defaults to the
+organization's `bootstrap_owner_email`.
+
+```json
+{ "email": "ada@acme.example" }
+```
+
+`201`:
+
+```json
+{ "url": "https://api.acme.example/reset-password?org=c8kq2m7xw3n5p9r1t4v6y0za#token=...",
+  "token": "...", "email": "ada@acme.example", "expires_at": "2026-10-29T10:00:00Z" }
+```
+
+The owner redeems it with
+[`POST /v1/orgs/{org}/auth/password/reset`](/docs/api/auth/#post-v1-orgs-org-auth-password-reset).
+While the organization has no owner, it makes the bootstrap address its
+first owner; otherwise it resets the password of the owner with that
+address. `400` without `ORG_PASSWORD_AUTH`, `404` for an unknown
+organization. The audit log records the organization and the address.
 
 ## Signing keys
 
@@ -176,12 +244,15 @@ Revokes the key. `204`; `404` if the organization has no active key with that
 
 ## Operator sign-in
 
-These routes exist only when `MANAGEMENT_AUTH` includes `webauthn`, except
-`GET /v1/auth/methods` and `GET /v1/auth/me`, which always do. `options`
+The security-key routes exist only when `MANAGEMENT_AUTH` includes
+`webauthn`, the password routes only with `password`, and the operator
+routes with either. `GET /v1/auth/methods`, `GET /v1/auth/me` and
+`GET /v1/audit` always exist. `options`
 are WebAuthn options as JSON (`PublicKeyCredentialRequestOptions` or
 `PublicKeyCredentialCreationOptions`), and `credential` is the browser's
-answer, as JSON. Ceremony and enrollment requests are
-[rate limited](/docs/concepts/rate-limits/).
+answer, as JSON. Setup, sign-in, step-up and enrollment requests are
+[rate limited](/docs/concepts/rate-limits/), and failed passwords
+[back off](/docs/concepts/authentication/#failed-attempts).
 
 ### GET /v1/auth/methods
 
@@ -190,10 +261,27 @@ answer, as JSON. Ceremony and enrollment requests are
 ```json
 { "jwt": false,
   "webauthn": { "rp_id": "ops.example.com", "attestation_required": true, "session_ttl_seconds": 900,
-                "idle_timeout_seconds": 300, "step_up_window_seconds": 300 } }
+                "idle_timeout_seconds": 300, "step_up_window_seconds": 300 },
+  "password": true, "setup_required": false,
+  "session_ttl_seconds": 900, "idle_timeout_seconds": 300, "step_up_window_seconds": 300 }
 ```
 
-`webauthn` is `null` when operators cannot sign in.
+`webauthn` is `null` without security keys, `password` is `false` without
+passwords, and `setup_required` is `true` until the
+[admin exists](#first-run-setup).
+
+### POST /v1/auth/password
+
+<p class="ep-meta"><span><b>Auth</b>none</span></p>
+
+```json
+{ "username": "admin", "password": "a long admin password" }
+```
+
+`200` with a session, as for a key below, with `session.method` set to
+`"password"` and no `credential_id`. Every failure is the same `401`;
+`429` with `Retry-After` while this client is locked out for this
+username.
 
 ### POST /v1/auth/sign-in/start
 
@@ -230,6 +318,22 @@ As sign-in, with the session operator's own keys. `finish` returns
 `{"session": {...}}`, fresh for `MANAGEMENT_STEP_UP_WINDOW`. `400` for JWT
 callers.
 
+### POST /v1/auth/step-up/password
+
+<p class="ep-meta"><span><b>Auth</b>operator session</span></p>
+
+```json
+{ "password": "a long admin password" }
+```
+
+`{"session": {...}}`, fresh for `MANAGEMENT_STEP_UP_WINDOW`. A wrong
+password is `401` and backs off like sign-in. An operator with a usable
+security key steps up only with the key:
+
+```json
+403 { "error": { "code": "use_security_key", ... } }
+```
+
 ### POST /v1/auth/sign-out
 
 <p class="ep-meta"><span><b>Auth</b>operator session</span></p>
@@ -241,7 +345,8 @@ Ends the session. `204`.
 <p class="ep-meta"><span><b>Auth</b>any</span></p>
 
 `{"method": "jwt", "subject": "..."}`, or `{"method": "webauthn",
-"operator": {...}, "session": {...}}` with the session as above.
+"operator": {...}, "session": {...}}` with the session as above, where
+`method` is `"webauthn"` or `"password"` after how the session was opened.
 
 ## Enrollment
 
@@ -279,20 +384,43 @@ up; each attempt needs a new `start`.
 
 <p class="ep-meta"><span><b>Auth</b>any</span></p>
 
-Every operator, with `disabled_at` and their keys: `id`, `name`,
-`aaguid` (verified, under an allowlist), `created_at`, `last_used_at`.
+Every operator, with `username`, `has_password`, `disabled_at`, and their
+keys: `id`, `name`, `aaguid` (verified, under an allowlist), `created_at`,
+`last_used_at`.
 
 ### POST /v1/operators
 
 <p class="ep-meta"><span><b>Auth</b>any, with step-up</span></p>
 
 ```json
-{ "name": "Sam Rivera" }
+{ "name": "Sam Rivera", "username": "sam", "password": "a long password to pass on" }
 ```
 
 `201` with `{operator, enrollment: {operator_id, url, token, expires_at}}`:
-open `url` with the new operator's key within 15 minutes. `name` is 1-200
-characters.
+open `url` with the new operator's key within 15 minutes. `enrollment` is
+`null` without `webauthn`. `name` is 1-200 characters. `username` and
+`password` need `password` in `MANAGEMENT_AUTH`, and a password needs a
+username; `409` if the username is taken.
+
+### PUT /v1/operators/{id}/password
+
+<p class="ep-meta"><span><b>Auth</b>any, with step-up</span></p>
+
+```json
+{ "password": "a long new password", "username": "sam" }
+```
+
+Sets the operator's password, and returns the operator. `username` is
+needed only if the operator has none yet. The operator's other password
+sessions end. `400` for a short password or a missing username, `404` for
+an unknown operator, `409` if the username is taken.
+
+### DELETE /v1/operators/{id}/password
+
+<p class="ep-meta"><span><b>Auth</b>any, with step-up</span></p>
+
+Removes the operator's password and ends its password sessions. `204`;
+`409` if it is the last active credential.
 
 ### POST /v1/operators/{id}/enrollments
 
@@ -312,8 +440,8 @@ Returns the operator. Disabling ends its sessions at once.
 <p class="ep-meta"><span><b>Auth</b>any, with step-up</span></p>
 
 Removes an operator, or one key. `204`. `409` if it would remove the last
-active key of an enabled operator ("enroll another operator key first"),
-also when disabling. A key's sessions end with it.
+active credential, a key or password of an enabled operator, also when
+disabling. A key's sessions end with it.
 
 ## Audit log
 

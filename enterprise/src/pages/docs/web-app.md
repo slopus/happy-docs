@@ -134,16 +134,25 @@ or signed in the browser from a private key (it can generate a key pair
 whose public half you add to `MANAGEMENT_JWT_PUBLIC_KEYS`). Enrollment
 links open its `/console/enroll` page. When an operation needs a fresh
 touch, it asks for one and retries, and the sidebar counts down to the
-session's end.
+session's end. It does not yet sign in with an operator password or run
+first-run setup; use the [management API](/docs/api/management/#first-run-setup)
+for those.
 
 ![The operator console's list of organizations](/shots/console.webp)
 
 ## Running it
 
 The web app is a static single-page app in the distribution's `web/`
-directory. Its development server serves it and proxies both APIs on one
-origin, so the OAuth sign-in pages and the MCP endpoint are reachable there
-too. See the [Quickstart](/docs/quickstart/#8-open-the-web-app).
+directory. The [Docker image](/docs/self-hosting/docker/) already serves it,
+with the APIs, on one origin: see the
+[Quickstart](/docs/quickstart/#7-open-the-web-app).
+
+The server can serve the built files itself: `WEB_DIR` points at them, and
+`MANAGEMENT_MOUNT=/mgmt` puts the management API next to them for the
+console. For development, the app's own development server serves it and
+proxies both APIs on one origin
+(`HE_ORG_URL=http://127.0.0.1:8080 HE_MANAGEMENT_URL=http://127.0.0.1:9090 npm run dev`,
+at `http://localhost:5173`).
 
 ### In production
 
@@ -174,8 +183,10 @@ Then set, on the server:
   invite links (`<origin>/invite`, a page of the web app), the passkey
   relying party and origin, the OAuth issuer, and the MCP endpoint's host
   check.
-- `CLIENT_IP_HEADER=X-Forwarded-For`, so that rate limits key on the client
-  rather than on the proxy. The server takes the last address in the list.
+- `CLIENT_IP_HEADER=x-real-ip`, so that rate limits key on the client
+  rather than on the proxy. (With `x-forwarded-for` the server takes the
+  last address in the list, so a proxy behind another proxy must not
+  append to it.)
 
 An nginx server block that does all of this:
 
@@ -192,7 +203,7 @@ server {
     proxy_pass http://127.0.0.1:8080;
     proxy_http_version 1.1;
     proxy_set_header Host $http_host;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Real-IP $remote_addr;
     proxy_buffering off;
     proxy_read_timeout 1h;
   }
@@ -216,8 +227,8 @@ server {
 ```
 
 with `PUBLIC_BASE_URL=https://enterprise.example.com` and
-`CLIENT_IP_HEADER=X-Forwarded-For`. See also
+`CLIENT_IP_HEADER=x-real-ip`. See also
 [Configuration](/docs/self-hosting/configuration/) and
-[Self-hosting](/docs/self-hosting/).
+[Deploying](/docs/self-hosting/).
 
 Your own apps can sit next to it: they use the same API under the same rules.
