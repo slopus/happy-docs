@@ -54,11 +54,15 @@ ADMIN=$(curl -s -X POST "$BASE/mgmt/v1/auth/password" -H "Content-Type: applicat
 ```sh
 ORG=$(curl -s -X POST "$BASE/mgmt/v1/organizations" \
   -H "Authorization: Bearer $ADMIN" -H "Content-Type: application/json" \
-  -d '{"name": "Acme", "owner_email": "ada@acme.example"}' | jq -r .id)
+  -d '{"name": "Acme", "owner_email": "ada@acme.example", "slug": "acme"}' | jq -r .id)
 echo "$ORG"
 ```
 
-The organization exists, but has no users yet. Its system teams and first
+`acme` is the organization's
+[address](/docs/concepts/organizations/#the-organizations-address), set for
+good: its sign-in page is `http://localhost:8080/acme`, and `acme` works in
+place of `$ORG` in every `/v1/orgs/{org}` URL. The organization exists, but
+has no users yet. Its system teams and first
 owner are created when `ada@acme.example` first signs in.
 
 ## 4. Sign in as the owner
@@ -133,7 +137,7 @@ curl -N "$BASE/v1/ontology/events" -H "Authorization: Bearer $TOKEN"
 
 ## 7. Open the web app
 
-Open `http://localhost:8080`, enter the organization's id (`echo $ORG`) and
+Open the organization's sign-in page, `http://localhost:8080/acme`, enter
 `ada@acme.example`, choose **Password**, and sign in with the owner's
 password. The `employee` type and its objects are under **Objects**, its
 definition under **Ontology**, and changes made through `curl` appear in

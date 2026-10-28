@@ -93,15 +93,17 @@ only while no operator has a password; remove it from `.env` afterwards.
 
 In the console, the admin:
 
-1. creates an organization with its name and its owner's email address;
+1. creates an organization with its name, its owner's email address, and
+   its [address](/docs/concepts/organizations/#the-organizations-address)
+   (`acme`, for `http://localhost:8080/acme`), which is set for good;
 2. on the organization's page, presses **Owner link** (leaving the address
    empty means the bootstrap owner's) and copies the link;
 3. sends it to the owner, over a channel they trust.
 
 The link opens `/reset-password` in the web app. It works once, within 24
 hours. The owner chooses a password there, which makes them the
-organization's first owner, and then signs in on the sign-in page with
-**Password**. From there the owner runs the organization: invites, whose
+organization's first owner, and then signs in at the organization's
+address with **Password**. From there the owner runs the organization: invites, whose
 links the web app shows to copy while email goes to the log, teams,
 two-factor policy, and the rest of the [web app](/docs/web-app/).
 
@@ -117,7 +119,7 @@ ADMIN=$(curl -s -X POST "$BASE/mgmt/v1/setup" -H "Content-Type: application/json
 
 ORG=$(curl -s -X POST "$BASE/mgmt/v1/organizations" \
   -H "Authorization: Bearer $ADMIN" -H "Content-Type: application/json" \
-  -d '{"name": "Acme", "owner_email": "ada@acme.example"}' | jq -r .id)
+  -d '{"name": "Acme", "owner_email": "ada@acme.example", "slug": "acme"}' | jq -r .id)
 
 curl -s -X POST "$BASE/mgmt/v1/organizations/$ORG/owner-link" -H "Authorization: Bearer $ADMIN"
 ```
@@ -136,6 +138,16 @@ TOKEN=$(curl -s -X POST "$BASE/v1/orgs/$ORG/auth/password" -H "Content-Type: app
 ```
 
 The [Quickstart](/docs/quickstart/) continues from here.
+
+## Sign-up
+
+By default only operators create organizations. `ORG_SIGNUP=open` lets
+anyone who proves their address by email create one and become its owner,
+from the web app's front page. Limit it with `ORG_SIGNUP_EMAIL_DOMAINS`
+and `ORG_SIGNUP_DAILY_LIMIT` (3 per address per day), and put Cloudflare
+Turnstile in front of the code emails with `TURNSTILE_SECRET_KEY` and
+`TURNSTILE_SITE_KEY`. Configure a real email provider first: see
+[Sign-up](/docs/concepts/authentication/#sign-up).
 
 ## Email
 

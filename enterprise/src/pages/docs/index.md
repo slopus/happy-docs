@@ -49,9 +49,9 @@ see or affect another.
 
 | | |
 |---|---|
-| People and agents | Human users log in with an emailed code or a password. Assistants act for a signed-in person over MCP; agent accounts act as themselves with API tokens. See [How it fits](/docs/how-it-fits/#how-it-connects) and [Users, teams, permissions](/docs/concepts/organizations/). |
+| People and agents | Human users sign in to the server with one emailed code and pick an organization, or sign in at an organization's own address with a code or a password. Assistants act for a signed-in person over MCP; agent accounts act as themselves with API tokens. See [How it fits](/docs/how-it-fits/#how-it-connects) and [Users, teams, permissions](/docs/concepts/organizations/). |
 | Teams and permissions | The system teams `owners` and `everyone`, custom teams that are objects of the ontology, subteams that pass their members up, memberships that end on time, a history of every membership change, and eight permissions granted to teams. |
-| Login and security posture | Email codes, passwords, invites, DNS-verified allowed domains, required two-factor authentication with TOTP or WebAuthn. See [Authentication](/docs/concepts/authentication/). |
+| Login and security posture | Server-wide sign-in, optional self-service sign-up, email codes, passwords, invites, DNS-verified allowed domains, required two-factor authentication with TOTP or WebAuthn. See [Authentication](/docs/concepts/authentication/). |
 | An ontology | Object types with typed properties and format rules, versioned schemas, custom validators in sandboxed Python, link types with cardinality, queries, and access per type, down to the objects shared with each member or their teams and to single properties. See [The ontology](/docs/concepts/ontology/). |
 | Business actions | The organization's own operations, such as "open a work order": typed parameters, criteria, edits applied all or nothing, safe retries, webhooks and emails (to members or customers) after commit, and an audit log. See [Business actions](/docs/concepts/actions/). |
 | Timeseries | Series of timestamped points, such as sensor readings, attached to objects and read under their access: idempotent batches, raw, bucketed and downsampled reads, the newest value, retention, and live updates. See [Timeseries](/docs/concepts/timeseries/). |

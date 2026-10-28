@@ -193,9 +193,37 @@ show that the rules, as modelled, hold. For example:
 The code is tested against that model; the code itself is not formally
 verified. See also [Organizations and isolation](/docs/concepts/isolation/#a-formally-verified-model).
 
+## The organization's address
+
+Every organization has a **slug**, its address on the server: `acme` in
+`https://enterprise.example.com/acme`, the organization's own sign-in page.
+
+- 3 to 40 characters of `a-z`, `0-9` and `-`, with no double dash, not
+  starting or ending with a dash, and never shaped like an id.
+- Unique across the server, and **set once**: chosen when the organization
+  is created, by the operator or at sign-up (derived from the name if none
+  is given), and never changed. When an organization is deleted its slug
+  stays taken, so nobody else can take over its old links.
+- Reserved names are refused (`422 slug_reserved`): host and
+  infrastructure names such as `app`, `api`, `admin`, `console`, `mail`,
+  `docs` or `status`, every top-level path of the web app such as
+  `settings`, `signup` or `reset-password`, and whatever the server lists
+  in `ORG_RESERVED_SLUGS`.
+- Wherever a URL names an organization (`/v1/orgs/{org}/...`, the OAuth and
+  MCP URLs under `/orgs/{org}`, and their discovery documents), `{org}` is
+  the slug or the id. Tokens are bound to the id, so they work under
+  either.
+
+Slugs are public by design: anyone can find out whether an address is
+taken, from a sign-in page or sign-up. Who belongs to an organization is
+not.
+
+Slugs are also valid DNS labels, so they could serve as subdomains
+(`acme.enterprise.example.com`), but sign-in uses the path for now.
+
 ## Joining an organization
 
-Someone becomes a user in one of four ways:
+Someone becomes a user in one of five ways:
 
 1. **Bootstrap owner.** When the operator creates an organization through the
    management API, they name an `owner_email`. While the organization has no
@@ -209,6 +237,10 @@ Someone becomes a user in one of four ways:
    seven days. Accepting it logs in as the invited user.
 4. **Agent.** A member with `invite_members` creates an agent, which gets its
    first API token.
+5. **Sign-up.** Where the server allows
+   [sign-up](/docs/concepts/authentication/#sign-up), someone who proves
+   their address by email creates a new organization and becomes its first
+   owner.
 
 Everyone else is turned away, with the same response a failed login gets.
 [Authentication](/docs/concepts/authentication/) covers each path in detail.

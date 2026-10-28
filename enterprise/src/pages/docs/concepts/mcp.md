@@ -10,6 +10,10 @@ lead: Every organization has its own MCP server and its own OAuth 2.1 authorizat
 <PUBLIC_BASE_URL>/orgs/{org}/mcp
 ```
 
+`{org}` is the organization's slug or its id: `/orgs/acme/mcp`. The OAuth
+URLs of a client that starts at `/orgs/acme` all say `acme`, and its tokens
+work under either form.
+
 The server speaks MCP over Streamable HTTP, stateless, with JSON responses. It
 is built on [rmcp](https://github.com/modelcontextprotocol/rust-sdk) and
 follows the MCP authorization spec, so a compliant client needs only the URL:

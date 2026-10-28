@@ -137,6 +137,7 @@ An organization:
 {
   "id": "c8kq2m7xw3n5p9r1t4v6y0za",
   "name": "Acme",
+  "slug": "acme",
   "bootstrap_owner_email": "ada@acme.example",
   "require_2fa": false,
   "created_at": "2026-10-24T10:00:00Z"
@@ -156,10 +157,13 @@ Every organization, oldest first, as a JSON array.
 ```sh
 curl -X POST http://127.0.0.1:9090/v1/organizations \
   -H "Authorization: Bearer $MGMT_JWT" -H "Content-Type: application/json" \
-  -d '{"name": "Acme", "owner_email": "ada@acme.example"}'
+  -d '{"name": "Acme", "owner_email": "ada@acme.example", "slug": "acme"}'
 ```
 
-`201` with the organization. `name` is 1-200 characters after trimming;
+`201` with the organization. `slug` is its
+[address](/docs/concepts/organizations/#the-organizations-address), set for
+good; without one it is derived from the name. `409 slug_taken`,
+`422 slug_reserved`, `422 slug_invalid`. `name` is 1-200 characters after trimming;
 `owner_email` must be a valid address and is stored normalized. That address
 may log in while the organization has no active owner and becomes its first
 owner (see [Joining](/docs/concepts/authentication/)).

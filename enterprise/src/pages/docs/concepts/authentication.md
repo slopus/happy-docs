@@ -111,6 +111,55 @@ An address may log in when, in this order:
 
 Anyone else needs an invite.
 
+## Signing in to the server
+
+People do not have to know which organization to sign in to. One emailed
+code proves an address across the server, and then they choose:
+
+1. `POST /v1/auth/start` with the address always answers `202` with a
+   challenge. A 6-digit code is emailed only if the address has an
+   organization to enter or may sign up, so the answer says nothing about
+   the address. The code works for 10 minutes and 5 tries.
+2. `POST /v1/auth/verify` checks it and returns an **identity token**
+   (`heid_...`, valid for 15 minutes) and the organizations the address may
+   enter now, each with how: `member`, `owner_claim` (the first owner of an
+   organization that has none), `domain` (a verified domain lets the
+   address join), or `invite` (a pending invite).
+3. `POST /v1/orgs/{org}/auth/identity` with the token opens exactly the
+   session an email code at that organization would, joining the same way,
+   or accepts the address's pending invite. A required second factor
+   follows as after any login.
+
+The identity token is not a credential: every organization and management
+endpoint refuses it. It only lists organizations and opens sessions in
+them, so while it lasts, switching to another organization needs no new
+code. Passwords stay per organization.
+
+Each listed organization is checked in that organization, by the same rules
+an email-code login uses, before it is shown. An address is never offered
+an organization it may not enter, and a deactivated member's organization
+is not listed.
+
+## Sign-up
+
+With `ORG_SIGNUP=open` (off by default), someone who has proven their
+address this way can create an organization: a name, an address
+([slug](/docs/concepts/organizations/#the-organizations-address)), and
+optionally their own display name. They become its first owner and are
+signed in.
+
+- `ORG_SIGNUP_EMAIL_DOMAINS` limits sign-up to addresses at the listed
+  domains.
+- `ORG_SIGNUP_DAILY_LIMIT` (3 by default) is how many organizations one
+  address may create per day.
+- With `TURNSTILE_SECRET_KEY` and `TURNSTILE_SITE_KEY`, sign-in codes are
+  only emailed behind a Cloudflare Turnstile check.
+
+Sign-up proves addresses by email, so it needs a real
+[email provider](/docs/self-hosting/configuration/#email): with the `log`
+provider the codes only reach the server log. While sign-up is off,
+organizations are created in the operator console only.
+
 ## Invites
 
 A member with `invite_members` invites an address. The server emails a link
@@ -229,5 +278,7 @@ WWW-Authenticate: Bearer
 
 The reason (unknown organization, unknown `kid`, bad signature, expired,
 revoked, deactivated user, wrong audience, wrong password) is logged on the server but never
-returned, so responses do not reveal which organizations, users, keys,
-sessions, or invites exist.
+returned, so responses do not reveal which users, keys, sessions, or
+invites exist. (Which organizations exist is public: their
+[addresses](/docs/concepts/organizations/#the-organizations-address) have
+sign-in pages.)

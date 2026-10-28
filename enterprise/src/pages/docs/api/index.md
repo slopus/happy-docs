@@ -8,7 +8,7 @@ lead: Two HTTP APIs on two listeners. Requests and responses are JSON, credentia
 |---|---|---|
 | Default address | `0.0.0.0:8080` | `127.0.0.1:9090` (keep it private) |
 | Who calls it | your organizations' users, agents, apps, MCP clients | you, the operator |
-| Credentials | session tokens, external JWTs, agent API tokens, OAuth access tokens (MCP only) | Ed25519 JWTs signed by a key in `MANAGEMENT_JWT_PUBLIC_KEYS`, or operator sessions opened with a password or a security key |
+| Credentials | session tokens, external JWTs, agent API tokens, OAuth access tokens (MCP only); identity tokens (`heid_`) are refused everywhere but the identity exchange and sign-up | Ed25519 JWTs signed by a key in `MANAGEMENT_JWT_PUBLIC_KEYS`, or operator sessions opened with a password or a security key |
 | JWT audience | `happy-enterprise:org` (REST), `happy-enterprise:mcp` (MCP) | `happy-enterprise:management` |
 | Database access | a role confined by row level security to the request's organization | a role that sees only the list of organizations and their identity provider keys |
 
@@ -42,6 +42,9 @@ TOKEN=eyJhbGciOiJFZERTQSIsImtpZCI6ImhlLXNlc3Npb24tdjEifQ...   # session token
   (raw bytes) and the OAuth token and revocation endpoints (form-encoded).
 - Ids are cuid2 strings, 24 characters, `^[a-z][a-z0-9]{23}$`. A malformed id
   in a path is a `404`, like an unknown one.
+- `{org}` in a URL (`/v1/orgs/{org}/...`, `/orgs/{org}/...`) is the
+  organization's [slug](/docs/concepts/organizations/#the-organizations-address)
+  or its id.
 - Timestamps are RFC 3339 in UTC.
 - Unknown JSON fields are refused by the ontology and security-posture endpoints.
 - `DELETE`s and other writes without a body answer `204 No Content`.

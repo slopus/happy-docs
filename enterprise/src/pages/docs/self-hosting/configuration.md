@@ -69,6 +69,16 @@ authenticate to the management API.
 |---|---|---|
 | `ORG_PASSWORD_AUTH` | `false` | `true` lets organization users sign in with [passwords](/docs/concepts/authentication/#signing-in-with-a-password). Off, every password route is `404`; stored passwords are kept. |
 
+## Addresses and sign-up
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `ORG_RESERVED_SLUGS` | none | Comma-separated [slugs](/docs/concepts/organizations/#the-organizations-address) no organization may take, on top of the built-in list. |
+| `ORG_SIGNUP` | `off` | `open` lets anyone with a proven address create an organization ([sign-up](/docs/concepts/authentication/#sign-up)). Needs a real email provider. |
+| `ORG_SIGNUP_EMAIL_DOMAINS` | none | Comma-separated domains whose addresses may sign up. Unset: any. |
+| `ORG_SIGNUP_DAILY_LIMIT` | `3` | Organizations one address may create per day. |
+| `TURNSTILE_SECRET_KEY`, `TURNSTILE_SITE_KEY` | none | Cloudflare Turnstile in front of server-wide sign-in codes (`POST /v1/auth/start`). Set both or neither. |
+
 ## WebAuthn
 
 | Variable | Default | Meaning |

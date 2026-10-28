@@ -14,6 +14,7 @@ lead: The organization's profile and photo, its security posture, its verified d
 {
   "id": "c8kq2m7xw3n5p9r1t4v6y0za",
   "name": "Acme",
+  "slug": "acme",
   "photo_file_id": "f6i2l8e4i0d9x3c7v1b5n2m6",
   "require_2fa": true,
   "created_at": "2026-10-01T09:00:00Z"
@@ -28,7 +29,9 @@ lead: The organization's profile and photo, its security posture, its verified d
 { "name": "Acme Corporation" }
 ```
 
-`name` is 1-200 characters. Returns the organization.
+`name` is 1-200 characters. Returns the organization. The
+[slug](/docs/concepts/organizations/#the-organizations-address) cannot be
+changed.
 
 ### PUT /v1/org/photo
 

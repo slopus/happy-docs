@@ -1,16 +1,18 @@
 ---
 layout: ../../../layouts/Docs.astro
 title: Login and sessions
-lead: Email-code and password login, set-password links, invite acceptance, completing a second factor, and logging out.
+lead: Server-wide sign-in and sign-up, email-code and password login, set-password links, invite acceptance, completing a second factor, and logging out.
 ---
 
+`{org}` in these URLs is the organization's
+[slug](/docs/concepts/organizations/#the-organizations-address) or its id.
 See [Authentication](/docs/concepts/authentication/) for the rules behind
 these endpoints, and [Two-factor authentication](/docs/concepts/two-factor/)
 for partial sessions.
 
 ## The login response
 
-Email verification, password sign-in, and invite acceptance all answer with a new session:
+Email verification, password sign-in, the identity exchange, and invite acceptance all answer with a new session:
 
 ```json
 {
@@ -71,12 +73,121 @@ log in are all the same `401`.
 
 <p class="ep-meta"><span><b>Auth</b>none</span></p>
 
-How people can sign in. The answer is the same for every `{org}`, existing
-or not.
+The organization's slug and name, and how its people can sign in. This is
+what an organization's sign-in page shows. `404` if no organization has
+that slug or id.
 
 ```json
-{ "email_code": true, "password": true }
+{ "org": { "slug": "acme", "name": "Acme" }, "email_code": true, "password": true }
 ```
+
+## Server-wide sign-in
+
+One emailed code for the whole server, then an organization to enter. See
+[Signing in to the server](/docs/concepts/authentication/#signing-in-to-the-server).
+
+### POST /v1/auth/start
+
+<p class="ep-meta"><span><b>Auth</b>none</span><span><b>Rate limit</b>30 / 10 min per IP, 5 / 15 min per address</span></p>
+
+```json
+{ "email": "ada@acme.example", "turnstile_token": "..." }
+```
+
+Always `202` with `{challenge_id, expires_at}`. The code is emailed only if
+the address has an organization to enter or may sign up. `turnstile_token`
+is required when the server has Turnstile keys (the site key is in
+[`GET /v1/signup`](#get-v1-signup)); `403 turnstile_failed` if Cloudflare
+does not accept it. `400` for an invalid address.
+
+### POST /v1/auth/verify
+
+<p class="ep-meta"><span><b>Auth</b>none</span><span><b>Rate limit</b>60 / 10 min per IP</span></p>
+
+```json
+{ "challenge_id": "q9w8e7r6t5y4u3i2o1p0a9s8", "code": "481920" }
+```
+
+```json
+{
+  "identity_token": "heid_...",
+  "email": "ada@acme.example",
+  "expires_at": "2026-10-28T10:15:00Z",
+  "orgs": [
+    { "id": "c8kq2m7xw3n5p9r1t4v6y0za", "slug": "acme", "name": "Acme", "how": "member" },
+    { "id": "d2kf8s0q2l5x7c1v9b4n6m8z", "slug": "acme-labs", "name": "Acme Labs", "how": "invite" }
+  ],
+  "signup_enabled": false
+}
+```
+
+`how` is `member`, `owner_claim`, `domain`, or `invite`. The identity token
+lasts 15 minutes and can be exchanged at any listed organization, as often
+as needed while it lasts. A wrong, expired, or used-up code is `401`.
+
+### POST /v1/orgs/{org}/auth/identity
+
+<p class="ep-meta"><span><b>Auth</b>identity token</span><span><b>Rate limit</b>60 / 10 min per IP</span></p>
+
+```json
+{ "identity_token": "heid_..." }
+```
+
+`200` with the [login response](#the-login-response): the session an
+email-code login to `{org}` would open, joining the same way, or the
+address's pending invite accepted. `401` for a bad or expired token, `403
+inactive` if the address may not enter, `404` for an unknown organization.
+
+## Sign-up
+
+See [Sign-up](/docs/concepts/authentication/#sign-up).
+
+### GET /v1/signup
+
+<p class="ep-meta"><span><b>Auth</b>none</span></p>
+
+Always `200`, whether sign-up is on or not:
+
+```json
+{ "enabled": true, "email_domains": ["acme.example"], "turnstile_site_key": "0x4AAAAAAA..." }
+```
+
+`email_domains` is empty when any domain may sign up, and
+`turnstile_site_key` is `null` without Turnstile.
+
+### GET /v1/signup/slug/{slug}
+
+<p class="ep-meta"><span><b>Auth</b>none</span><span><b>Rate limit</b>60 / min per IP</span></p>
+
+Whether a slug is free for a new organization:
+
+```json
+{ "slug": "acme", "available": false, "reason": "taken" }
+```
+
+`reason` is `taken`, `reserved`, or `invalid`, and absent when the slug is
+available. `404` while sign-up is off.
+
+### POST /v1/signup/finish
+
+<p class="ep-meta"><span><b>Auth</b>identity token</span><span><b>Rate limit</b>60 / 10 min per IP</span></p>
+
+```json
+{ "identity_token": "heid_...", "org_name": "Acme", "slug": "acme", "display_name": "Ada Lovelace" }
+```
+
+Creates the organization with the token's address as its first owner, and
+signs them in. `201` with the [login response](#the-login-response) plus
+`"org": {"id", "slug", "name"}`.
+
+| Status | When |
+|---|---|
+| `401` | a bad or expired identity token |
+| `400` | `org_name` is not 1-200 characters |
+| `422 email_domain_not_allowed` | the address is not at one of `ORG_SIGNUP_EMAIL_DOMAINS` |
+| `429 signup_limit` | the address created `ORG_SIGNUP_DAILY_LIMIT` organizations today |
+| `409 slug_taken`, `422 slug_reserved`, `422 slug_invalid` | the slug cannot be had |
+| `404` | sign-up is off |
 
 ## Passwords
 

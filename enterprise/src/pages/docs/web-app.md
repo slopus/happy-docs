@@ -97,13 +97,31 @@ checked against the person's access before it is shown.
 
 ## Signing in
 
-The sign-in page asks for the organization and the work email address.
-When the server has [passwords](/docs/concepts/authentication/#signing-in-with-a-password)
-on, it offers **Email code** or **Password**. A password signs in only
-someone who already has one; joining still takes an invite or an emailed
-code, and a forgotten password needs an emailed code or a reset link from
-an owner.
+The front page, `/`, signs in to the server
+[email first](/docs/concepts/authentication/#signing-in-to-the-server): the
+work email, then the emailed code, then **Choose an organization** from
+the ones the address may enter, each marked when the person is its first
+owner, invited, or joins through a verified domain. Entering one opens its
+session, with the second factor as usual. With no organization to enter,
+the page says to ask for an invite, or offers to create one. The verified
+address is kept while its identity token lasts, 15 minutes, so **Switch
+organization** in the sidebar needs no new code; signing out forgets it.
 
+Where the server allows [sign-up](/docs/concepts/authentication/#sign-up),
+**Create a new organization** opens `/signup`: the organization's name,
+its address, checked as you type (taken, reserved, or invalid), and the
+owner's own name. It signs the new owner in. With Turnstile configured,
+the email step shows its check.
+
+Each organization also has its own sign-in page at its address,
+`/{slug}` (`/acme`). It offers **Email code**, and **Password** when the
+server has [passwords](/docs/concepts/authentication/#signing-in-with-a-password)
+on. A password signs in only someone who already has one; joining still
+takes an invite or an emailed code, and a forgotten password needs an
+emailed code or a reset link from an owner. An organization's id in that
+place leads on to its slug.
+
+Invite and set-password pages name the organization and its address.
 Accepting an invite asks for a display name and, with passwords on, an
 optional password, so the next sign-in needs no email.
 
@@ -120,8 +138,9 @@ organization has no owner it makes that address its first owner.
   sends no email (`EMAIL_PROVIDER=log`), a new invite shows its link to
   copy and pass on.
 - **Teams** and the permissions granted to them.
-- **The organization**: its name and photo, verified email domains, and
-  whether two-factor authentication is required.
+- **The organization**: its name and photo, its sign-in address (shown,
+  never changed), verified email domains, and whether two-factor
+  authentication is required.
 
 ![Teams and their permissions](/shots/teams.webp)
 
@@ -161,7 +180,10 @@ confirmation, it asks for a touch of the key, or for the password from an
 operator without one, and retries; the sidebar counts down to the
 session's end.
 
-An organization's page has an **Owner link** button: leave the address
+Creating an organization asks for its name, the owner's address, and the
+organization's address, suggested from the name and checked as you type;
+it cannot be changed later. An organization's page shows its address and
+has an **Owner link** button: leave the address
 empty for the bootstrap owner, and copy the single-use link it shows.
 
 ![The operator console's list of organizations](/shots/console.webp)

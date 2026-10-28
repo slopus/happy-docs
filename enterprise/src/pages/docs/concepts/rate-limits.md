@@ -8,8 +8,9 @@ lead: Sliding-window limits protect login, passwords, second factors, and OAuth.
 
 | What | Per IP | Per account |
 |---|---|---|
-| Login codes (`email/start`, the OAuth email step) | 30 per 10 minutes | 5 per 15 minutes per organization and address |
-| Code checks, invite acceptance, password sign-in, set-password links | 60 per 10 minutes | (5 attempts per code) |
+| Login codes (`email/start`, `/v1/auth/start`, the OAuth email step) | 30 per 10 minutes | 5 per 15 minutes per organization (or the server) and address |
+| Code checks, invite acceptance, password sign-in, set-password links, identity exchanges, sign-ups | 60 per 10 minutes | (5 attempts per code; `ORG_SIGNUP_DAILY_LIMIT` new organizations per address per day) |
+| Sign-up slug checks | 60 per minute | |
 | [Passwords](/docs/concepts/authentication/#failed-attempts): sign-ins, step-ups and changes (organizations and management) | locked after 5 failures per account and IP: 1 minute, doubling to 1 hour | past 20 attempts in 15 minutes, each waits 1 second; never locked |
 | Second-factor attempts (REST and OAuth pages) | 60 per 15 minutes | 20 per 15 minutes per user, across sessions (10 failures also end a session) |
 | OAuth token and revocation | 120 per minute | 60 per minute per client |
